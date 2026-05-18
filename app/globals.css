@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+    * {
+        color: white;
+    }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+    --color-accent: #363636;
+    --color-special: #0891b2;
+    --color-secondary: #2c2c2c;
+    --color-primary: #1f1f1f;
+    --font-sans: var(--font-fredoka);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background-color: #1f1f1f;
+    height: 100vh;
+    margin: 0px;
 }
+
+.button {
+    @apply hover:bg-primary hover:text-special transition-all cursor-pointer
+}
+
+.sign-up-input {
+    @apply bg-accent rounded-[3px] outline-none w-60 h-10 text-[15px] pt-3 pl-1 border-gray-500 border
+}
+
+.input-box {
+    @apply mt-8
+}
+
+.error {
+    @apply absolute left-18 text-[12px] w-67 text-red-500 text-left
+}
+
+.floating-label {
+    @apply absolute text-gray-500 cursor-text left-19 top-2 transition-all
+    peer-focus:top-1 peer-focus:text-[10px]
+    peer-not-placeholder-shown:text-[10px] peer-not-placeholder-shown:top-1
+}
+
+.right-nav-link {
+    @apply h-full cursor-pointer flex items-center justify-center w-30
+}
+
