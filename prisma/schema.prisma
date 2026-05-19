@@ -5,19 +5,31 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../app/generated/prisma"
-  url = env("POSTGRES_PRISMA_URL")
-  directURL = env("POSTGRES_URL_NON_POOLING")
+  output = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model Account {
+model User {
   id String @id @default(cuid())
-  username String @unique
-  password String 
   email String @unique
-  created_date DateTime @default(now())
+  password String
+  name String @unique
+  createdAt DateTime @default(now())
 }
+
+model Item {
+  id String @id @default(cuid())
+  name String @unique 
+  price Float 
+}
+
+model Purchase {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId String 
+  itemId String 
+}
+
