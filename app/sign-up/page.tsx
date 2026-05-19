@@ -10,7 +10,9 @@ export default function SignUp() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [waiting, setWaiting] = useState(false);
+
+    const formFilled = username.length > 0 && password.length > 0 && email.length > 0 && email.includes("@");
 
     function checkUser(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
@@ -27,7 +29,6 @@ export default function SignUp() {
         }
     }
 
-
     function checkPassword(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
         setPassword(value);
@@ -41,8 +42,16 @@ export default function SignUp() {
         }
     }
 
+    function checkEmail(event: React.ChangeEvent<HTMLInputElement>) {
+        const value = event.target.value;
+        setEmail(value);
 
-    async function handleSubmit(event: React.SubmitEvent<HTMLElement>) {
+        if (!value.includes("@")) {
+            setError("Invalid email");
+        }
+    }
+
+    async function onSubmit(event: React.SubmitEvent<HTMLElement>) {
         event.preventDefault();
 
         if (username.length < 3) {
@@ -55,25 +64,25 @@ export default function SignUp() {
 
             return;
         }
-        else if (password.length < 3) {
+        else if (password.length < 5) {
             setError("Password too short");
 
             return;
         }
 
 
-        setLoading(true);
+        setWaiting(true);
 
         try {
-            const res = await fetch("/api/signup", {
+            const response = await fetch("/api/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password, email }),
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
+            if (!response.ok) {
                 setError(data.error || "Something went wrong");
             } 
             else {
@@ -85,14 +94,14 @@ export default function SignUp() {
             setError("Network error");
         } 
         finally {
-            setLoading(false);
+            setWaiting(false);
         }
     }
 
     return (
         <div className="flex flex-col justify-center min-h-screen items-center m-0">
             <form
-                onSubmit={handleSubmit}
+                onSubmit={onSubmit}
                 className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-96"
             >
                 <h1 className="text-4xl mt-4 text-special">Sign Up</h1>
@@ -143,7 +152,7 @@ export default function SignUp() {
                         type="email"
                         placeholder=""
                         required
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={checkEmail}
                     />
                     
                     <label htmlFor="email" className="floating-label">Email</label>
@@ -151,10 +160,10 @@ export default function SignUp() {
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className="mt-5 rounded-md button bg-accent self-center w-50 h-10"
+                    disabled={waiting}
+                    className={`mt-5 rounded-md button bg-accent self-center ${error==="" && formFilled ? 'w-60 h-10' : 'w-50 h-10'}`}
                 >
-                    {loading ? "Creating..." : "Create"}
+                    {waiting ? "Creating..." : "Create"}
                 </button>
             </form>
         </div>

@@ -1,6 +1,6 @@
 import { prisma  } from "@/lib/db";
 import bcrypt from "bcrypt";
-import { contains_special_chars } from "@/lib/utils";
+import { containsSpecialChars } from "@/lib/utils";
 
 //
 
@@ -18,8 +18,8 @@ export async function POST(request: Request) {
         }
 
 
-        if (contains_special_chars(username)) {
-            return Response.json({error: "Username contains special characters"})
+        if (containsSpecialChars(username)) {
+            return Response.json({error: "Username contains special characters"}, { status: 400 })
         }
 
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         });
 
 
-        return Response.json({success: true, userId: user.id });
+        return Response.json({success: true, userId: user.id }, { status: 200 });
 
     } 
     catch (err) {

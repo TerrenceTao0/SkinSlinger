@@ -1,11 +1,50 @@
 "use client";
 
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+
 //
 
 export default function Login() {
+    const [waiting, setWaiting] = useState(false);
+    const [error, setError] = useState("");
+    const [user, setUser] = useState("");
+    const [password, setPassword] = useState("");
+
+    const formFilled = user.length > 0 && password.length > 0
+
+    async function onSubmit(event: React.SubmitEvent<HTMLElement>) {
+        event.preventDefault();
+        setWaiting(true);
+
+        try {
+            const signInData = await signIn('credentials', {
+                user: user,
+                password: password,
+                redirect: false,
+            });
+
+            if (signInData?.error) {
+                setError("Account details incorrect");
+                
+            } else {
+                window.location.href = "/";
+            }
+        }
+        catch {
+            setError("Network error");
+        }
+        finally {
+            setWaiting(false);
+        }
+    }
+
     return (
         <div className="flex flex-col justify-center min-h-screen items-center m-0">
-            <form className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-86">
+            <form 
+                onSubmit={onSubmit} 
+                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-86"
+            >
                 <h1 className="text-4xl mt-4 text-special">
                     Login
                 </h1>
@@ -15,6 +54,7 @@ export default function Login() {
                         id="username"
                         className="sign-up-input peer"
                         placeholder=""
+                        onChange={(event) => setUser(event.target.value)}
                         required
                     />
 
@@ -34,6 +74,7 @@ export default function Login() {
                         className="sign-up-input peer"
                         type="password"
                         placeholder=""
+                        onChange={(event) => setPassword(event.target.value)}
                         required
                     />
 
@@ -49,8 +90,20 @@ export default function Login() {
                     Forgot Password
                 </button>
 
-                <button className="mt-7 rounded-md button bg-accent self-center w-50 h-10">
-                    Continue
+                <div className="relative h-0 left-10 top-7">
+                    {error === "Account details incorrect" && (
+                        <p className="error absolute">
+                            Account details are incorrect.
+                        </p>
+                    )}
+                </div>
+
+                <button 
+                    disabled={waiting}
+                    type="submit" 
+                    className={`mt-11 rounded-md button bg-accent self-center ${error === "" && formFilled ? 'w-60 h-10' : 'w-50 h-10'}`}
+                >
+                    {waiting? "Processing..." : "Continue"}
                 </button>
             </form>
         </div>
