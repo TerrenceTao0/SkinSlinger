@@ -1,5 +1,6 @@
 import "./globals.css";
 import TopNav from "./components/TopNav"
+import Providers from "./components/Providers"
 import { Fredoka } from 'next/font/google'
 
 const fredoka = Fredoka({
@@ -19,8 +20,10 @@ children,
       <title>Bifrost Markets</title>
 
       <body className="h-screen flex flex-col m-0 overflow-hidden antialiased">
-        <TopNav /> 
-        {children}
+            <Providers>
+                <TopNav />
+                {children}
+            </Providers>
         </body>
     </html>
   );

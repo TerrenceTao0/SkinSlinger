@@ -1,9 +1,18 @@
-import Image from 'next/image'
+"use client";
+
 import Link from 'next/link'
+import { useSession, signOut } from 'next-auth/react'
 
 //
 
 export default function TopNav() {
+    const { data: session } = useSession();
+
+    function promptLogOut() {
+        signOut()
+    }
+
+
     return (
         <>
             <nav className="fixed top-2 h-14 w-40 left-2 flex justify-center items-center z-50 bg-secondary">
@@ -22,13 +31,27 @@ export default function TopNav() {
                 </div>
 
                 <div className="flex h-full">
-                    <Link href="/login" className="right-nav-link button">
-                        LOGIN
-                    </Link>
-                    
-                    <Link href="/sign-up" className="right-nav-link button">
-                        SIGN UP
-                    </Link>
+                    {session? (
+                        <>
+                            <Link 
+                                href="/sign-up" 
+                                className="right-nav-link button"
+                                onClick={promptLogOut}
+                            >
+                                LOG OUT
+                            </Link>
+                        </>
+                    ): (
+                        <>
+                            <Link href="/login" className="right-nav-link button">
+                                LOGIN
+                            </Link>
+
+                            <Link href="/sign-up" className="right-nav-link button">
+                                SIGN UP
+                            </Link>
+                        </>
+                    )}
 
                     <Link href="/login" className="right-nav-link button">
                         BASKET

@@ -1,12 +1,6 @@
-import { VerifyEmailTemplate } from "@/app/components/VerifyEmailTemplate";
-import { Resend } from "resend"
 import { prisma  } from "@/lib/db";
 import bcrypt from "bcrypt";
 import { containsSpecialChars } from "@/lib/utils";
-
-//
-
-const resend = new Resend(process.env.RESEND_API);
 
 //
 
@@ -49,34 +43,17 @@ export async function POST(request: Request) {
 
 
         const hashed_password = await bcrypt.hash(password, 10);
-        const token = crypto.randomUUID();
-        const expires = new Date(Date.now() + 1000 * 60 * 60) // 1 hour
 
-        await prisma.pendingAccount.create({
+        const user = await prisma.user.create({
             data: {
                 email,
-                username,
                 password: hashed_password,
-                token,
-                expires
+                username,
             },
         });
 
 
-        const { error } = await resend.emails.send({
-            from: 'Acme <onboarding@resend.dev>',
-            to: [email],
-            subject: 'Email Verification',
-            react: VerifyEmailTemplate(),
-        });
-
-
-        if (error) {
-            return Response.json({ error }, { status: 500 });
-        }
-
-
-        return Response.json(null, { status: 200 });
+        return Response.json({ success: true, userId: user.id }, { status: 200 });
     } 
     catch (err) {
         console.error("Signup error:", err);

@@ -36,6 +36,10 @@ body {
     @apply absolute left-18 text-[12px] w-67 text-red-500 text-left
 }
 
+.request-error {
+    @apply absolute text-red-500 whitespace-nowrap left-1/2 -translate-x-1/2 bottom-[0.1px]
+}
+
 .floating-label {
     @apply absolute text-gray-500 cursor-text left-19 top-2 transition-all
     peer-focus:top-1 peer-focus:text-[10px]

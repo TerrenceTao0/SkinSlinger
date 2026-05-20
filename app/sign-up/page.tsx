@@ -11,6 +11,7 @@ export default function SignUp() {
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [waiting, setWaiting] = useState(false);
+    const [verifying, setVerifying] = useState(false);
 
     const formFilled = username.length > 0 && password.length > 0 && email.length > 0 && email.includes("@");
 
@@ -83,10 +84,10 @@ export default function SignUp() {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.error || "Something went wrong");
+                setError(data.error || "Server error. Try again.");
             } 
             else {
-                window.location.href = "/login";
+                setVerifying(true);
             }
 
         } 
@@ -100,72 +101,86 @@ export default function SignUp() {
 
     return (
         <div className="flex flex-col justify-center min-h-screen items-center m-0">
+           {!verifying ? (
             <form
                 onSubmit={onSubmit}
                 className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-96"
-            >
-                <h1 className="text-4xl mt-4 text-special">Sign Up</h1>
-
-                <div className="input-box relative">
-                    <input
-                        id="username"
-                        className="sign-up-input peer"
-                        placeholder=""
-                        required
-                        onChange={checkUser}
-                    />
-
-                    <br />
-                    
-                    <label htmlFor="username" className="floating-label">Username</label>
-
-                    {error === "Username too short" && (
-                        <p className="error">Username must be at least 3 characters long.</p>
-                    )}
-
-                    {error === "Username contains special characters" && (
-                        <p className="error">Username cannot contain special characters.</p>
-                    )}
-                </div>
-
-                <div className="input-box relative">
-                    <input
-                        id="password"
-                        className="sign-up-input peer"
-                        type="password"
-                        placeholder=""
-                        required
-                        onChange={checkPassword}
-                    />
-
-                    <label htmlFor="password" className="floating-label">Password</label>
-
-                    {error === "Password too short" && (
-                        <p className="error">Password must be at least 5 characters long.</p>
-                    )}
-                </div>
-
-                <div className="input-box relative">
-                    <input
-                        id="email"
-                        className="sign-up-input peer"
-                        type="email"
-                        placeholder=""
-                        required
-                        onChange={checkEmail}
-                    />
-                    
-                    <label htmlFor="email" className="floating-label">Email</label>
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={waiting}
-                    className={`mt-5 rounded-md button bg-accent self-center ${error==="" && formFilled ? 'w-60 h-10' : 'w-50 h-10'}`}
                 >
-                    {waiting ? "Creating..." : "Create"}
-                </button>
-            </form>
+                    <h1 className="text-4xl mt-4 text-special">Sign Up</h1>
+
+                    <div className="input-box relative">
+                        <input
+                            id="username"
+                            className="sign-up-input peer"
+                            placeholder=""
+                            required
+                            onChange={checkUser}
+                        />
+
+                        <br />
+                        
+                        <label htmlFor="username" className="floating-label">Username</label>
+
+                        {error === "Username too short" && (
+                            <p className="error">Username must be at least 3 characters long.</p>
+                        )}
+
+                        {error === "Username contains special characters" && (
+                            <p className="error">Username cannot contain special characters.</p>
+                        )}
+                    </div>
+
+                    <div className="input-box relative">
+                        <input
+                            id="password"
+                            className="sign-up-input peer"
+                            type="password"
+                            placeholder=""
+                            required
+                            onChange={checkPassword}
+                        />
+
+                        <label htmlFor="password" className="floating-label">Password</label>
+
+                        {error === "Password too short" && (
+                            <p className="error">Password must be at least 5 characters long.</p>
+                        )}
+                    </div>
+
+                    <div className="input-box relative">
+                        <input
+                            id="email"
+                            className="sign-up-input peer"
+                            type="email"
+                            placeholder=""
+                            required
+                            onChange={checkEmail}
+                        />
+                        
+                        <label htmlFor="email" className="floating-label">Email</label>
+                    </div>
+
+                    <div className="relative self-center justify-center top-11">
+                        {(error === "Email is already in use" || error == "Username is already in use" || error == "Server error. Try again.") && (
+                            <p className="request-error ">
+                                {error}
+                            </p>
+                        )}
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={waiting}
+                        className={`mt-11 rounded-md button bg-accent self-center ${error==="" && formFilled ? 'w-60 h-9' : 'w-50 h-9'}`}
+                    >
+                        {waiting ? "Creating..." : "Create"}
+                    </button>
+                </form>
+            ) : (
+                <div className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-96">
+                    
+                </div>
+            )}
         </div>
     );
 }
