@@ -1,62 +1,39 @@
 import { prisma  } from "@/lib/db";
-import bcrypt from "bcrypt";
-import { containsSpecialChars } from "@/lib/utils";
 
 //
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
     try {
-        const { username, password, email } = await request.json();
+        const { searchParams } = new URL(request.url);
+        const token = searchParams.get("token") ?? undefined;
 
-        if (!username || username.length < 3) {
-            return Response.json({error: "Username too short"}, { status: 400 });
+        const pendingAccount = await prisma.pendingAccount.findUnique({ where: { token } })
+
+        if (!pendingAccount) {
+            return Response.redirect("http://localhost:3000/status?message=Token Invalid", 302)
         }
 
 
-        if (!password || password.length < 5) {
-            return Response.json({error: "Password too short"}, { status: 400 });
+        if (pendingAccount.expires < new Date()) {
+            return Response.redirect("http://localhost:3000/status?message=Link Expired", 302)
         }
 
 
-        if (containsSpecialChars(username)) {
-            return Response.json({error: "Username contains special characters"}, { status: 400 })
-        }
-
-
-        if (!email) {
-            return Response.json({error: "Email required"}, { status: 400 });
-        }
-
-
-        const existingEmail = await prisma.user.findUnique({ where: { email } });
-
-        if (existingEmail) {
-            return Response.json({error: "Email is already in use"}, { status: 409 });
-        }
-
-        
-        const existingName = await prisma.user.findUnique({ where: { username } });
-
-        if (existingName) {
-            return Response.json({error: "Username is already in use"}, { status: 409 });
-        }
-
-
-        const hashed_password = await bcrypt.hash(password, 10);
-
-        const user = await prisma.user.create({
+        await prisma.user.create({
             data: {
-                email,
-                password: hashed_password,
-                username,
+                email: pendingAccount.email,
+                password: pendingAccount.password,
+                username: pendingAccount.username,
             },
         });
 
 
-        return Response.json({ success: true, userId: user.id }, { status: 200 });
+        await prisma.pendingAccount.delete({ where: { token } })
+
+        return Response.redirect("http://localhost:3000/login", 302)
     } 
     catch (err) {
-        console.error("Signup error:", err);
+        console.error("Signup error: ", err);
 
         return Response.json({ error: "Server error" }, { status: 500 });
     }

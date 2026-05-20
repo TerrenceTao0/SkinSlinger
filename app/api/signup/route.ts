@@ -1,4 +1,4 @@
-import { VerifyEmailTemplate } from "@/app/components/VerifyEmailTemplate";
+import { VerifyEmail } from "@/app/components/VerifyEmail";
 import { Resend } from "resend"
 import { prisma  } from "@/lib/db";
 import bcrypt from "bcrypt";
@@ -34,23 +34,25 @@ export async function POST(request: Request) {
         }
 
 
-        const existingEmail = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email } });
 
-        if (existingEmail) {
+        if (user) {
             return Response.json({error: "Email is already in use"}, { status: 409 });
         }
 
         
-        const existingName = await prisma.user.findUnique({ where: { username } });
+        const user2 = await prisma.user.findUnique({ where: { username } });
 
-        if (existingName) {
+        if (user2) {
             return Response.json({error: "Username is already in use"}, { status: 409 });
         }
 
 
+        await prisma.pendingAccount.deleteMany({ where: {email} });
+
         const hashed_password = await bcrypt.hash(password, 10);
         const token = crypto.randomUUID();
-        const expires = new Date(Date.now() + 1000 * 60 * 60) // 1 hour
+        const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
 
         await prisma.pendingAccount.create({
             data: {
@@ -63,11 +65,13 @@ export async function POST(request: Request) {
         });
 
 
+        const link = `http://localhost:3000/api/verify-email?token=${token}`
+
         const { error } = await resend.emails.send({
-            from: 'Acme <onboarding@resend.dev>',
+            from: 'Bifrost Markets <onboarding@resend.dev>',
             to: [email],
             subject: 'Email Verification',
-            react: VerifyEmailTemplate(),
+            react: VerifyEmail({ link }),
         });
 
 
@@ -79,7 +83,7 @@ export async function POST(request: Request) {
         return Response.json(null, { status: 200 });
     } 
     catch (err) {
-        console.error("Signup error:", err);
+        console.error("Signup error: ", err);
 
         return Response.json({ error: "Server error" }, { status: 500 });
     }

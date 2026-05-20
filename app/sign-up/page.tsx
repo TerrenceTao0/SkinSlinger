@@ -177,8 +177,10 @@ export default function SignUp() {
                     </button>
                 </form>
             ) : (
-                <div className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-96">
-                    
+                <div className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-26 justify-center">
+                    <p>
+                        Check your email for a verification link.
+                    </p>
                 </div>
             )}
         </div>

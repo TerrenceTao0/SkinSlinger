@@ -13,14 +13,14 @@ datasource db {
 }
 
 model User {
-  id String    @id @default(cuid())
-  email String?   @unique
+  id String @id @default(cuid())
+  email String? @unique
   emailVerified DateTime?
   name String?
   image String?
   password String?
-  username String?   @unique
-  createdAt DateTime  @default(now())
+  username String? @unique
+  createdAt DateTime @default(now())
   accounts Account[]
   sessions Session[]
 }
@@ -48,6 +48,12 @@ model PendingAccount {
   email String @unique
   username String @unique
   password String
+  token String @unique
+  expires DateTime
+}
+
+model ResetPassword {
+  id String @id @default(cuid())
   token String @unique
   expires DateTime
 }
