@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from "next/navigation";
 
 //
 
-export default function ForgotPassword() {
+export default function ResetPassword() {
     const router = useRouter();
 
-    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [waiting, setWaiting] = useState(false);
+
+    const searchParams = useSearchParams();
+    const token = searchParams.get("token");
 
     async function onSubmit(event: React.ChangeEvent<HTMLElement>) {
         event.preventDefault();
@@ -20,23 +24,30 @@ export default function ForgotPassword() {
         setWaiting(true);
 
         try {
-            const response = await fetch('/api/forgot-password', {
+            const response = await fetch('/api/reset-password', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ token, password })
             }) 
 
             const data = await response.json();
 
             if (!response.ok) {
-                if (data.error) setError(data.error);
+                const error = data.error;
+
+                if (error) {
+                    router.push(`/status?message=${error}&redirect=/forgot-password`);
+                    
+                } else {
+                    router.push("/login");
+                }
             }
             else {
-                router.push("/status?message=Check your email for a reset link.")
+                router.push(`/login`);
             }
         }
-        catch (error) {
-            setError(error as string);
+        catch {
+
         }
         finally {
             setWaiting(false);
@@ -44,14 +55,14 @@ export default function ForgotPassword() {
     }
 
 
-    function checkEmail(event: React.ChangeEvent<HTMLElement>) {
-        const email = event.target.value;
-        setEmail(email);
+    function checkPassword(event: React.ChangeEvent<HTMLElement>) {
+        const password = event.target.value;
+        setPassword(password);
 
-        if (!email.includes("@") && email.length > 0) {
-            setError("Email is not valid.")
+        if (password.length > 0 && password.length < 5) {
+            setError("Password must be at least 5 characters long.")
         }
-        else if (error == "Email is not valid.") {
+        else if (error == "Password must be at least 5 characters long.") {
             setError("");
         }
     }
@@ -64,25 +75,26 @@ export default function ForgotPassword() {
                 className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-50"
             >
                 <h1 className="text-4xl mt-4 text-special">
-                    Account email
+                    New password
                 </h1>
 
                 <div className="input-box relative">
                     <input
-                        id="email"
+                        id="password"
                         className="sign-up-input peer"
                         placeholder=""
-                        onChange={checkEmail}
+                        onChange={checkPassword}
+                        type="password"
                         required
                     />
 
                     <br></br>
 
                     <label 
-                        htmlFor="email"
+                        htmlFor="password"
                         className="floating-label"
                     >
-                        Email
+                        Password
                     </label>
 
                     {error.length > 0 && (
@@ -93,9 +105,9 @@ export default function ForgotPassword() {
                         <button 
                             disabled={waiting}
                             type="submit" 
-                            className={`rounded-md button bg-accent self-center ${error === "" && email.length > 0 ? 'w-60 h-9' : 'w-40 h-9'}`}
+                            className={`rounded-md button bg-accent self-center ${error === "" && password.length >= 5 && token ? 'w-60 h-9' : 'w-40 h-9'}`}
                         >
-                            {waiting? "Processing..." : "Request Reset"}
+                            {waiting? "Processing..." : "Change"}
                         </button>
                     </div>
                 </div>

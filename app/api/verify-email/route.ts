@@ -6,7 +6,6 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const token = searchParams.get("token") ?? undefined;
-
         const pendingAccount = await prisma.pendingAccount.findUnique({ where: { token } })
 
         if (!pendingAccount) {
@@ -32,8 +31,8 @@ export async function GET(request: Request) {
 
         return Response.redirect("http://localhost:3000/login", 302)
     } 
-    catch (err) {
-        console.error("Signup error: ", err);
+    catch (error) {
+        console.error(error);
 
         return Response.json({ error: "Server error" }, { status: 500 });
     }

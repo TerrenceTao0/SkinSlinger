@@ -12,7 +12,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
+model user {
   id String @id @default(cuid())
   email String? @unique
   emailVerified DateTime?
@@ -21,11 +21,11 @@ model User {
   password String?
   username String? @unique
   createdAt DateTime @default(now())
-  accounts Account[]
-  sessions Session[]
+  accounts account[]
+  sessions session[]
 }
 
-model Account {
+model account {
   id String @id @default(cuid())
   userId String
   type String
@@ -38,12 +38,12 @@ model Account {
   scope String?
   id_token String? @db.Text
   session_state String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
-model PendingAccount {
+model pendingAccount {
   id String @id @default(cuid())
   email String @unique
   username String @unique
@@ -52,21 +52,22 @@ model PendingAccount {
   expires DateTime
 }
 
-model ResetPassword {
+model resetPassword {
   id String @id @default(cuid())
   token String @unique
+  email String @unique
   expires DateTime
 }
 
-model Session {
+model session {
   id String @id @default(cuid())
   sessionToken String @unique
   userId String
   expires DateTime
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
+model verificationToken {
   identifier String
   token String @unique
   expires DateTime
@@ -74,13 +75,13 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Item {
+model item {
   id String @id @default(cuid())
   name String @unique 
   price Float 
 }
 
-model Purchase {
+model purchase {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   userId String 

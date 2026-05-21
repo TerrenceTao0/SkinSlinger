@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from 'next/link'
 
 //
 
@@ -89,9 +90,9 @@ export default function Login() {
                     </label>
                 </div>
 
-                <button className="mt-0.5 rounded-md cursor-pointer bg-transparent ml-8 w-40 h-7 text-[10px]">
+                <Link href="/forgot-password" className="rounded-md cursor-pointer bg-transparent ml-19 w-20 h-6 flex items-center text-[10px]">
                     Forgot Password
-                </button>
+                </Link>
 
                 <div className="relative self-center justify-center top-10">
                     {error === "Account details incorrect" && (

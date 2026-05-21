@@ -84,7 +84,7 @@ export default function SignUp() {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.error || "Server error. Try again.");
+                if (data.error) setError(data.error);
             } 
             else {
                 setVerifying(true);
@@ -171,7 +171,7 @@ export default function SignUp() {
                     <button
                         type="submit"
                         disabled={waiting}
-                        className={`mt-11 rounded-md button bg-accent self-center ${error==="" && formFilled ? 'w-60 h-9' : 'w-50 h-9'}`}
+                        className={`mt-11 rounded-md button bg-accent self-center ${error === "" && formFilled ? 'w-60 h-9' : 'w-50 h-9'}`}
                     >
                         {waiting ? "Creating..." : "Create"}
                     </button>

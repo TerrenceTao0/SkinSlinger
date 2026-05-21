@@ -82,8 +82,8 @@ export async function POST(request: Request) {
 
         return Response.json(null, { status: 200 });
     } 
-    catch (err) {
-        console.error("Signup error: ", err);
+    catch (error) {
+        console.error(error);
 
         return Response.json({ error: "Server error" }, { status: 500 });
     }
