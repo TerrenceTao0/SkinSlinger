@@ -111,8 +111,8 @@ export const authOptions: NextAuthOptions = {
 
                 return {
                     id: foundUser.id,
-                    username: foundUser.username,
-                    email: foundUser.email,
+                    username: foundUser.username ?? undefined,
+                    email: foundUser.email ?? undefined,
                     cash: foundUser.cash,
                 }
             }
