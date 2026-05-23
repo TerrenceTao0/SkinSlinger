@@ -9,7 +9,7 @@ import InventoryClient from "./InventoryClient";
 
 //
 
-async function addNewItems(priceMap, missingItems) {
+async function addNewItems(priceMap: Map<string, number>, missingItems: SteamItem[]) {
     await Promise.all(missingItems.map(async item => {
         const result = await fetchItemPrice(item.market_hash_name, item.game);
         
