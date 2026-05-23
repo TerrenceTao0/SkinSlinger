@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -37,5 +37,3 @@
     "typescript": "^5"
   }
 }
-
-"vercel-build": "prisma generate && prisma migrate deploy && next build"
