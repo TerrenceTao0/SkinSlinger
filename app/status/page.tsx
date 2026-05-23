@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 //
 
-export default function Status(request: Request) {
+function StatusContent() {
     const searchParams = useSearchParams();
     const message = searchParams.get("message");
     const redirect = searchParams.get("redirect");
@@ -26,6 +27,14 @@ export default function Status(request: Request) {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function Status() {
+    return (
+        <Suspense>
+            <StatusContent />
+        </Suspense>
     )
 }
 

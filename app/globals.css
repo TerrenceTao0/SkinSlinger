@@ -13,7 +13,7 @@
     --color-less-special: #4a7483;
     --color-secondary: #2c2c2c;
     --color-primary: #1f1f1f;
-    --font-sans: var(--font-fredoka);
+    --font-sans: var(--font-inter);
 }
 
 body {
@@ -50,7 +50,7 @@ body {
 }
 
 .right-nav-link {
-    @apply h-full cursor-pointer flex items-center justify-center w-30
+    @apply w-40 h-full flex justify-center items-center
 }
 
 ::-webkit-scrollbar {

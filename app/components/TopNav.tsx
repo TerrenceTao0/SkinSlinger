@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
+import { getBasket } from '@/lib/basket';
 
 //
 
@@ -31,7 +32,15 @@ export default function TopNav() {
                     )}
 
                     <Link href="/basket" className="right-nav-link button">
-                        BASKET
+                        { getBasket().length > 0 ? (
+                            <>
+                                Basket ({getBasket().length})
+                            </>
+                        ):
+                            <>
+                                Basket
+                            </>
+                        }
                     </Link>
 
                     {session ? (

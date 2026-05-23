@@ -9,18 +9,25 @@ export type BasketItem = {
     maxQuantity: number,
 }
 
-const KEY = "bifrost_basket";
+//
 
 export function getBasket(): BasketItem[] {
     if (typeof window === "undefined") return [];
-    try { return JSON.parse(localStorage.getItem(KEY) ?? "[]"); }
-    catch { return []; }
+
+    try {
+        return JSON.parse(localStorage.getItem("basket") ?? "[]");
+    } catch {
+        return [];
+    }
 }
+
 
 export function saveBasket(basket: BasketItem[]) {
-    localStorage.setItem(KEY, JSON.stringify(basket));
+    localStorage.setItem("basket", JSON.stringify(basket));
 }
 
+
 export function clearBasket() {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem("basket");
 }
+

@@ -22,14 +22,6 @@ export type ListingCard = {
 type DisplayCard = ListingCard & { quantity: number }
 
 function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: DisplayCard & { onBuy: () => void }) {
-    const [added, setAdded] = useState(false);
-
-    function handleBuy() {
-        onBuy();
-        setAdded(true);
-        setTimeout(() => setAdded(false), 1500);
-    }
-
     return (
         <div className="bg-accent h-50 w-49 rounded-sm relative">
             <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-2">
@@ -58,11 +50,11 @@ function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: Dis
 
             <div className="flex justify-center bottom-0 w-full absolute">
                 <button
-                    onClick={handleBuy}
-                    className={`button rounded-sm w-full h-10 ${added ? "bg-special" : "bg-less-special"}`}
-                    style={!added && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
+                    onClick={onBuy}
+                    className="bg-less-special button rounded-sm w-full h-10"
+                    style={hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
                 >
-                    {added ? "ADDED" : "BUY"}
+                    BUY
                 </button>
             </div>
         </div>
@@ -76,6 +68,7 @@ export default function HomeClient({ initialListings, initialHasMore }: {
 }) {
     const [gameFilter, setGameFilter] = useState<GameFilter>("all");
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
+    const [basket, setBasket] = useState<BasketItem[]>(() => getBasket());
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const loadingRef = useRef(false);
@@ -129,22 +122,26 @@ export default function HomeClient({ initialListings, initialHasMore }: {
     }, [hasMore, cursor, gameFilter, load]);
 
     function handleBuy(item: DisplayCard) {
-        const basket = getBasket();
+        const current = getBasket();
+        let updated: BasketItem[];
+
         if (item.commodity) {
-            const existing = basket.find(b => b.marketName === item.marketName && b.commodity);
+            const existing = current.find(b => b.marketName === item.marketName && b.commodity);
             if (existing) {
-                if (existing.quantity < item.quantity) {
-                    existing.quantity += 1;
-                    saveBasket(basket);
-                }
+                if (existing.quantity >= existing.maxQuantity) return;
+                updated = current.map(b =>
+                    b.marketName === item.marketName && b.commodity ? { ...b, quantity: b.quantity + 1 } : b
+                );
             } else {
-                saveBasket([...basket, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: 1, maxQuantity: item.quantity } as BasketItem]);
+                updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: 1, maxQuantity: item.quantity } as BasketItem];
             }
         } else {
-            if (!basket.find(b => b.id === item.id)) {
-                saveBasket([...basket, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem]);
-            }
+            if (current.find(b => b.id === item.id)) return;
+            updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
         }
+
+        saveBasket(updated);
+        setBasket(updated);
     }
 
     const displayListings = useMemo<DisplayCard[]>(() => {
@@ -166,8 +163,20 @@ export default function HomeClient({ initialListings, initialHasMore }: {
             }
         }
 
-        return result;
-    }, [listings]);
+        // Subtract basket quantities; hide fully-basketed items
+        return result
+            .map(item => {
+                if (item.commodity) {
+                    const inBasket = basket.find(b => b.marketName === item.marketName && b.commodity);
+                    return inBasket ? { ...item, quantity: item.quantity - inBasket.quantity } : item;
+                }
+                return item;
+            })
+            .filter(item => !item.commodity
+                ? !basket.find(b => b.id === item.id)
+                : item.quantity > 0
+            );
+    }, [listings, basket]);
 
     return (
         <>
