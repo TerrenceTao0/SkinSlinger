@@ -44,7 +44,7 @@ export default function ForgotPassword() {
     }
 
 
-    function checkEmail(event: React.ChangeEvent<HTMLElement>) {
+    function checkEmail(event: React.ChangeEvent<HTMLInputElement>) {
         const email = event.target.value;
         setEmail(email);
 
