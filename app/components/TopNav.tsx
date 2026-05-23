@@ -2,19 +2,33 @@
 
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { getBasket } from '@/lib/basket';
+import { useBasket } from './BasketProvider';
 
 //
 
 export default function TopNav() {
     const { data: session } = useSession();
+    const { basket } = useBasket();
+    let basketCount = 0
+
+    for (let i = 0; i < basket.length; i++) {
+        const item = basket[i];
+
+        if ("quantity" in item) {
+            basketCount += item.quantity;
+        } 
+        else {
+            basketCount += 1;
+        }
+    }
+
 
     return (
         <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
             <div className="w-43 h-full flex justify-center items-center bg-secondary">
                 <Link href="/">
-                    <p className="hover:text-special transition-all cursor-pointer text-4xl font-semi-bold">
-                        Bifrost
+                    <p className="hover:text-special transition-all cursor-pointer text-2xl font-semi-bold">
+                        SkinSlinger
                     </p>
                 </Link>
             </div>
@@ -32,15 +46,7 @@ export default function TopNav() {
                     )}
 
                     <Link href="/basket" className="right-nav-link button">
-                        { getBasket().length > 0 ? (
-                            <>
-                                Basket ({getBasket().length})
-                            </>
-                        ):
-                            <>
-                                Basket
-                            </>
-                        }
+                        Basket{basketCount > 0 && ` (${basketCount})`}
                     </Link>
 
                     {session ? (

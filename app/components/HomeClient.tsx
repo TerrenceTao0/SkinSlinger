@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import LeftPanel from "./LeftPanel";
-import { getBasket, saveBasket, BasketItem } from "@/lib/basket";
+import { BasketItem } from "@/lib/basket";
+import { useBasket } from "./BasketProvider";
 
 //
 
@@ -17,11 +18,14 @@ export type ListingCard = {
     hexColor: string,
     game: string,
     commodity: boolean,
+    sellerId: string,
 }
 
 type DisplayCard = ListingCard & { quantity: number }
 
-function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: DisplayCard & { onBuy: () => void }) {
+function ListingCard({ marketName, price, icon, hexColor, quantity, sellerId, currentUserId, onBuy }: DisplayCard & { currentUserId: string | null, onBuy: () => void }) {
+    const isOwned = currentUserId !== null && currentUserId === sellerId;
+
     return (
         <div className="bg-accent h-50 w-49 rounded-sm relative">
             <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-2">
@@ -51,10 +55,11 @@ function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: Dis
             <div className="flex justify-center bottom-0 w-full absolute">
                 <button
                     onClick={onBuy}
-                    className="bg-less-special button rounded-sm w-full h-10"
-                    style={hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
+                    disabled={isOwned}
+                    className={`rounded-sm w-full h-10 ${isOwned ? "bg-accent opacity-50 cursor-default" : "bg-less-special button"}`}
+                    style={!isOwned && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
                 >
-                    BUY
+                    {isOwned ? "OWNED" : "BUY"}
                 </button>
             </div>
         </div>
@@ -62,13 +67,14 @@ function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: Dis
 }
 
 
-export default function HomeClient({ initialListings, initialHasMore }: {
+export default function HomeClient({ initialListings, initialHasMore, currentUserId }: {
     initialListings: ListingCard[],
     initialHasMore: boolean,
+    currentUserId: string | null,
 }) {
     const [gameFilter, setGameFilter] = useState<GameFilter>("all");
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
-    const [basket, setBasket] = useState<BasketItem[]>(() => getBasket());
+    const { basket, setBasket } = useBasket();
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const loadingRef = useRef(false);
@@ -122,7 +128,7 @@ export default function HomeClient({ initialListings, initialHasMore }: {
     }, [hasMore, cursor, gameFilter, load]);
 
     function handleBuy(item: DisplayCard) {
-        const current = getBasket();
+        const current = basket;
         let updated: BasketItem[];
 
         if (item.commodity) {
@@ -140,7 +146,6 @@ export default function HomeClient({ initialListings, initialHasMore }: {
             updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
         }
 
-        saveBasket(updated);
         setBasket(updated);
     }
 
@@ -187,7 +192,7 @@ export default function HomeClient({ initialListings, initialHasMore }: {
                     <div>
                         <div className="bg-secondary w-310 mr-30 overflow-y-auto h-210 mt-14 grid grid-cols-7 justify-start content-start gap-50 p-3">
                             {displayListings.map(l => (
-                                <ListingCard key={l.id} {...l} onBuy={() => handleBuy(l)} />
+                                <ListingCard key={l.id} {...l} currentUserId={currentUserId} onBuy={() => handleBuy(l)} />
                             ))}
                             
                             <div ref={sentinelRef} className="col-span-7 h-1" />

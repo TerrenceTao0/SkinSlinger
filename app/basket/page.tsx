@@ -3,20 +3,18 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { getBasket, saveBasket, clearBasket, BasketItem } from "@/lib/basket";
+import { useBasket } from "@/app/components/BasketProvider";
 
 //
 
 export default function Basket() {
     const { data: session } = useSession();
-    const [basket, setBasketState] = useState<BasketItem[]>(() => getBasket());
+    const { basket, setBasket, clearBasketState } = useBasket();
     const [checking, setChecking] = useState(false);
     const [error, setError] = useState("");
 
     function remove(id: string) {
-        const updated = basket.filter(item => item.id !== id);
-        saveBasket(updated);
-        setBasketState(updated);
+        setBasket(basket.filter(item => item.id !== id));
     }
 
 
@@ -41,8 +39,7 @@ export default function Basket() {
         const data = await res.json();
 
         if (res.ok) {
-            clearBasket();
-            setBasketState([]);
+            clearBasketState();
 
         } else {
             setError(data.error ?? "Checkout failed");

@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import HomeClient from "./components/HomeClient";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 //
 
@@ -8,6 +10,8 @@ const PAGE_SIZE = 30;
 //
 
 export default async function App() {
+    const session = await getServerSession(authOptions);
+    const currentUserId = session?.user?.id ?? null;
     const rows = await prisma.item_listing.findMany({
         take: PAGE_SIZE + 1,
         orderBy: { price: "desc" },
@@ -32,9 +36,10 @@ export default async function App() {
             hexColor: listing.inv!.hexColor,
             game: listing.inv!.game,
             commodity: listing.inv!.commodity,
+            sellerId: listing.userId,
         }));
 
 
-    return <HomeClient initialListings={cards} initialHasMore={hasMore} />;
+    return <HomeClient initialListings={cards} initialHasMore={hasMore} currentUserId={currentUserId} />;
 }
 

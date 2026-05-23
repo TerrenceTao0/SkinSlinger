@@ -1,5 +1,5 @@
 export type BasketItem = {
-    id: string,         // listing ID (representative for commodities)
+    id: string,
     marketName: string,
     price: number,
     icon: string,

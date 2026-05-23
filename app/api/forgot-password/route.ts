@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         const link = `http://localhost:3000/api/reset-password?token=${token}`
 
         const { error } = await resend.emails.send({
-            from: 'Bifrost Markets <onboarding@resend.dev>',
+            from: 'SkinSlinger <onboarding@resend.dev>',
             to: [email],
             subject: 'Reset Password',
             react: ForgotPasswordEmail({ link }),

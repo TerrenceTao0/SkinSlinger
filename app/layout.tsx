@@ -17,7 +17,7 @@ children,
 }>) {
   return (
     <html lang="en" className={`${inter.variable} font-sans`}>
-      <title>Bifrost Markets</title>
+      <title>SkinSlinger</title>
 
       <body className="h-screen w-[95%] mx-auto flex flex-col overflow-hidden">
             <Providers>

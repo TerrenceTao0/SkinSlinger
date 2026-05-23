@@ -39,6 +39,7 @@ export async function GET(request: Request) {
                 hexColor: l.inv!.hexColor,
                 game: l.inv!.game,
                 commodity: l.inv!.commodity,
+                sellerId: l.userId,
             }));
 
         return Response.json({ listings, nextCursor });
