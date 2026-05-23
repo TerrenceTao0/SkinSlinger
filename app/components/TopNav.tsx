@@ -8,40 +8,47 @@ import { useSession, signOut } from 'next-auth/react'
 export default function TopNav() {
     const { data: session } = useSession();
 
-    function promptLogOut() {
-        signOut()
-    }
-
-
     return (
-        <>
-            <nav className="fixed top-2 h-14 w-40 left-2 flex justify-center items-center z-50 bg-secondary">
+        <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
+            <div className="w-43 h-full flex justify-center items-center bg-secondary">
                 <Link href="/">
-                    <p className="hover:text-special transition-all cursor-pointer text-4xl">
+                    <p className="hover:text-special transition-all cursor-pointer text-4xl font-semi-bold">
                         Bifrost
                     </p>
                 </Link>
-            </nav>
+            </div>
 
-            <nav className="fixed top-2 h-14 w-433 left-45 flex justify-between items-center z-50 bg-secondary">
-               <div className="flex justify-center items-center h-full">
-                    <Link href="/login" className="right-nav-link button">
-                        TRADE
-                    </Link>
+            <div className="flex-1 h-full flex justify-between items-center bg-secondary ml-3">
+                <div className="flex justify-center items-center h-full">
+                    
                 </div>
 
                 <div className="flex h-full">
-                    {session? (
+                    {session && (
+                        <p className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button">
+                            ${session.user.cash?.toFixed(2)}
+                        </p>
+                    )}
+
+                    <Link href="/basket" className="right-nav-link button">
+                        BASKET
+                    </Link>
+
+                    {session ? (
                         <>
-                            <Link 
-                                href="/sign-up" 
+                            <Link href="/inventory" className="right-nav-link button">
+                                INVENTORY
+                            </Link>
+
+                            <Link
+                                href="/sign-up"
                                 className="right-nav-link button"
-                                onClick={promptLogOut}
+                                onClick={() => signOut()}
                             >
                                 LOG OUT
                             </Link>
                         </>
-                    ): (
+                    ) : (
                         <>
                             <Link href="/login" className="right-nav-link button">
                                 LOGIN
@@ -52,13 +59,9 @@ export default function TopNav() {
                             </Link>
                         </>
                     )}
-
-                    <Link href="/login" className="right-nav-link button">
-                        BASKET
-                    </Link>
                 </div>
-            </nav>
-        </>
+            </div>
+        </nav>
     )
 }
 

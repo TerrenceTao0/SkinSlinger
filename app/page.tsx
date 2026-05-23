@@ -1,70 +1,40 @@
-import ItemCard from './components/ItemCard'
-
-const items = [
-    {
-        name: "Gun 1",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 2",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 3",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 4",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 5",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 6",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 7",
-        price: 10.00,
-        quantity: 1
-    },
-
-    {
-        name: "Gun 8",
-        price: 10.00,
-        quantity: 1
-    },
-]
+import { prisma } from "@/lib/db";
+import HomeClient from "./components/HomeClient";
 
 //
 
-export default function App() {
-    return (
-        <div className="flex justify-center items-center min-h-screen">
-            <div className="bg-secondary w-46 h-210 absolute left-4 mt-14">
+const PAGE_SIZE = 30;
 
-            </div>
+//
 
-            <div className="bg-secondary w-420 h-210 ml-50 mt-14 gap-y-50 grid grid-cols-7 grid-rows-4">
-                {items.map((item) => (
-                    <ItemCard key={item.name} name={item.name} price={item.price} quantity={item.quantity} />
-                ))}
-            </div>
-        </div>
-    );
+export default async function App() {
+    const rows = await prisma.item_listing.findMany({
+        take: PAGE_SIZE + 1,
+        orderBy: { price: "desc" },
+    });
+
+
+    const page = rows.slice(0, PAGE_SIZE);
+    const hasMore = rows.length > PAGE_SIZE;
+
+    const assetIds = page.map(listing => listing.assetId);
+    const inventoryItems = await prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } });
+    const itemMap = new Map(inventoryItems.map(item => [item.assetId, item]));
+
+    const cards = page
+        .map(listing => ({ ...listing, inv: itemMap.get(listing.assetId) }))
+        .filter(listing => listing.inv)
+        .map(listing => ({
+            id: listing.id,
+            marketName: listing.marketName,
+            price: listing.price,
+            icon: listing.inv!.icon,
+            hexColor: listing.inv!.hexColor,
+            game: listing.inv!.game,
+            commodity: listing.inv!.commodity,
+        }));
+
+
+    return <HomeClient initialListings={cards} initialHasMore={hasMore} />;
 }
 

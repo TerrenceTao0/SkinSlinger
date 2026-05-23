@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { containsSpecialChars } from '@/lib/utils';
+import { signIn } from "next-auth/react";
 
 //
 
@@ -104,9 +105,11 @@ export default function SignUp() {
            {!verifying ? (
             <form
                 onSubmit={onSubmit}
-                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-96"
+                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-115"
                 >
-                    <h1 className="text-4xl mt-4 text-special">Sign Up</h1>
+                    <h1 className="text-4xl mt-4 text-special bold">
+                        Sign Up
+                    </h1>
 
                     <div className="input-box relative">
                         <input
@@ -158,6 +161,10 @@ export default function SignUp() {
                         />
                         
                         <label htmlFor="email" className="floating-label">Email</label>
+
+                        {error === "Invalid email" && (
+                            <p className="error">Invalid email.</p>
+                        )}
                     </div>
 
                     <div className="relative self-center justify-center top-11">
@@ -171,9 +178,23 @@ export default function SignUp() {
                     <button
                         type="submit"
                         disabled={waiting}
-                        className={`mt-11 rounded-md button bg-accent self-center ${error === "" && formFilled ? 'w-60 h-9' : 'w-50 h-9'}`}
+                        className={`mt-16 rounded-md button bg-accent self-center ${error === "" && formFilled ? 'w-60 h-9' : 'w-50 h-9'}`}
                     >
                         {waiting ? "Creating..." : "Create"}
+                    </button>
+
+                    <div className="flex items-center gap-2 mx-8">
+                        <hr className="flex-1 border-gray-500" />
+                        <span className="text-gray-500 text-sm">Or</span>
+                        <hr className="flex-1 border-gray-500" />
+                    </div>
+
+                    <button 
+                        type="button" 
+                        className={`rounded-md button bg-accent self-center ${error === "" && formFilled ? 'w-50 h-8 text-[12px]' : 'w-80 h-8'}`}
+                        onClick={() => signIn('google', { callbackUrl: '/' })}
+                    >
+                        Sign up with Google
                     </button>
                 </form>
             ) : (

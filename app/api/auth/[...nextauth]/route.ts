@@ -1,8 +1,30 @@
 import NextAuth from "next-auth"
 import { authOptions } from "@/lib/auth" 
+import Steam from 'next-auth-steam'
+import type { NextRequest } from 'next/server'
 
 //
 
-const handler = NextAuth(authOptions)
+async function auth(
+  req: NextRequest,
+  ctx: {
+    params: {
+      nextauth: string[]
+    }
+  }
+) {
+  return NextAuth(req, ctx, {
+    ...authOptions,
 
-export { handler as GET, handler as POST }
+    providers: [
+        ...authOptions.providers,
+        Steam(req, {
+            clientSecret: process.env.STEAM_SECRET!
+      })
+    ]
+  })
+}
+
+//
+
+export { auth as GET, auth as POST }

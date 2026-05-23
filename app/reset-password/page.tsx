@@ -74,7 +74,7 @@ export default function ResetPassword() {
                 onSubmit={onSubmit}
                 className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-50"
             >
-                <h1 className="text-4xl mt-4 text-special">
+                <h1 className="text-4xl mt-4 text-special bold">
                     New password
                 </h1>
 

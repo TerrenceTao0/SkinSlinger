@@ -21,8 +21,30 @@ model user {
   password String?
   username String? @unique
   createdAt DateTime @default(now())
+  steam_trade_url String?
+  steam_id String?
+  cash Float @default(0)
+  lastInventoryRefresh DateTime @default("1970-01-01T00:00:00Z")
+
   accounts account[]
   sessions session[]
+  listings item_listing[]
+  inventory_item inventory_item[]
+}
+
+model inventory_item {
+  id String @id @default(cuid())
+  userId String
+  assetId String @unique
+  market_name String
+  market_hash_name String
+  icon String
+  type String
+  hexColor String
+  game String
+  commodity Boolean @default(false)
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model account {
@@ -76,9 +98,20 @@ model verificationToken {
 }
 
 model item {
-  id String @id @default(cuid())
-  name String @unique 
+  marketName String @id
   price Float 
+  docId String
+}
+
+model item_listing {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId String
+  assetId String @unique  // Steam asset ID - unique per item instance
+  marketName String
+  price Float
+  game String?
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model purchase {

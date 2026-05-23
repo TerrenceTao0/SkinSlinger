@@ -19,7 +19,7 @@ children,
     <html lang="en" className={`${fredoka.variable} font-sans`}>
       <title>Bifrost Markets</title>
 
-      <body className="h-screen flex flex-col m-0 overflow-hidden antialiased">
+      <body className="h-screen w-[95%] mx-auto flex flex-col overflow-hidden">
             <Providers>
                 <TopNav />
                 {children}

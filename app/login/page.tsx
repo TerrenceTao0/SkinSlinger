@@ -49,7 +49,7 @@ export default function Login() {
                 onSubmit={onSubmit} 
                 className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-105"
             >
-                <h1 className="text-4xl mt-4 text-special">
+                <h1 className="text-4xl mt-4 text-special bold">
                     Login
                 </h1>
 
