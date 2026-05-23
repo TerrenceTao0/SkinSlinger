@@ -36,6 +36,7 @@ function ListingCard({ marketName, price, icon, hexColor, quantity, onBuy }: Dis
                 <h1 style={{ color: `#${hexColor}` }} className="text-[14px] w-35">
                     {marketName}
                 </h1>
+
                 {quantity > 1 && (
                     <h1 className="text-[14px]">[x{quantity}]</h1>
                 )}
@@ -175,10 +176,11 @@ export default function HomeClient({ initialListings, initialHasMore }: {
             <div className="h-full w-full flex justify-center items-center">
                 <div className="bg-secondary w-200 h-150 flex justify-center items-center">
                     <div>
-                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-210 mt-14 grid grid-cols-7 justify-start content-start gap-2 p-3">
+                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-210 mt-14 grid grid-cols-7 justify-start content-start gap-50 p-3">
                             {displayListings.map(l => (
                                 <ListingCard key={l.id} {...l} onBuy={() => handleBuy(l)} />
                             ))}
+                            
                             <div ref={sentinelRef} className="col-span-7 h-1" />
                         </div>
                     </div>

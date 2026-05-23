@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from "next/navigation";
 
 //
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
     const router = useRouter();
 
     const [password, setPassword] = useState("");
@@ -113,6 +113,14 @@ export default function ResetPassword() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function ResetPassword() {
+    return (
+        <Suspense>
+            <ResetPasswordForm />
+        </Suspense>
     );
 }
 
