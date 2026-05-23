@@ -37,5 +37,3 @@
     "typescript": "^5"
   }
 }
-
-"vercel-build": "prisma generate && prisma migrate deploy && next build"
