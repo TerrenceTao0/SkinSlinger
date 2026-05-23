@@ -12,7 +12,7 @@ export default function ForgotPassword() {
     const [error, setError] = useState("");
     const [waiting, setWaiting] = useState(false);
 
-    async function onSubmit(event: React.ChangeEvent<HTMLElement>) {
+    async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (error != "") return;

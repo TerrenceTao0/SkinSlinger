@@ -16,7 +16,7 @@ export default function ResetPassword() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
 
-    async function onSubmit(event: React.ChangeEvent<HTMLElement>) {
+    async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (error != "") return;
@@ -55,7 +55,7 @@ export default function ResetPassword() {
     }
 
 
-    function checkPassword(event: React.ChangeEvent<HTMLElement>) {
+    function checkPassword(event: React.ChangeEvent<HTMLInputElement>) {
         const password = event.target.value;
         setPassword(password);
 
