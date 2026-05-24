@@ -27,8 +27,6 @@ export default function TopNav() {
         <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
             <div className="w-43 h-full flex justify-center items-center bg-secondary">
                 <Link href="/">
-                    
-
                     <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
                         SkinSlinger
                     </p>
@@ -42,9 +40,13 @@ export default function TopNav() {
 
                 <div className="flex h-full">
                     {session && (
-                        <p className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button">
-                            ${session.user.cash?.toFixed(2)}
-                        </p>
+                        <Link href="/finance">
+                            <button 
+                            className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button"
+                            >
+                                ${session.user.cash?.toFixed(2)}
+                            </button>
+                        </Link>
                     )}
 
                     {session ? (
@@ -61,13 +63,12 @@ export default function TopNav() {
                                 Inventory
                             </Link>
 
-                            <Link
-                                href="/sign-up"
+                            <button
                                 className="right-nav-link button"
-                                onClick={() => signOut()}
+                                onClick={() => signOut({ callbackUrl: '/' })}
                             >
-                                Log out 
-                            </Link>
+                                Log out
+                            </button>
                         </>
                     ) : (
                         <>

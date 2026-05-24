@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         });
 
 
-        const link = `http://localhost:3000/api/verify-email?token=${token}`
+        const link = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}`
 
         const { error } = await resend.emails.send({
             from: 'SkinSlinger <onboarding@skinslinger.com>',

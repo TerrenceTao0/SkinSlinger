@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         const user = await prisma.user.findUnique({ where : {email} })
 
         if (!user) {
-            return Response.json({ error: "Account not found" }, { status: 500 })
+            return Response.json({ error: "Account not found" }, { status: 404 })
         }
 
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         });
 
 
-        const link = `http://localhost:3000/api/reset-password?token=${token}`
+        const link = `${process.env.NEXTAUTH_URL}/api/reset-password?token=${token}`
 
         const { error } = await resend.emails.send({
             from: 'SkinSlinger <onboarding@skinslinger.com>',

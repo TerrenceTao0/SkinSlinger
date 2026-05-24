@@ -7,7 +7,6 @@ import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
 import { useBasket } from "./BasketProvider";
 import { useSession } from "next-auth/react";
-import { useSegmentState } from "next/dist/next-devtools/userspace/app/segment-explorer-node";
 import { useRouter } from "next/navigation";
 
 //
@@ -18,7 +17,6 @@ export type ListingCard = {
     id: string,
     marketName: string,
     price: number,
-    marketPrice: number | null,
     icon: string,
     hexColor: string,
     game: string,
@@ -61,8 +59,14 @@ export default function HomeClient(
     const loadingRef = useRef(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
+    const isFirstSearchRender = useRef(true);
+    const searchRef = useRef(search);
+    const gameFilterRef = useRef(gameFilter);
 
-    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean) => {
+    useEffect(() => { searchRef.current = search; }, [search]);
+    useEffect(() => { gameFilterRef.current = gameFilter; }, [gameFilter]);
+
+    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string) => {
         if (loadingRef.current) return;
 
         loadingRef.current = true;
@@ -70,15 +74,15 @@ export default function HomeClient(
         const params = new URLSearchParams();
 
         if (game !== "all") params.set("game", game);
-
         if (cur) params.set("cursor", cur);
+        if (search) params.set("search", search);
 
         const res = await fetch(`/api/listings?${params}`);
         const data = await res.json();
 
         if (reset) {
             setListings(data.listings);
-        } 
+        }
         else {
             setListings(prev => [...prev, ...data.listings]);
         }
@@ -91,17 +95,27 @@ export default function HomeClient(
     }, []);
 
 
-    // On filter change, reset and fetch (skip initial mount — server data already loaded)
+    // On filter change, reset and fetch immediately (skip initial mount — server data already loaded)
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
-
             return;
         }
 
-
-        load(gameFilter, null, true);
+        load(gameFilter, null, true, searchRef.current);
     }, [gameFilter, load]);
+
+
+    // On search change, debounce then reset and fetch (skip initial mount)
+    useEffect(() => {
+        if (isFirstSearchRender.current) {
+            isFirstSearchRender.current = false;
+            return;
+        }
+
+        const id = setTimeout(() => load(gameFilterRef.current, null, true, search), 300);
+        return () => clearTimeout(id);
+    }, [search, load]);
 
 
     // Infinite scroll via IntersectionObserver
@@ -112,7 +126,7 @@ export default function HomeClient(
 
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && hasMore) {
-                load(gameFilter, cursor, false);
+                load(gameFilterRef.current, cursor, false, searchRef.current);
             }
         }, { threshold: 0.1 });
 
@@ -150,13 +164,13 @@ export default function HomeClient(
                 );
             }
             else {
-                updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, marketPrice: item.marketPrice, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: qty, maxQuantity: item.quantity } as BasketItem];
+                updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: qty, maxQuantity: item.quantity } as BasketItem];
             }
         }
         else {
             if (current.find(b => b.id === item.id)) return;
 
-            updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, marketPrice: item.marketPrice, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
+            updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
         }
 
 
@@ -205,12 +219,6 @@ export default function HomeClient(
             )
             .sort((a, b) => {
                 if (b.price !== a.price) return b.price - a.price;
-
-                const discountA = a.marketPrice ? 1 - a.price / a.marketPrice : 0;
-                const discountB = b.marketPrice ? 1 - b.price / b.marketPrice : 0;
-
-                if (discountB !== discountA) return discountB - discountA;
-                
                 return b.quantity - a.quantity;
             });
     }, [listings, basket]);
@@ -261,24 +269,6 @@ export default function HomeClient(
                             <span className="opacity-60">Listing Price</span>
                             <span>${(preview.price * previewQty).toFixed(2)}</span>
                         </div>
-
-                        {preview.marketPrice !== null && (
-                            <>
-                                <div className="flex justify-between w-full text-sm">
-                                    <span className="opacity-60">Market Price</span>
-                                    <span className="opacity-60 line-through">${(preview.marketPrice * previewQty).toFixed(2)}</span>
-                                </div>
-
-                                {preview.marketPrice > preview.price && (
-                                    <div className="flex justify-between w-full text-sm">
-                                        <span className="opacity-60">You Save</span>
-                                        <span className="text-green-400">
-                                            ${((preview.marketPrice - preview.price) * previewQty).toFixed(2)}
-                                        </span>
-                                    </div>
-                                )}
-                            </>
-                        )}
 
                         {preview.quantity > 1 && (
                             <div className="flex justify-between w-full text-sm">
@@ -336,7 +326,7 @@ export default function HomeClient(
                         </div>
 
                         <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-50 p-3">
-                            {displayListings.filter(listing => listing.marketName.toLowerCase().includes(search.toLowerCase())).map(listing => (
+                            {displayListings.map(listing => (
                                 <ListingCard
                                     key={listing.id} {...listing}
                                     currentUserId={currentUserId}

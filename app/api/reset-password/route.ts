@@ -10,16 +10,16 @@ export async function GET(request: Request) {
         const resetPassword = await prisma.resetPassword.findUnique({ where: { token } })
 
         if (!resetPassword) {
-            return Response.redirect("http://localhost:3000/status?message=Server error", 302)
+            return Response.redirect(`${process.env.NEXTAUTH_URL}/status?message=Server error`, 302)
         }
 
 
-        return Response.redirect(`http://localhost:3000/reset-password?token=${token}`, 302)
+        return Response.redirect(`${process.env.NEXTAUTH_URL}/reset-password?token=${token}`, 302)
     }
     catch (error) {
         console.log(error);
 
-        return Response.redirect("http://localhost:3000/status?message=Server error", 302)
+        return Response.redirect(`${process.env.NEXTAUTH_URL}/status?message=Server error`, 302)
     }
 }
 

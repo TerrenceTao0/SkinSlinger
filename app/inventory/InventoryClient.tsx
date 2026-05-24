@@ -91,6 +91,17 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
     const [gameFilter, setGameFilter] = useState<"all" | "CS2" | "Dota2" | "Rust">("all")
     const [lastRefreshDisplay, setLastRefreshDisplay] = useState(() => timeAgo(lastRefresh));
 
+    // null = still loading, number = resolved (0 means not found / too cheap)
+    const [livePrices, setLivePrices] = useState<Map<string, number | null>>(() => {
+        const map = new Map<string, number | null>();
+        for (const item of inventory) {
+            if (!map.has(item.market_name)) {
+                map.set(item.market_name, item.price > 0 ? item.price : null);
+            }
+        }
+        return map;
+    });
+
     useEffect(() => {
         setLastRefreshDisplay(timeAgo(lastRefresh));
 
@@ -98,6 +109,65 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
 
         return () => clearInterval(id);
     }, [lastRefresh]);
+
+    useEffect(() => {
+        const seen = new Set<string>();
+        const unpriced = inventory.filter(i => {
+            if (i.price > 0 || seen.has(i.market_name)) return false;
+            seen.add(i.market_name);
+            return true;
+        });
+
+        if (unpriced.length === 0) return;
+
+        const controller = new AbortController();
+
+        (async () => {
+            try {
+                const res = await fetch('/api/prices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: unpriced.map(i => ({
+                        market_name: i.market_name,
+                        market_hash_name: i.market_hash_name,
+                        game: i.game
+                    })) }),
+                    signal: controller.signal
+                });
+
+                if (!res.body) return;
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop()!;
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        const { market_name, price } = JSON.parse(line);
+                        setLivePrices(prev => new Map(prev).set(market_name, price));
+                    }
+                }
+            } catch (e) {
+                if ((e as Error).name === 'AbortError') return;
+                // On error, resolve all still-loading items as 0 so they're filtered out
+                setLivePrices(prev => {
+                    const next = new Map(prev);
+                    for (const item of unpriced) {
+                        if (next.get(item.market_name) === null) next.set(item.market_name, 0);
+                    }
+                    return next;
+                });
+            }
+        })();
+
+        return () => controller.abort();
+    }, []);
 
     function checkUrl(event: React.ChangeEvent<HTMLInputElement>) {
         const url = event.target.value;
@@ -155,23 +225,34 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
         const commodityMap = new Map<string, SteamItem & { quantity: number }>();
 
         for (const item of filtered) {
+            const priceState = livePrices.get(item.market_name);
+            // Skip items resolved as too cheap (keep null = loading)
+            if (priceState !== null && (priceState ?? 0) < 0.10) continue;
+
+            const price = priceState ?? 0;
+            const itemWithPrice = { ...item, price };
+
             if (item.commodity) {
                 const existing = commodityMap.get(item.market_name);
                 if (existing) {
                     existing.quantity += 1;
                 } else {
-                    const entry = { ...item, quantity: 1 };
+                    const entry = { ...itemWithPrice, quantity: 1 };
                     commodityMap.set(item.market_name, entry);
                     result.push(entry);
                 }
             } else {
-                result.push({ ...item, quantity: 1 });
+                result.push({ ...itemWithPrice, quantity: 1 });
             }
         }
 
         return result.sort((a, b) => b.price - a.price);
     })();
-    const totalValue = stackedInventory.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalValue = stackedInventory.reduce((sum, item) => {
+        const priceState = livePrices.get(item.market_name);
+        if (priceState === null) return sum;
+        return sum + item.price * item.quantity;
+    }, 0);
 
     return (
         <>
@@ -188,24 +269,34 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                             <div className="bg-secondary w-310 h-18 mt-13 absolute flex items-center px-6">
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Items</span>
-                                        <span className="text-2xl">{stackedInventory.length}</span>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                            Items
+                                        </span>
+
+                                        <span className="text-2xl">
+                                            {stackedInventory.length}
+                                        </span>
                                     </div>
 
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Steam Value</span>
-                                        <span className="text-2xl">${totalValue.toFixed(2)}</span>
-                                    </div>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                            Steam Value
+                                        </span>
 
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Default Market Value (-20%)</span>
-                                        <span className="text-2xl">${(totalValue / 1.2).toFixed(2)}</span>
+                                        <span className="text-2xl">
+                                            ${totalValue.toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col items-center ml-auto">
-                                    <span className="text-[11px] uppercase tracking-widest opacity-50">Last Updated</span>
-                                    <span className="text-2xl">{lastRefreshDisplay}</span>
+                                    <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                        Last Updated
+                                    </span>
+
+                                    <span className="text-2xl">
+                                        {lastRefreshDisplay}
+                                    </span>
                                 </div>
                             </div>
 
@@ -219,13 +310,14 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                                     if (remaining <= 0) return;
 
                                     return (
-                                        <InventoryItemCard 
-                                            key={item.assetId} 
-                                            item={item} 
-                                            quantity={remaining} 
-                                            selling={selling} 
-                                            setSelling={setSelling} 
-                                            hexColor={item.hexColor} 
+                                        <InventoryItemCard
+                                            key={item.assetId}
+                                            item={item}
+                                            quantity={remaining}
+                                            selling={selling}
+                                            setSelling={setSelling}
+                                            hexColor={item.hexColor}
+                                            loading={livePrices.get(item.market_name) === null}
                                         />
                                     )
                                 })}

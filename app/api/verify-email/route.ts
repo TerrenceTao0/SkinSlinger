@@ -9,12 +9,12 @@ export async function GET(request: Request) {
         const pendingAccount = await prisma.pendingAccount.findUnique({ where: { token } })
 
         if (!pendingAccount) {
-            return Response.redirect("http://localhost:3000/status?message=Token Invalid", 302)
+            return Response.redirect(`${process.env.NEXTAUTH_URL}/status?message=Token Invalid`, 302)
         }
 
 
         if (pendingAccount.expires < new Date()) {
-            return Response.redirect("http://localhost:3000/status?message=Link Expired", 302)
+            return Response.redirect(`${process.env.NEXTAUTH_URL}/status?message=Link Expired`, 302)
         }
 
 
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
         await prisma.pendingAccount.delete({ where: { token } })
 
-        return Response.redirect("http://localhost:3000/login", 302)
+        return Response.redirect(`${process.env.NEXTAUTH_URL}/login`, 302)
     } 
     catch (error) {
         console.error(error);

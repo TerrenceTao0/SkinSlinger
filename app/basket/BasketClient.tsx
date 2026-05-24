@@ -61,14 +61,6 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
 
 
     const total = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const savings = basket.reduce((sum, item) => {
-        if (item.marketPrice && item.marketPrice > item.price) {
-            return sum + (item.marketPrice - item.price) * item.quantity;
-        }
-
-
-        return sum;
-    }, 0);
 
 
     const cash = session?.user?.cash ?? 0;
@@ -165,16 +157,6 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
 
                         <p className="text-green-400">0%</p>
                     </div>
-
-                    {savings > 0 && (
-                        <div className="flex justify-between">
-                            <p className="opacity-60">You Save</p>
-
-                            <p className="text-green-400">
-                                ${savings.toFixed(2)}
-                            </p>
-                        </div>
-                    )}
 
                     <div className="border-t border-white/10" />
 

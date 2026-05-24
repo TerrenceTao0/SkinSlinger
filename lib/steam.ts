@@ -96,13 +96,13 @@ async function fetchGameInventory(steam_id: string, app_id: number, game: string
 
 // Fetches a user's combined inventory.
 export async function getInventory(steam_id: string): Promise<SteamItem[]> {
-    const [cs2, dota2] = await Promise.all([
+    const [cs2, dota2, rust] = await Promise.all([
         fetchGameInventory(steam_id, game_ids["CS2"], "CS2"),
         fetchGameInventory(steam_id, game_ids["Dota2"], "Dota2"),
         fetchGameInventory(steam_id, game_ids["Rust"], "Rust"),
     ]);
 
 
-    return [...cs2, ...dota2];
+    return [...cs2, ...dota2, ...rust];
 }
 

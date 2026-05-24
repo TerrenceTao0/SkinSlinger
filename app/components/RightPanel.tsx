@@ -75,12 +75,10 @@ function ListPrompt(
 }
 
 
-function ItemCard({market_name, price, quantity, icon, hexColor, pct, setPct, remove}: {
-    market_name: string, price: number, quantity: number, icon: string, hexColor: string,
-    pct: number, setPct: (val: number) => void, remove: () => void
+function ItemCard({market_name, quantity, icon, hexColor, priceStr, setPriceStr, remove}: {
+    market_name: string, quantity: number, icon: string, hexColor: string,
+    priceStr: string, setPriceStr: (val: string) => void, remove: () => void
 }) {
-    const adjustedPrice = price * (pct / 100);
-
     return (
         <div className="bg-accent h-50 w-[95%] mt-3 mb-3 ml-2.25 rounded-sm relative">
             <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-10">
@@ -105,20 +103,19 @@ function ItemCard({market_name, price, quantity, icon, hexColor, pct, setPct, re
                 />
             </div>
 
-            <div className="px-2">
-                <div className="flex justify-between text-[15px] opacity-70">
-                    <p>{pct.toFixed(1)}%</p>
-                    <p>${adjustedPrice.toFixed(2)}</p>
-                </div>
-
+            <div className="px-2 flex justify-between items-center">
+                <span className="text-[15px] opacity-70">Price</span>
                 <input
-                    type="range"
-                    min={60}
-                    max={100}
-                    step={0.1}
-                    value={pct}
-                    onChange={e => setPct(Number(e.target.value))}
-                    className="w-full accent-special"
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={priceStr}
+                    placeholder="0.00"
+                    onChange={e => {
+                        const val = e.target.value;
+                        if (val === "" || parseFloat(val) >= 0) setPriceStr(val);
+                    }}
+                    className="bg-accent rounded-sm w-20 h-8 text-center outline-none border border-gray-500 text-[15px]"
                 />
             </div>
 
@@ -141,13 +138,13 @@ export default function RightPanel({ selling, setSelling, onListed }: {
     onListed: () => void
 }) {
     const [showPrompt, setShowPrompt] = useState(false);
-    const [pctMap, setPctMap] = useState<Record<string, number>>({});
+    const [priceMap, setPriceMap] = useState<Record<string, string>>({});
 
     async function listItems() {
         const items = stackedQueue.map(item => ({
             assetId: item.assetId,
             marketName: item.market_name,
-            price: item.price * ((pctMap[item.market_name] ?? 80) / 100),
+            price: parseFloat(priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)),
             game: item.game,
             commodity: item.commodity,
             quantity: item.quantity,
@@ -197,14 +194,14 @@ export default function RightPanel({ selling, setSelling, onListed }: {
         return result;
     })();
     const totalValue = stackedQueue.reduce((sum, item) => {
-        const pct = pctMap[item.market_name] ?? 80;
-        return sum + item.price * (pct / 100) * item.quantity;
+        const price = parseFloat(priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2));
+        return sum + (isNaN(price) ? 0 : price) * item.quantity;
     }, 0);
 
     return (
         <>
             {showPrompt && (
-                <ListPrompt totalValue={totalValue} itemCount={stackedQueue.length} onConfirm={listItems} setShowPrompt={setShowPrompt} />
+                <ListPrompt totalValue={totalValue} itemCount={stackedQueue.reduce((sum, item) => sum + item.quantity, 0)} onConfirm={listItems} setShowPrompt={setShowPrompt} />
             )}
 
             <div className="fixed w-[95%] left-[2.5%] flex justify-end">
@@ -222,12 +219,11 @@ export default function RightPanel({ selling, setSelling, onListed }: {
                             <ItemCard
                                 key={item.market_name}
                                 market_name={item.market_name}
-                                price={item.price}
                                 quantity={item.quantity}
                                 icon={item.icon}
                                 hexColor={item.hexColor}
-                                pct={pctMap[item.market_name] ?? 80}
-                                setPct={(val) => setPctMap(prev => ({ ...prev, [item.market_name]: val }))}
+                                priceStr={priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)}
+                                setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
                                 remove={() => remove(item.market_name)}
                             />
                         ))}

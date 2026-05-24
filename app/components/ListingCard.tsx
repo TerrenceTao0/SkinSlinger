@@ -9,7 +9,6 @@ export default function ListingCard(
     {
         marketName,
         price,
-        marketPrice,
         icon,
         hexColor,
         quantity,
@@ -21,7 +20,6 @@ export default function ListingCard(
     DisplayCard & { currentUserId: string | null, onBuy: () => void, onPreview: () => void })
 {
     const isOwned = currentUserId !== null && currentUserId === sellerId;
-    const discount = marketPrice ? (1 - price / marketPrice) * 100 : null;
 
     return (
         <div
@@ -56,12 +54,6 @@ export default function ListingCard(
                 <p className="text-[12px] pl-2">
                     ${price.toFixed(2)}
                 </p>
-
-                {discount !== null && (
-                    <p className="text-[12px] pr-2 text-green-400">
-                        -{discount.toFixed(1)}%
-                    </p>
-                )}
             </div>
 
             <div className="flex justify-center bottom-0 w-full absolute">

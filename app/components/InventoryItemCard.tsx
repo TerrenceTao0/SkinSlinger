@@ -3,12 +3,13 @@ import { SteamItem } from '@/lib/steam'
 
 //
 
-export default function InventoryItemCard({ item, quantity, selling, setSelling, hexColor }: {
+export default function InventoryItemCard({ item, quantity, selling, setSelling, hexColor, loading = false }: {
     item: SteamItem,
     quantity: number,
     selling: SteamItem[],
     setSelling: React.Dispatch<React.SetStateAction<SteamItem[]>>,
-    hexColor: string
+    hexColor: string,
+    loading?: boolean
 }) {
     function add() {
         setSelling([...selling, item])
@@ -41,12 +42,13 @@ export default function InventoryItemCard({ item, quantity, selling, setSelling,
             </div>
 
             <p className="text-[15px] pl-2 absolute bottom-10 z-2">
-                ${item.price.toFixed(2)}
+                {loading ? '...' : `$${item.price.toFixed(2)}`}
             </p>
 
             <div className="flex justify-center bottom-0 w-full absolute">
                 <button
                     onClick={add}
+                    disabled={loading}
                     className="bg-less-special button rounded-sm w-full h-10"
                     style={{ borderTop: `2px solid #${hexColor}` }}
                  >

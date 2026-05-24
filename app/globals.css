@@ -17,8 +17,8 @@
 }
 
 body {
-    background-color: var(--color-primary);
-    height: 100vh;
+    background: linear-gradient(to top, #1a1a1a, var(--color-primary));
+    min-height: 100vh;
     margin: 0px;
 }
 
