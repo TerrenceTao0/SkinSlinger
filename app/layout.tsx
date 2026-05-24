@@ -16,13 +16,17 @@ const inter = Inter({
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" className={`${inter.variable} font-sans`}>
-            <title>SkinSlinger</title>
+            <head>
+                    <title>SkinSlinger</title>
+                    <link rel="icon" href="/logo.svg" />
+            </head>
+
             <body className="h-screen w-[95%] mx-auto flex flex-col overflow-hidden">
                 <Providers>
                     <TopNav />
                     {children}
                 </Providers>
-                
+
                 <Analytics />
             </body>
         </html>

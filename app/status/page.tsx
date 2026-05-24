@@ -13,19 +13,17 @@ function StatusContent() {
 
     return (
         <div className="h-full w-full flex justify-center items-center">
-            {message && (
-                <div className="bg-secondary w-100 h-50 flex flex-col items-center">
-                    <p className="mt-11 text-2xl">
-                        {message}
-                    </p>
+            <div className="bg-secondary w-96 flex flex-col items-center gap-6 p-10 rounded-sm frame-shadow">
+                <p className="text-2xl text-center">
+                    {message ?? "Something went wrong"}
+                </p>
 
-                    <Link href={redirect ?? "/"}>
-                        <button className="button bg-accent w-72 h-12 mt-13">
-                            Okay
-                        </button>
-                    </Link>
-                </div>
-            )}
+                <Link href={redirect ?? "/"} className="w-full">
+                    <button className="button bg-accent w-full h-11 rounded-sm">
+                        Okay
+                    </button>
+                </Link>
+            </div>
         </div>
     )
 }

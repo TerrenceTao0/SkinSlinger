@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         const link = `http://localhost:3000/api/verify-email?token=${token}`
 
         const { error } = await resend.emails.send({
-            from: 'SkinSlinger <onboarding@resend.dev>',
+            from: 'SkinSlinger <onboarding@skinslinger.com>',
             to: [email],
             subject: 'Email Verification',
             react: VerifyEmail({ link }),

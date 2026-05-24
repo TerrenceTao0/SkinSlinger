@@ -23,6 +23,7 @@ export async function GET(request: Request) {
                 email: pendingAccount.email,
                 password: pendingAccount.password,
                 username: pendingAccount.username,
+                emailVerified: new Date(),
             },
         });
 

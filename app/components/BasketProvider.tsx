@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { BasketItem, getBasket, saveBasket, clearBasket } from "@/lib/basket";
 
 //
@@ -14,7 +14,11 @@ type BasketContextType = {
 const BasketContext = createContext<BasketContextType | null>(null);
 
 export function BasketProvider({ children }: { children: React.ReactNode }) {
-    const [basket, setBasketState] = useState<BasketItem[]>(() => getBasket());
+    const [basket, setBasketState] = useState<BasketItem[]>([]);
+
+    useEffect(() => {
+        setBasketState(getBasket());
+    }, []);
 
     function setBasket(items: BasketItem[]) {
         saveBasket(items);

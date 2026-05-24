@@ -105,9 +105,9 @@ export default function SignUp() {
            {!verifying ? (
             <form
                 onSubmit={onSubmit}
-                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-115"
+                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 h-115 frame-shadow"
                 >
-                    <h1 className="text-4xl mt-4 text-special bold">
+                    <h1 className="text-4xl mt-4 text-special font-medium">
                         Sign Up
                     </h1>
 

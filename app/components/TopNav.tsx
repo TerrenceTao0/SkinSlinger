@@ -27,7 +27,9 @@ export default function TopNav() {
         <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
             <div className="w-43 h-full flex justify-center items-center bg-secondary">
                 <Link href="/">
-                    <p className="hover:text-special transition-all cursor-pointer text-2xl font-semi-bold">
+                    
+
+                    <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
                         SkinSlinger
                     </p>
                 </Link>
@@ -45,12 +47,12 @@ export default function TopNav() {
                         </p>
                     )}
 
-                    <Link href="/basket" className="right-nav-link button">
-                        Basket{basketCount > 0 && ` (${basketCount})`}
-                    </Link>
-
                     {session ? (
                         <>
+                            <Link href="/basket" className="right-nav-link button">
+                                Basket{basketCount > 0 && ` (${basketCount})`}
+                            </Link>
+
                             <Link href="/inventory" className="right-nav-link button">
                                 INVENTORY
                             </Link>

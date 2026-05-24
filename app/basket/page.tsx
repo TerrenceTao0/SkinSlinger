@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useBasket } from "@/app/components/BasketProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 //
 
@@ -12,6 +14,12 @@ export default function Basket() {
     const { basket, setBasket, clearBasketState } = useBasket();
     const [checking, setChecking] = useState(false);
     const [error, setError] = useState("");
+    const router = useRouter();
+
+    useEffect(() => {
+        if (session === null) router.push("/");
+    }, [session, router])
+
 
     function remove(id: string) {
         setBasket(basket.filter(item => item.id !== id));

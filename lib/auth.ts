@@ -4,6 +4,12 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "./db"
 import { compare } from "bcryptjs";
+import { Resend } from "resend";
+import { TwoFactorEmail } from "@/app/components/TwoFactorEmail";
+
+//
+
+const resend = new Resend(process.env.RESEND_API);
 
 //
 
@@ -68,17 +74,10 @@ export const authOptions: NextAuthOptions = {
 
         CredentialsProvider({
             name: "Credentials",
-            credentials: 
-            {
-                user: { 
-                    label: "Username/Email", 
-                    type: "text" 
-                },
-
-                password: { 
-                    label: "Password", 
-                    type: "password"
-                }
+            credentials: {
+                user: { label: "Username/Email", type: "text" },
+                password: { label: "Password", type: "password" },
+                code: { label: "Code", type: "text" },
             },
 
             async authorize(credentials) {
@@ -94,10 +93,10 @@ export const authOptions: NextAuthOptions = {
                             { username: credentials.user },
                         ]
                     }
-                })
+                });
 
 
-                if (!foundUser || !foundUser?.password) {
+                if (!foundUser || !foundUser.password) {
                     return null;
                 }
 
@@ -106,15 +105,58 @@ export const authOptions: NextAuthOptions = {
 
                 if (!passwordMatches) {
                     return null;
+                }
+
+
+                if (credentials.code) {
+                    if (!foundUser.twoFactorCode || !foundUser.twoFactorExpires) {
+                        throw new Error("2FA_REQUIRED");
+                    }
+
+
+                    if (foundUser.twoFactorExpires < new Date()) {
+                        throw new Error("2FA_EXPIRED");
+                    }
+
+
+                    if (foundUser.twoFactorCode !== credentials.code.trim()) {
+                        throw new Error("2FA_INVALID");
+                    }
+
+
+                    await prisma.user.update({
+                        where: { id: foundUser.id },
+                        data: { twoFactorCode: null, twoFactorExpires: null },
+                    });
                 } 
+                else {
+                    const code = Math.floor(100000 + Math.random() * 900000).toString();
+                    const expires = new Date(Date.now() + 10 * 60 * 1000);
+
+                    await prisma.user.update({
+                        where: { id: foundUser.id },
+                        data: { twoFactorCode: code, twoFactorExpires: expires },
+                    });
 
 
+                    await resend.emails.send({
+                        from: 'SkinSlinger <onboarding@skinslinger.com>',
+                        to: [foundUser.email!],
+                        subject: 'Login Code',
+                        react: TwoFactorEmail({ code }),
+                    });
+
+
+                    throw new Error("2FA_REQUIRED");
+                }
+
+                
                 return {
                     id: foundUser.id,
                     username: foundUser.username ?? undefined,
                     email: foundUser.email ?? undefined,
                     cash: foundUser.cash,
-                }
+                };
             }
         })
     ]

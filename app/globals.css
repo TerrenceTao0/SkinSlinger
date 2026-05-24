@@ -9,8 +9,8 @@
 @theme {
     --color-accent: #363636;
     --color-remove: #834a4a;
-    --color-special: #3d9cbe;
-    --color-less-special: #4a7483;
+    --color-special: #0077ff;
+    --color-less-special: #0088be;
     --color-secondary: #2c2c2c;
     --color-primary: #1f1f1f;
     --font-sans: var(--font-inter);
@@ -20,7 +20,6 @@ body {
     background-color: var(--color-primary);
     height: 100vh;
     margin: 0px;
-    color: #834a4a;
 }
 
 .button {
@@ -63,6 +62,10 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: var(--color-special);
+}
+
+.frame-shadow {
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 }
 
 input[type="number"]::-webkit-inner-spin-button,
