@@ -28,6 +28,10 @@ export async function GET(request: Request) {
         const inventoryItems = await prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } });
         const itemMap = new Map(inventoryItems.map(i => [i.assetId, i]));
 
+        const marketNames = page.map(l => l.marketName);
+        const marketItems = await prisma.item.findMany({ where: { marketName: { in: marketNames } } });
+        const marketPriceMap = new Map(marketItems.map(i => [i.marketName, i.price]));
+
         const listings = page
             .map(l => ({ ...l, inv: itemMap.get(l.assetId) }))
             .filter(l => l.inv)
@@ -35,6 +39,7 @@ export async function GET(request: Request) {
                 id: l.id,
                 marketName: l.marketName,
                 price: l.price,
+                marketPrice: marketPriceMap.get(l.marketName) ?? null,
                 icon: l.inv!.icon,
                 hexColor: l.inv!.hexColor,
                 game: l.inv!.game,

@@ -33,13 +33,13 @@ function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
         <>
             {/* Blur background */}
             <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-6"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5"
             ></div>
 
 
             {/* Ask for Trade Url */}
             <form
-                className="flex flex-col gap-1 rounded-[5px] text-center w-96 h-80 mt-5"
+                className="flex flex-col gap-1 rounded-[5px] text-center w-96 h-80 mt-5 z-6 bg-secondary frame-shadow"
                 onSubmit={onSubmit}
             >
                 <p className="mt-10 text-2xl">Enter your Steam Trade Url</p>
@@ -93,7 +93,9 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
 
     useEffect(() => {
         setLastRefreshDisplay(timeAgo(lastRefresh));
+
         const id = setInterval(() => setLastRefreshDisplay(timeAgo(lastRefresh)), 10000);
+
         return () => clearInterval(id);
     }, [lastRefresh]);
 
@@ -177,7 +179,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
             <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} />
 
             <div className="h-full w-full flex justify-center items-center">
-                <div className="bg-secondary w-200 h-150 flex justify-center items-center">
+                <div className="w-200 h-150 flex justify-center items-center">
                     {!isSteamLinked ? (
                         <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
                     ) : (
@@ -217,7 +219,14 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                                     if (remaining <= 0) return;
 
                                     return (
-                                        <InventoryItemCard key={item.assetId} item={item} quantity={remaining} selling={selling} setSelling={setSelling} hexColor={item.hexColor} />
+                                        <InventoryItemCard 
+                                            key={item.assetId} 
+                                            item={item} 
+                                            quantity={remaining} 
+                                            selling={selling} 
+                                            setSelling={setSelling} 
+                                            hexColor={item.hexColor} 
+                                        />
                                     )
                                 })}
                             </div>

@@ -1,6 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Resend } from "resend";
+import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
+
+//
+
+const resend = new Resend(process.env.RESEND_API);
 
 //
 
@@ -12,50 +18,62 @@ export async function POST(request: Request) {
             return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const buyer = await prisma.user.findUnique({ where: { email: session.user.email } });
 
-        const user = await prisma.user.findUnique({ where: { email: session.user.email } });
-
-        if (!user) {
+        if (!buyer) {
             return Response.json({ error: "User not found" }, { status: 404 });
         }
 
+        const pendingCount = await prisma.purchase.count({
+            where: { buyerId: buyer.id, status: { in: ["pending", "offer_sent"] } },
+        });
+        if (pendingCount > 0) {
+            return Response.json({ error: "You have an active order. Complete or cancel it before checking out." }, { status: 409 });
+        }
 
         const { items } = await request.json() as {
             items: { id: string, marketName: string, commodity: boolean, quantity: number }[]
         };
 
-
         if (!Array.isArray(items) || items.length === 0) {
             return Response.json({ error: "No items provided" }, { status: 400 });
         }
 
-
         // Resolve which listings to purchase
-        const toPurchase: { id: string, price: number, sellerId: string }[] = [];
+        type ListingToPurchase = {
+            id: string,
+            price: number,
+            sellerId: string,
+            assetId: string,
+            marketName: string,
+            game: string | null,
+            icon: string | null,
+            hexColor: string | null,
+            commodity: boolean,
+        };
+
+        const toPurchase: ListingToPurchase[] = [];
 
         for (const item of items) {
             if (item.commodity) {
                 const listings = await prisma.item_listing.findMany({
                     where: {
                         marketName: item.marketName,
-                        userId: { not: user.id },
+                        userId: { not: buyer.id },
                     },
                     take: item.quantity,
                     orderBy: { price: "asc" },
                 });
 
-
                 if (listings.length < item.quantity) {
                     return Response.json({ error: `Not enough "${item.marketName}" available` }, { status: 409 });
                 }
 
-
-                for (const l of listings) {
-                    toPurchase.push({ id: l.id, price: l.price, sellerId: l.userId });
+                for (const listing of listings) {
+                    const inv = await prisma.inventory_item.findUnique({ where: { assetId: listing.assetId }, select: { icon: true, hexColor: true, commodity: true } });
+                    toPurchase.push({ id: listing.id, price: listing.price, sellerId: listing.userId, assetId: listing.assetId, marketName: listing.marketName, game: listing.game, icon: inv?.icon ?? null, hexColor: inv?.hexColor ?? null, commodity: inv?.commodity ?? true });
                 }
-
-
-            } 
+            }
             else {
                 const listing = await prisma.item_listing.findUnique({ where: { id: item.id } });
 
@@ -63,58 +81,101 @@ export async function POST(request: Request) {
                     return Response.json({ error: `Listing for "${item.marketName}" no longer exists` }, { status: 409 });
                 }
 
-
-                if (listing.userId === user.id) {
+                if (listing.userId === buyer.id) {
                     return Response.json({ error: "You cannot buy your own listing" }, { status: 400 });
                 }
 
-
-                toPurchase.push({ id: listing.id, price: listing.price, sellerId: listing.userId });
+                const inv = await prisma.inventory_item.findUnique({ where: { assetId: listing.assetId }, select: { icon: true, hexColor: true, commodity: true } });
+                toPurchase.push({ id: listing.id, price: listing.price, sellerId: listing.userId, assetId: listing.assetId, marketName: listing.marketName, game: listing.game, icon: inv?.icon ?? null, hexColor: inv?.hexColor ?? null, commodity: inv?.commodity ?? false });
             }
         }
 
+        const total = toPurchase.reduce((sum, listing) => sum + listing.price, 0);
 
-        const total = toPurchase.reduce((sum, l) => sum + l.price, 0);
-
-        if (user.cash < total) {
+        if (buyer.cash < total) {
             return Response.json({ error: "Insufficient balance" }, { status: 402 });
         }
 
+        // Require public Steam inventory so the cron can verify trade completion
+        if (!buyer.steam_id) {
+            return Response.json({ error: "You must link your Steam account before making purchases." }, { status: 400 });
+        }
 
-        // Process purchase in a transaction
-        await prisma.$transaction(async (tx) => {
-            // Deduct from buyer
+        const games = [...new Set(toPurchase.map(l => l.game ?? "730"))];
+        for (const game of games) {
+            const invRes = await fetch(`https://steamcommunity.com/inventory/${buyer.steam_id}/${game}/2?l=english&count=1`);
+            if (invRes.status === 403) {
+                return Response.json({ error: "Your Steam inventory must be set to public before making purchases." }, { status: 400 });
+            }
+            if (invRes.ok) {
+                const invData = await invRes.json();
+                if (invData?.success === false) {
+                    return Response.json({ error: "Your Steam inventory must be set to public before making purchases." }, { status: 400 });
+                }
+            }
+            // Other non-200 responses (rate limit, server error) — allow checkout
+        }
+
+        // Deduct buyer cash and create pending purchases
+        const purchases = await prisma.$transaction(async (tx) => {
             await tx.user.update({
-                where: { id: user.id },
+                where: { id: buyer.id },
                 data: { cash: { decrement: total } },
             });
 
+            const created = [];
 
-            // Credit each seller and delete their listing
-            for (const l of toPurchase) {
-                await tx.user.update({
-                    where: { id: l.sellerId },
-                    data: { cash: { increment: l.price } },
+            for (const listing of toPurchase) {
+                await tx.item_listing.delete({ where: { id: listing.id } });
+
+                const purchase = await tx.purchase.create({
+                    data: {
+                        price: listing.price,
+                        assetId: listing.assetId,
+                        marketName: listing.marketName,
+                        game: listing.game,
+                        icon: listing.icon,
+                        hexColor: listing.hexColor,
+                        commodity: listing.commodity,
+                        buyerTradeUrl: buyer.steam_trade_url,
+                        buyerId: buyer.id,
+                        sellerId: listing.sellerId,
+                    },
                 });
 
-
-                await tx.item_listing.delete({ where: { id: l.id } });
-
-                await tx.purchase.create({
-                    data: { userId: user.id, itemId: l.id },
-                });
+                created.push(purchase);
             }
+
+            return created;
         });
 
+        // Notify each seller
+        const sellerIds = [...new Set(toPurchase.map(listing => listing.sellerId))];
+        const sellers = await prisma.user.findMany({ where: { id: { in: sellerIds } } });
 
-        const updated = await prisma.user.findUnique({ where: { id: user.id }, select: { cash: true } });
+        for (const seller of sellers) {
+            if (!seller.email) continue;
+
+            const sellerItems = purchases.filter(p => p.sellerId === seller.id);
+
+            await resend.emails.send({
+                from: 'SkinSlinger <onboarding@skinslinger.com>',
+                to: [seller.email],
+                subject: `New sale — send your item${sellerItems.length > 1 ? "s" : ""}`,
+                react: PurchaseNotificationEmail({
+                    buyerTradeUrl: buyer.steam_trade_url ?? "",
+                    buyerName: buyer.username ?? buyer.email ?? "Buyer",
+                    items: sellerItems.map(p => ({ marketName: p.marketName, price: p.price })),
+                }),
+            });
+        }
+
+        const updated = await prisma.user.findUnique({ where: { id: buyer.id }, select: { cash: true } });
 
         return Response.json({ newCash: updated!.cash });
     }
     catch (error) {
         console.error(error);
-
         return Response.json({ error: "Server error" }, { status: 500 });
     }
 }
-

@@ -114,6 +114,6 @@ export default async function Inventory() {
     })).filter(item => item.price >= 0.10 && !listedAssetIds.has(item.assetId));
 
     
-    return <InventoryClient isSteamLinked={!!user?.steam_id} inventory={inventoryWithPrices} lastRefresh={lastRefresh} />;
+    return <InventoryClient isSteamLinked={user?.steam_id && user?.steam_trade_url} inventory={inventoryWithPrices} lastRefresh={lastRefresh} />;
 }
 

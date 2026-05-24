@@ -53,8 +53,12 @@ export default function TopNav() {
                                 Basket{basketCount > 0 && ` (${basketCount})`}
                             </Link>
 
+                            <Link href="/orders" className="right-nav-link button">
+                                Orders
+                            </Link>
+
                             <Link href="/inventory" className="right-nav-link button">
-                                INVENTORY
+                                Inventory
                             </Link>
 
                             <Link
@@ -62,17 +66,17 @@ export default function TopNav() {
                                 className="right-nav-link button"
                                 onClick={() => signOut()}
                             >
-                                LOG OUT
+                                Log out 
                             </Link>
                         </>
                     ) : (
                         <>
                             <Link href="/login" className="right-nav-link button">
-                                LOGIN
+                                Login
                             </Link>
 
                             <Link href="/sign-up" className="right-nav-link button">
-                                SIGN UP
+                                Sign Up
                             </Link>
                         </>
                     )}

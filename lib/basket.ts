@@ -2,6 +2,7 @@ export type BasketItem = {
     id: string,
     marketName: string,
     price: number,
+    marketPrice: number | null,
     icon: string,
     hexColor: string,
     commodity: boolean,

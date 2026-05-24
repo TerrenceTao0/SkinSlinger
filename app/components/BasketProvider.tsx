@@ -13,6 +13,8 @@ type BasketContextType = {
 
 const BasketContext = createContext<BasketContextType | null>(null);
 
+//
+
 export function BasketProvider({ children }: { children: React.ReactNode }) {
     const [basket, setBasketState] = useState<BasketItem[]>([]);
 
@@ -39,6 +41,9 @@ export function BasketProvider({ children }: { children: React.ReactNode }) {
 
 export function useBasket() {
     const ctx = useContext(BasketContext);
+
     if (!ctx) throw new Error("useBasket must be used within BasketProvider");
+
     return ctx;
 }
+

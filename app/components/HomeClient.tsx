@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import LeftPanel from "./LeftPanel";
+import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
 import { useBasket } from "./BasketProvider";
 import { useSession } from "next-auth/react";
@@ -17,6 +18,7 @@ export type ListingCard = {
     id: string,
     marketName: string,
     price: number,
+    marketPrice: number | null,
     icon: string,
     hexColor: string,
     game: string,
@@ -24,61 +26,31 @@ export type ListingCard = {
     sellerId: string,
 }
 
-type DisplayCard = ListingCard & { quantity: number }
+export type DisplayCard = ListingCard & { quantity: number }
 
 //
 
-function ListingCard({ marketName, price, icon, hexColor, quantity, sellerId, currentUserId, onBuy }: DisplayCard & { currentUserId: string | null, onBuy: () => void }) {
-    const isOwned = currentUserId !== null && currentUserId === sellerId;
+export default function HomeClient(
+    {
+        initialListings,
+        initialHasMore,
+        currentUserId,
+        hasPendingPurchase,
+    }: {
+        initialListings: ListingCard[],
+        initialHasMore: boolean,
+        currentUserId: string | null,
+        hasPendingPurchase: boolean,
+    })
+    {
 
-    return (
-        <div className="bg-accent h-50 w-49 rounded-sm relative">
-            <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-2">
-                <h1 style={{ color: `#${hexColor}` }} className="text-[14px] w-35">
-                    {marketName}
-                </h1>
-
-                {quantity > 1 && (
-                    <h1 className="text-[14px]">[x{quantity}]</h1>
-                )}
-            </div>
-
-            <div className="absolute inset-0 flex justify-center items-center z-0 mb-5" style={{ filter: `drop-shadow(0 0 8px #${hexColor}99)` }}>
-                <Image
-                    src={icon}
-                    alt="Failed To Load"
-                    style={{ width: 'auto' }}
-                    width={100}
-                    height={100}
-                />
-            </div>
-
-            <p className="text-[15px] pl-2 absolute bottom-10 z-2">
-                ${price.toFixed(2)}
-            </p>
-
-            <div className="flex justify-center bottom-0 w-full absolute">
-                <button
-                    onClick={onBuy}
-                    disabled={isOwned}
-                    className={`rounded-sm w-full h-10 ${isOwned ? "bg-accent opacity-50 cursor-default" : "bg-less-special button"}`}
-                    style={!isOwned && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
-                >
-                    {isOwned ? "OWNED" : "BUY"}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-
-export default function HomeClient({ initialListings, initialHasMore, currentUserId }: {
-    initialListings: ListingCard[],
-    initialHasMore: boolean,
-    currentUserId: string | null,
-}) {
     const [gameFilter, setGameFilter] = useState<GameFilter>("all");
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
+    const [preview, setPreview] = useState<DisplayCard | null>(null);
+    const [previewQtyStr, setPreviewQtyStr] = useState("");
+    const [pendingNotice, setPendingNotice] = useState(false);
+    const previewQty = parseInt(previewQtyStr) || 1;
+    const [search, setSearch] = useState("");
     const { basket, setBasket } = useBasket();
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
@@ -110,6 +82,8 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
         else {
             setListings(prev => [...prev, ...data.listings]);
         }
+
+
         setCursor(data.nextCursor);
         setHasMore(data.nextCursor !== null);
 
@@ -142,16 +116,21 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
             }
         }, { threshold: 0.1 });
 
+
         observer.observe(el);
 
         return () => observer.disconnect();
     }, [hasMore, cursor, gameFilter, load]);
 
 
-    function handleBuy(item: DisplayCard) {
+    function handleBuy(item: DisplayCard, qty: number = 1) {
         if (session === null) {
             router.push("/sign-up");
+            return;
+        }
 
+        if (hasPendingPurchase) {
+            setPendingNotice(true);
             return;
         }
 
@@ -161,22 +140,23 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
 
         if (item.commodity) {
             const existing = current.find(b => b.marketName === item.marketName && b.commodity);
-           
+
             if (existing) {
-                if (existing.quantity >= existing.maxQuantity) return;
+                const newQty = Math.min(existing.quantity + qty, existing.maxQuantity);
+                if (newQty === existing.quantity) return;
 
                 updated = current.map(b =>
-                    b.marketName === item.marketName && b.commodity ? { ...b, quantity: b.quantity + 1 } : b
+                    b.marketName === item.marketName && b.commodity ? { ...b, quantity: newQty } : b
                 );
-            } 
-            else {
-                updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: 1, maxQuantity: item.quantity } as BasketItem];
             }
-        } 
+            else {
+                updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, marketPrice: item.marketPrice, icon: item.icon, hexColor: item.hexColor, commodity: true, quantity: qty, maxQuantity: item.quantity } as BasketItem];
+            }
+        }
         else {
             if (current.find(b => b.id === item.id)) return;
 
-            updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
+            updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, marketPrice: item.marketPrice, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
         }
 
 
@@ -188,21 +168,21 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
         const result: DisplayCard[] = [];
         const commodityMap = new Map<string, DisplayCard>();
 
-        for (const l of listings) {
-            if (l.commodity) {
-                const existing = commodityMap.get(l.marketName);
+        for (const listing of listings) {
+            if (listing.commodity) {
+                const existing = commodityMap.get(listing.marketName);
 
                 if (existing) {
                     existing.quantity += 1;
-                } 
+                }
                 else {
-                    const entry: DisplayCard = { ...l, quantity: 1 };
-                    commodityMap.set(l.marketName, entry);
+                    const entry: DisplayCard = { ...listing, quantity: 1 };
+                    commodityMap.set(listing.marketName, entry);
                     result.push(entry);
                 }
             }
             else {
-                result.push({ ...l, quantity: 1 });
+                result.push({ ...listing, quantity: 1 });
             }
         }
 
@@ -222,7 +202,17 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
             .filter(item => !item.commodity
                 ? !basket.find(b => b.id === item.id)
                 : item.quantity > 0
-            );
+            )
+            .sort((a, b) => {
+                if (b.price !== a.price) return b.price - a.price;
+
+                const discountA = a.marketPrice ? 1 - a.price / a.marketPrice : 0;
+                const discountB = b.marketPrice ? 1 - b.price / b.marketPrice : 0;
+
+                if (discountB !== discountA) return discountB - discountA;
+                
+                return b.quantity - a.quantity;
+            });
     }, [listings, basket]);
 
 
@@ -230,12 +220,129 @@ export default function HomeClient({ initialListings, initialHasMore, currentUse
         <>
             <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
 
+            {pendingNotice && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    onClick={() => setPendingNotice(false)}
+                >
+                    <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+                        <p className="text-lg font-medium">Pending order</p>
+                        <p className="opacity-60 text-sm">You have an active purchase in progress. You cannot add items to your basket until it is completed or cancelled.</p>
+                        <button onClick={() => setPendingNotice(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">Dismiss</button>
+                    </div>
+                </div>
+            )}
+
+            {preview && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    onClick={() => setPreview(null)}
+                >
+                    <div
+                        className="bg-secondary rounded-sm p-8 flex flex-col items-center gap-4 w-80"
+                        style={{ boxShadow: `0 0 40px #${preview.hexColor}55, 0 8px 32px rgba(0,0,0,0.6)` }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div style={{ filter: `drop-shadow(0 0 16px #${preview.hexColor}99)` }}>
+                            <Image
+                                src={preview.icon}
+                                alt={preview.marketName}
+                                width={180}
+                                height={180}
+                                style={{ width: 'auto' }}
+                            />
+                        </div>
+
+                        <h2 style={{ color: `#${preview.hexColor}` }} className="text-lg text-center">
+                            {preview.marketName}
+                        </h2>
+
+                        <div className="flex justify-between w-full text-sm">
+                            <span className="opacity-60">Listing Price</span>
+                            <span>${(preview.price * previewQty).toFixed(2)}</span>
+                        </div>
+
+                        {preview.marketPrice !== null && (
+                            <>
+                                <div className="flex justify-between w-full text-sm">
+                                    <span className="opacity-60">Market Price</span>
+                                    <span className="opacity-60 line-through">${(preview.marketPrice * previewQty).toFixed(2)}</span>
+                                </div>
+
+                                {preview.marketPrice > preview.price && (
+                                    <div className="flex justify-between w-full text-sm">
+                                        <span className="opacity-60">You Save</span>
+                                        <span className="text-green-400">
+                                            ${((preview.marketPrice - preview.price) * previewQty).toFixed(2)}
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {preview.quantity > 1 && (
+                            <div className="flex justify-between w-full text-sm">
+                                <span className="opacity-60">Available</span>
+                                <span>{preview.quantity}</span>
+                            </div>
+                        )}
+
+                        {preview.commodity && preview.quantity > 1 && (
+                            <div className="flex justify-between items-center w-full text-sm">
+                                <span className="opacity-60">Quantity</span>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={preview.quantity}
+                                    value={previewQtyStr}
+                                    placeholder="1"
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val === "") {
+                                            setPreviewQtyStr("");
+                                        } else {
+                                            const num = parseInt(val);
+                                            if (!isNaN(num)) setPreviewQtyStr(String(Math.min(Math.max(1, num), preview.quantity)));
+                                        }
+                                    }}
+                                    className="bg-accent rounded-sm w-16 h-8 text-center outline-none border border-gray-500"
+                                />
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => { handleBuy(preview, previewQty); setPreview(null); }}
+                            disabled={currentUserId !== null && currentUserId === preview.sellerId}
+                            className={`w-full h-10 rounded-sm ${currentUserId === preview.sellerId ? "bg-accent opacity-50 cursor-default" : "bg-less-special button"}`}
+                            style={preview.hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${preview.hexColor}` } : {}}
+                        >
+                            {currentUserId === preview.sellerId ? "OWNED" : "BUY"}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="h-full w-full flex justify-center items-center">
                 <div className="bg-secondary w-200 h-150 flex justify-center items-center">
                     <div>
-                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-210 mt-14 grid grid-cols-7 justify-start content-start gap-50 p-3">
-                            {displayListings.map(l => (
-                                <ListingCard key={l.id} {...l} currentUserId={currentUserId} onBuy={() => handleBuy(l)} />
+                        <div className="bg-secondary w-310 h-14 mt-14 absolute flex items-center px-4">
+                            <input
+                                type="text"
+                                placeholder="Search items..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
+                            />
+                        </div>
+
+                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-50 p-3">
+                            {displayListings.filter(listing => listing.marketName.toLowerCase().includes(search.toLowerCase())).map(listing => (
+                                <ListingCard
+                                    key={listing.id} {...listing}
+                                    currentUserId={currentUserId}
+                                    onBuy={() => handleBuy(listing)}
+                                    onPreview={() => { setPreview(listing); setPreviewQtyStr(""); }}
+                                />
                             ))}
                             
                             <div ref={sentinelRef} className="col-span-7 h-1" />
