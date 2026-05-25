@@ -3,7 +3,6 @@ import HomeClient from "../components/HomeClient";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { Metadata } from 'next'
-import '@stripe/stripe-js';
 
 //
 

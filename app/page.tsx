@@ -14,6 +14,7 @@ const fees = [
     { label: "Sales Fee", value: "0%", icon: "/percentage.svg" },
     { label: "Deposit Fee", value: "0%", icon: "/deposit.svg" },
     { label: "Withdrawal Fee", value: "2.9% + $0.50", icon: "/withdraw.svg" },
+    { label: "FX Fee", value: "0%", icon: "/percentage.svg" },
 ]
 
 const steps = [
@@ -39,7 +40,7 @@ const steps = [
     },
 ]
 
-const paymentMethods = ["Card", "Link", "Bank (UK/FIN)", "Google Pay"]
+const paymentMethods = ["USDC (Polygon Network)"]
 
 //
 
@@ -82,6 +83,15 @@ export default function Home() {
                     <p className="text-special font-semibold text-lg">The lowest fees in the market. Guaranteed.</p>
                 </div>
 
+                {/* No KYC */}
+                <div
+                    className="w-full max-w-sm rounded-sm px-6 py-5 flex flex-col items-center gap-1 bg-green-200"
+                    style={{ boxShadow: "0 0 32px rgba(76, 107, 34, 0.6), 0 0 8px rgba(76, 107, 34, 0.3)" }}
+                >
+                    <p className="text-special text-2xl font-bold underline">No KYC</p>
+                    <p className="text-special text-sm text-center font-semibold">No identity verification required. Sign up with just an email and a password.</p>
+                </div>
+
 
                 {/* Fee cards */}
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
@@ -100,7 +110,7 @@ export default function Home() {
 
                 {/* Payment methods */}
                 <div className="flex flex-col items-center gap-2">
-                    <p className="text-xs text-gray-500 uppercase tracking-widest">Payment Methods</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest">Payments powered by NOWPayments</p>
                     <div className="flex gap-2 flex-wrap justify-center">
                         {paymentMethods.map(method => (
                             <span key={method} className="bg-accent text-gray-400 text-xs px-3 py-1 rounded-sm">
