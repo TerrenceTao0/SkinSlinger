@@ -42,7 +42,7 @@ function PaymentForm({ amountCents }: { amountCents: number }) {
             <p className="text-center text-lg font-medium mb-1">
                 Deposit ${(amountCents / 100).toFixed(2)}
             </p>
-            <PaymentElement options={{ layout: 'tabs' }} />
+            <PaymentElement options={{ layout: { type: 'accordion', defaultCollapsed: false, radios: 'never', spacedAccordionItems: true } }} />
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             <button
                 type="submit"

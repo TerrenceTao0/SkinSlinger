@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/db'
 
+//
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+//
 
 export async function POST(req: Request) {
     const body = await req.text()
@@ -12,17 +16,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
     }
 
+
     let event: Stripe.Event
 
     try {
         event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-    } catch {
+    } 
+    catch {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
+
 
     if (event.type === 'payment_intent.succeeded') {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
         const userId = paymentIntent.metadata.userId
+
         if (userId) {
             await prisma.user.update({
                 where: { id: userId },
@@ -31,13 +39,16 @@ export async function POST(req: Request) {
         }
     }
 
+
     if (event.type === 'charge.dispute.created') {
         const dispute = event.data.object as Stripe.Dispute
         const charge = await stripe.charges.retrieve(dispute.charge as string)
+       
         if (!charge.payment_intent) return NextResponse.json({ received: true })
 
         const paymentIntent = await stripe.paymentIntents.retrieve(charge.payment_intent as string)
         const userId = paymentIntent.metadata.userId
+        
         if (userId) {
             await prisma.user.update({
                 where: { id: userId },
@@ -46,5 +57,7 @@ export async function POST(req: Request) {
         }
     }
 
+    
     return NextResponse.json({ received: true })
 }
+
