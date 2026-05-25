@@ -38,7 +38,7 @@ export default function TopNav() {
                 {/* Desktop nav */}
                 <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3">
                     <div className="flex h-full items-center gap-3">
-                        <Link href="/guide" className="right-nav-link button">Guide</Link>               
+                        <Link href="/market" className="right-nav-link button">Market</Link>               
                     </div>
 
                     <div className="flex h-full items-center gap-3">
@@ -99,6 +99,10 @@ export default function TopNav() {
                 <div className="md:hidden fixed top-16 right-[2.5%] w-[50%] z-49 bg-secondary rounded-sm">
                     {session ? (
                         <>
+                            <Link href="/market" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                                Market
+                            </Link>
+
                             <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Basket{basketCount > 0 && ` (${basketCount})`}
                             </Link>
@@ -120,6 +124,10 @@ export default function TopNav() {
                         </>
                     ) : (
                         <>
+                            <Link href="/market" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                                Market
+                            </Link>
+
                             <Link href="/login" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Login
                             </Link>
