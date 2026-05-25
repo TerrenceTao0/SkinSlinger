@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { amount, currency } = await req.json()
+    const { amount } = await req.json()
 
     if (!amount || amount < 1) {
         return NextResponse.json({ error: 'Minimum deposit is $1.00' }, { status: 400 })
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
             price_amount: amount,
             price_currency: 'usd',
-            pay_currency: currency,
+            pay_currency: 'usdcmatic',
             order_id: session.user.id,
             ipn_callback_url: `${process.env.NEXTAUTH_URL}/api/webhooks/nowpayments`,
         }),

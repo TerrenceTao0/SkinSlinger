@@ -17,7 +17,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { amount, address, currency } = await req.json()
+    const { amount, address } = await req.json()
+    const currency = 'usdcmatic'
 
     if (!amount || amount < MIN_WITHDRAWAL) {
         return NextResponse.json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL}.00` }, { status: 400 })

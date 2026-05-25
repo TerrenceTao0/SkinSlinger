@@ -2,17 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import Image from 'next/image'
 
 //
-
-const CURRENCIES = [
-    { id: "btc",        label: "BTC"           },
-    { id: "eth",        label: "ETH"           },
-    { id: "usdterc20",  label: "USDT (ERC-20)" },
-    { id: "usdttrc20",  label: "USDT (TRC-20)" },
-    { id: "sol",        label: "SOL"           },
-    { id: "ltc",        label: "LTC"           },
-]
 
 const WITHDRAWAL_FEE = 0.02
 
@@ -40,11 +32,10 @@ const STATUS_LABELS: Record<PaymentStatus, string> = {
 export default function FinanceClient() {
     const [view, setView] = useState<"menu" | "deposit-amount" | "payment" | "deposit-success" | "withdraw" | "withdraw-success">("menu")
     const [amountInput, setAmountInput] = useState("")
-    const [currency, setCurrency] = useState("btc")
     const [address, setAddress] = useState("")
     const [payment, setPayment] = useState<Payment | null>(null)
     const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("waiting")
-    const [withdrawResult, setWithdrawResult] = useState<{ cryptoAmount: number, currency: string } | null>(null)
+    const [withdrawResult, setWithdrawResult] = useState<{ cryptoAmount: number } | null>(null)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<"address" | "amount" | null>(null)
@@ -88,7 +79,7 @@ export default function FinanceClient() {
         const res = await fetch('/api/create-deposit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount, currency }),
+            body: JSON.stringify({ amount }),
         })
 
         const data = await res.json()
@@ -127,7 +118,7 @@ export default function FinanceClient() {
         const res = await fetch('/api/withdraw', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount, address, currency }),
+            body: JSON.stringify({ amount, address }),
         })
 
         const data = await res.json()
@@ -153,7 +144,6 @@ export default function FinanceClient() {
         setAmountInput("")
         setAddress("")
         setError("")
-        setCurrency("btc")
         setView("menu")
     }
 
@@ -177,7 +167,7 @@ export default function FinanceClient() {
                 <div className="w-100 flex flex-col justify-center items-center bg-secondary gap-4 frame-shadow rounded-[5px] p-8">
                     <p className="text-lg font-medium">Withdrawal initiated!</p>
                     <p className="text-sm text-gray-400 text-center">
-                        {withdrawResult.cryptoAmount} {withdrawResult.currency.toUpperCase()} is on its way to your wallet.
+                        {withdrawResult.cryptoAmount} USDC is on its way to your wallet.
                     </p>
                     <button className="bg-special w-40 h-10 rounded-[5px] button" onClick={reset}>Done</button>
                 </div>
@@ -192,7 +182,7 @@ export default function FinanceClient() {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px] flex flex-col gap-4">
-                    <p className="text-center text-lg font-medium">Send {payment.payCurrency.toUpperCase()}</p>
+                    <p className="text-center text-lg font-medium">Send USDC (Polygon)</p>
 
                     <div className="flex justify-center">
                         <QRCodeSVG value={payment.payAddress} size={160} bgColor="transparent" fgColor="white" />
@@ -206,7 +196,7 @@ export default function FinanceClient() {
                             </button>
                         </div>
                         <div className="flex items-center justify-between bg-primary rounded-sm px-3 py-2">
-                            <span className="text-sm">{payment.payAmount} {payment.payCurrency.toUpperCase()}</span>
+                            <span className="text-sm">{payment.payAmount} USDC</span>
                             <button onClick={() => copy(String(payment.payAmount), "amount")} className="text-xs text-special shrink-0 cursor-pointer">
                                 {copied === "amount" ? "Copied!" : "Copy"}
                             </button>
@@ -233,6 +223,10 @@ export default function FinanceClient() {
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
                     <form onSubmit={handleDeposit} className="flex flex-col gap-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <Image src="/usdc.png" alt="USDC" width={24} height={24} />
+                            <p className="text-sm text-gray-400">Deposit via USDC (Polygon Network)</p>
+                        </div>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                             <input
@@ -248,18 +242,7 @@ export default function FinanceClient() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                            {CURRENCIES.map(c => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => setCurrency(c.id)}
-                                    className={`h-10 rounded-sm text-sm button ${currency === c.id ? "bg-special" : "bg-accent"}`}
-                                >
-                                    {c.label}
-                                </button>
-                            ))}
-                        </div>
+                        <p className="text-xs text-yellow-500 text-center">Only send USDC on the Polygon network. Sending on any other network will result in permanent loss of funds.</p>
 
                         {error && <p className="text-red-400 text-sm">{error}</p>}
 
@@ -282,6 +265,10 @@ export default function FinanceClient() {
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
                     <form onSubmit={handleWithdraw} className="flex flex-col gap-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <Image src="/usdc.png" alt="USDC" width={24} height={24} />
+                            <p className="text-sm text-gray-400">Withdraw to USDC (Polygon Network)</p>
+                        </div>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                             <input
@@ -299,25 +286,12 @@ export default function FinanceClient() {
 
                         <input
                             type="text"
-                            placeholder="Wallet address"
+                            placeholder="Your USDC (Polygon) wallet address"
                             value={address}
                             onChange={e => setAddress(e.target.value)}
                             className="w-full px-3 py-2 bg-primary border border-gray-600 rounded-[5px] text-sm"
                             required
                         />
-
-                        <div className="grid grid-cols-2 gap-2">
-                            {CURRENCIES.map(c => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => setCurrency(c.id)}
-                                    className={`h-10 rounded-sm text-sm button ${currency === c.id ? "bg-special" : "bg-accent"}`}
-                                >
-                                    {c.label}
-                                </button>
-                            ))}
-                        </div>
 
                         {amount >= 5 && (
                             <div className="bg-primary rounded-sm px-3 py-2 flex flex-col gap-1 text-sm">
@@ -331,10 +305,12 @@ export default function FinanceClient() {
                                 </div>
                                 <div className="flex justify-between font-medium border-t border-gray-700 pt-1 mt-1">
                                     <span>You receive</span>
-                                    <span>${net.toFixed(2)}</span>
+                                    <span>${net.toFixed(2)} USDC</span>
                                 </div>
                             </div>
                         )}
+
+                        <p className="text-xs text-yellow-500 text-center">Make sure your wallet address is on the Polygon network. Withdrawals sent to the wrong network cannot be recovered.</p>
 
                         {error && <p className="text-red-400 text-sm">{error}</p>}
 
