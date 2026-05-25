@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     }
 
     const netAmount = amount * (1 - FEE_RATE)
+    const feeAmount = amount * FEE_RATE
     const usdcAmount = parseUnits(netAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
+    const usdcFee = parseUnits(feeAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
 
     try {
         const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
@@ -58,6 +60,13 @@ export async function POST(req: Request) {
             abi: erc20Abi,
             functionName: 'transfer',
             args: [address as `0x${string}`, usdcAmount],
+        })
+
+        await walletClient.writeContract({
+            address: process.env.USDC_ADDRESS as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'transfer',
+            args: [process.env.USDC_PROFIT_ADDRESS as `0x${string}`, usdcFee],
         })
 
         return NextResponse.json({ txHash, usdcAmount: netAmount })
