@@ -9,7 +9,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 //
 
 const FEE_RATE = 0.02
-const MIN_WITHDRAWAL = 5
+const MIN_WITHDRAWAL = 1
 const USDC_DECIMALS = 6
 
 //

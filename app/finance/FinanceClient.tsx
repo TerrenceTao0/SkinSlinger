@@ -129,8 +129,8 @@ export default function FinanceClient() {
 
         const amount = parseFloat(amountInput)
 
-        if (!amount || amount < 5) {
-            setError("Minimum withdrawal is $5.00")
+        if (!amount || amount < 1) {
+            setError("Minimum withdrawal is $1.00")
             return
         }
 
@@ -311,7 +311,7 @@ export default function FinanceClient() {
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                             <input
                                 type="number"
-                                min="5"
+                                min="1"
                                 step="0.01"
                                 placeholder="0.00"
                                 value={amountInput}
@@ -331,7 +331,7 @@ export default function FinanceClient() {
                             required
                         />
 
-                        {amount >= 5 && (
+                        {amount >= 1 && (
                             <div className="bg-primary rounded-sm px-3 py-2 flex flex-col gap-1 text-sm">
                                 <div className="flex justify-between text-gray-400">
                                     <span>Amount</span>
