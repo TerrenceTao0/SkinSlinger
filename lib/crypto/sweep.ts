@@ -44,7 +44,7 @@ export async function sweepUsdc(index: number, amountUsdc: bigint): Promise<`0x$
                 amountUsdc,
             ],
         }),
-        value: 0n,
+        value: BigInt(0),
     })
 
     return txHash

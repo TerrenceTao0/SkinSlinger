@@ -25,10 +25,10 @@ export async function GET(req: Request) {
     const counter = await prisma.deposit_counter.upsert({
         where: { id: 'global' },
         update: {},
-        create: { id: 'global', value: 0, lastBlock: currentBlock },
+        create: { id: 'global', value: 0, lastBlock: currentBlock as bigint },
     })
 
-    const fromBlock = counter.lastBlock > 0n ? counter.lastBlock + 1n : currentBlock - 100n
+    const fromBlock = counter.lastBlock > BigInt(0) ? counter.lastBlock + BigInt(1) : currentBlock - BigInt(100)
 
     // Get all pending deposits that haven't expired
     const pending = await prisma.crypto_deposit.findMany({
@@ -60,11 +60,11 @@ export async function GET(req: Request) {
         const deposit = pending.find(d => d.address.toLowerCase() === log.args.to?.toLowerCase())
         if (!deposit) continue
 
-        const received = log.args.value ?? 0n
+        const received = log.args.value ?? BigInt(0)
         const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
 
         // Accept if received amount is within 1% of expected (handles rounding)
-        if (received < expected * 99n / 100n) continue
+        if (received < expected * BigInt(99) / BigInt(100)) continue
 
         // Mark confirmed and sweep
         await prisma.crypto_deposit.update({

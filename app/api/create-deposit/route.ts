@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const counter = await prisma.deposit_counter.upsert({
         where: { id: 'global' },
         update: { value: { increment: 1 } },
-        create: { id: 'global', value: 1, lastBlock: 0n },
+        create: { id: 'global', value: 1, lastBlock: BigInt(0) },
     })
 
     const index = counter.value
