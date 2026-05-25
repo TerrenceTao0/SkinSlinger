@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -58,7 +59,10 @@ function PaymentForm({ amountCents }: { amountCents: number }) {
 //
 
 export default function FinanceClient() {
-    const [view, setView] = useState<"menu" | "amount" | "payment" | "success">("menu")
+    const searchParams = useSearchParams()
+    const [view, setView] = useState<"menu" | "amount" | "payment" | "success">(
+        searchParams.get('redirect_status') === 'succeeded' ? 'success' : 'menu'
+    )
     const [amountInput, setAmountInput] = useState("")
     const [amountCents, setAmountCents] = useState(0)
     const [clientSecret, setClientSecret] = useState("")
@@ -66,10 +70,7 @@ export default function FinanceClient() {
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search)
-
-        if (params.get('redirect_status') === 'succeeded') {
-            setView("success")
+        if (searchParams.get('redirect_status') === 'succeeded') {
             window.history.replaceState({}, '', '/finance')
         }
     }, [])
