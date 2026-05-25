@@ -102,11 +102,22 @@ model verificationToken {
   @@unique([identifier, token])
 }
 
-model deposit {
-  id        String   @id // NOWPayments payment_id — used as idempotency key
+model crypto_deposit {
+  id        String   @id @default(cuid())
   userId    String
-  amount    Float
+  address   String   @unique
+  index     Int      @unique
+  amountUsdc Float
+  status    String   @default("pending") // pending | confirmed | swept | expired
+  txHash    String?
+  expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model deposit_counter {
+  id        String @id
+  value     Int    @default(0)
+  lastBlock BigInt @default(0)
 }
 
 model item {

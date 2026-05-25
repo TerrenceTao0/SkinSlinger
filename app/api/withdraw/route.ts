@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { createWalletClient, http, erc20Abi, parseUnits } from 'viem'
+import { polygon } from 'viem/chains'
+import { privateKeyToAccount } from 'viem/accounts'
 
 //
 
-const FEE_RATE = 0.02 // 2%
+const FEE_RATE = 0.02
 const MIN_WITHDRAWAL = 5
+const USDC_DECIMALS = 6
 
 //
 
@@ -18,7 +22,6 @@ export async function POST(req: Request) {
     }
 
     const { amount, address } = await req.json()
-    const currency = 'usdcmatic'
 
     if (!amount || amount < MIN_WITHDRAWAL) {
         return NextResponse.json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL}.00` }, { status: 400 })
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
     }
 
-    // Deduct balance atomically — updateMany returns count 0 if balance insufficient
+    // Deduct balance atomically
     const updated = await prisma.user.updateMany({
         where: { id: session.user.id, cash: { gte: amount } },
         data: { cash: { decrement: amount } },
@@ -38,56 +41,28 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
     }
 
-    const netUsd = amount * (1 - FEE_RATE)
+    const netAmount = amount * (1 - FEE_RATE)
+    const usdcAmount = parseUnits(netAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
 
     try {
-        // Get crypto amount estimate
-        const estimateRes = await fetch(
-            `https://api.nowpayments.io/v1/estimate?amount=${netUsd}&currency_from=usd&currency_to=${currency}`,
-            { headers: { 'x-api-key': process.env.NOWPAYMENTS_API_KEY! } }
-        )
+        const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
 
-        if (!estimateRes.ok) throw new Error('Failed to get exchange rate')
-
-        const { estimated_amount: cryptoAmount } = await estimateRes.json()
-
-        // Authenticate with NOWPayments to get JWT for payouts
-        const authRes = await fetch('https://api.nowpayments.io/v1/auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: process.env.NOWPAYMENTS_EMAIL!,
-                password: process.env.NOWPAYMENTS_PASSWORD!,
-            }),
+        const walletClient = createWalletClient({
+            account,
+            chain: polygon,
+            transport: http(process.env.ALCHEMY_POLYGON_RPC!),
         })
 
-        if (!authRes.ok) throw new Error('Payment provider auth failed')
-
-        const { token } = await authRes.json()
-
-        // Create payout
-        const payoutRes = await fetch('https://api.nowpayments.io/v1/payout', {
-            method: 'POST',
-            headers: {
-                'x-api-key': process.env.NOWPAYMENTS_API_KEY!,
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ipn_callback_url: `${process.env.NEXTAUTH_URL}/api/webhooks/nowpayments`,
-                withdrawals: [{ address, currency, amount: cryptoAmount }],
-            }),
+        const txHash = await walletClient.writeContract({
+            address: process.env.USDC_ADDRESS as `0x${string}`,
+            abi: erc20Abi,
+            functionName: 'transfer',
+            args: [address as `0x${string}`, usdcAmount],
         })
 
-        if (!payoutRes.ok) {
-            const err = await payoutRes.json()
-            throw new Error(err.message ?? 'Payout failed')
-        }
-
-        return NextResponse.json({ cryptoAmount, currency })
-    }
-    catch (err) {
-        // Refund the deducted balance
+        return NextResponse.json({ txHash, usdcAmount: netAmount })
+    } catch (err) {
+        // Refund on failure
         await prisma.user.update({
             where: { id: session.user.id },
             data: { cash: { increment: amount } },

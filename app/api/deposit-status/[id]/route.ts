@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { completeDeposit } from '@/lib/completeDeposit'
+import { prisma } from '@/lib/db'
+
+//
+
+// Maps DB status to the labels FinanceClient expects
+const STATUS_MAP: Record<string, string> = {
+    pending:   'waiting',
+    confirmed: 'confirming',
+    swept:     'finished',
+    expired:   'expired',
+}
 
 //
 
@@ -14,23 +24,23 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params
 
-    const res = await fetch(`https://api.nowpayments.io/v1/payment/${id}`, {
-        headers: { 'x-api-key': process.env.NOWPAYMENTS_API_KEY! },
+    // id is the deposit address
+    const deposit = await prisma.crypto_deposit.findUnique({
+        where: { address: id },
     })
 
-    if (!res.ok) {
+    if (!deposit || deposit.userId !== session.user.id) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const data = await res.json()
-
-    if (data.payment_status === 'finished') {
-        await completeDeposit(
-            String(data.payment_id),
-            session.user.id,
-            data.price_amount as number,
-        )
+    // Mark expired if past expiry and still pending
+    if (deposit.status === 'pending' && deposit.expiresAt < new Date()) {
+        await prisma.crypto_deposit.update({
+            where: { address: id },
+            data: { status: 'expired' },
+        })
+        return NextResponse.json({ status: 'expired' })
     }
 
-    return NextResponse.json({ status: data.payment_status })
+    return NextResponse.json({ status: STATUS_MAP[deposit.status] ?? deposit.status })
 }

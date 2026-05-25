@@ -110,7 +110,7 @@ export default function FinanceClient() {
         setSecondsLeft(20 * 60)
         setView("payment")
         setLoading(false)
-        startPolling(data.paymentId)
+        startPolling(data.payAddress)
         startTimer()
     }
 
@@ -225,9 +225,14 @@ export default function FinanceClient() {
                     </p>
 
                     {!isTerminal && (
-                        <p className={`text-center text-sm font-mono ${secondsLeft < 60 ? "text-red-400" : "text-gray-500"}`}>
-                            Expires in {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
-                        </p>
+                        <>
+                            <p className={`text-center text-sm font-mono ${secondsLeft < 60 ? "text-red-400" : "text-gray-500"}`}>
+                                Expires in {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
+                            </p>
+                            <p className="text-xs text-gray-600 text-center">
+                                20 minutes is more than enough time for transactions to confirm on Polygon. If you send the payment after the timer expires and it does not verify in time, you will not be refunded.
+                            </p>
+                        </>
                     )}
 
                     {isTerminal && (

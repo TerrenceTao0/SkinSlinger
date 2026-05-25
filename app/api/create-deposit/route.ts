@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { getDepositAddress } from '@/lib/crypto/account'
+
+//
+
+const EXPIRY_MINUTES = 20
 
 //
 
@@ -17,32 +23,29 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Minimum deposit is $1.00' }, { status: 400 })
     }
 
-    const res = await fetch('https://api.nowpayments.io/v1/payment', {
-        method: 'POST',
-        headers: {
-            'x-api-key': process.env.NOWPAYMENTS_API_KEY!,
-            'Content-Type': 'application/json',
+    // Atomically increment the deposit index counter
+    const counter = await prisma.deposit_counter.upsert({
+        where: { id: 'global' },
+        update: { value: { increment: 1 } },
+        create: { id: 'global', value: 1, lastBlock: 0n },
+    })
+
+    const index = counter.value
+    const address = await getDepositAddress(index)
+    const expiresAt = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000)
+
+    // USDC has 6 decimals — amount is USD which equals USDC 1:1
+    const amountUsdc = amount
+
+    await prisma.crypto_deposit.create({
+        data: {
+            userId: session.user.id,
+            address,
+            index,
+            amountUsdc,
+            expiresAt,
         },
-        body: JSON.stringify({
-            price_amount: amount,
-            price_currency: 'usd',
-            pay_currency: 'usdcmatic',
-            order_id: session.user.id,
-            ipn_callback_url: `${process.env.NEXTAUTH_URL}/api/webhooks/nowpayments`,
-        }),
     })
 
-    if (!res.ok) {
-        const err = await res.json()
-        return NextResponse.json({ error: err.message ?? 'Failed to create payment' }, { status: 500 })
-    }
-
-    const data = await res.json()
-
-    return NextResponse.json({
-        paymentId: data.payment_id,
-        payAddress: data.pay_address,
-        payAmount: data.pay_amount,
-        payCurrency: data.pay_currency,
-    })
+    return NextResponse.json({ depositId: address, payAddress: address, payAmount: amountUsdc })
 }
