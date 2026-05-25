@@ -39,15 +39,14 @@ const steps = [
     },
 ]
 
+const paymentMethods = ["Card", "Link", "Bank (UK/FIN)", "Google Pay"]
+
 //
 
 export default function Home() {
     return (
         <div className="overflow-y-auto h-full w-full no-scrollbar">
-
-            {/* Hero */}
-            <div className="flex flex-col justify-center items-center gap-6 px-4 pt-20 pb-16">
-
+            <div className="flex flex-col justify-center items-center gap-6 px-4 pt-35 pb-16">
                 <div className="flex flex-col items-center text-center gap-3">
                     <Image src="/logo.svg" alt="" width={60} height={60} />
                     <h1 className="text-4xl font-bold">SkinSlinger</h1>
@@ -55,6 +54,7 @@ export default function Home() {
                         The new P2P Steam skin marketplace. No bots, no middleman. Buy and sell directly with other players.
                     </p>
                 </div>
+
 
                 {/* Games */}
                 <div className="flex gap-3 text-sm flex-wrap justify-center">
@@ -66,17 +66,22 @@ export default function Home() {
                     ))}
                 </div>
 
+
                 {/* No trade hold callout */}
                 <div className="bg-secondary rounded-sm px-5 py-3 max-w-lg text-center text-sm text-gray-400">
-                    Items are sent directly between users - no bot, no 7-day trade hold. Only items without an active trade hold can be listed.
+                    Items are sent directly between users.
+                    <br />
+                    Only items without an active trade hold can be listed
                     <br />
                     Minimum price - $0.10
                 </div>
+
 
                 {/* Lowest fees callout */}
                 <div className="flex flex-col items-center text-center gap-1">
                     <p className="text-special font-semibold text-lg">The lowest fees in the market. Guaranteed.</p>
                 </div>
+
 
                 {/* Fee cards */}
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
@@ -86,10 +91,25 @@ export default function Home() {
                                 <Image src={icon} alt="" width={18} height={18} className="opacity-60 invert" />
                                 <span className="text-sm text-gray-400">{label}</span>
                             </div>
+
                             <span className="font-semibold text-special">{value}</span>
                         </div>
                     ))}
                 </div>
+
+
+                {/* Payment methods */}
+                <div className="flex flex-col items-center gap-2">
+                    <p className="text-xs text-gray-500 uppercase tracking-widest">Payment Methods</p>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                        {paymentMethods.map(method => (
+                            <span key={method} className="bg-accent text-gray-400 text-xs px-3 py-1 rounded-sm">
+                                {method}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
 
                 {/* CTA */}
                 <div className="flex gap-3">
@@ -98,17 +118,24 @@ export default function Home() {
                             Browse Market
                         </button>
                     </Link>
+
                     <Link href="/sign-up">
-                        <button className="button bg-accent px-8 h-11 rounded-sm font-medium">
+                        <button className="button bg-special px-8 h-11 rounded-sm font-medium">
                             Sign Up
                         </button>
                     </Link>
                 </div>
 
+
+                {/* Scroll hint */}
+                <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce mt-7">
+                    <Image src="/arrow-down.svg" alt="Scroll Down" height={40} width={40} className="invert" />
+                </div>
             </div>
 
+
             {/* Infographic */}
-            <div className="w-full max-w-lg mx-auto px-4 pb-16 mt-15">
+            <div className="w-full max-w-lg mx-auto px-4 pb-16">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
 
                 <div className="flex flex-col gap-3">

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         const paymentIntent = await stripe.paymentIntents.create({
             amount,
             currency: 'usd',
-            payment_method_types: ['card', 'link'],
+            automatic_payment_methods: { enabled: true },
             metadata: { userId: session.user.id },
         })
 
