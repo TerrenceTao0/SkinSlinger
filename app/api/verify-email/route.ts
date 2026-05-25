@@ -27,10 +27,19 @@ export async function GET(request: Request) {
             },
         });
 
+        await prisma.pendingAccount.delete({ where: { token } });
 
-        await prisma.pendingAccount.delete({ where: { token } })
+        const autoLoginToken = crypto.randomUUID();
+        await prisma.verificationToken.create({
+            data: {
+                identifier: pendingAccount.email,
+                token: autoLoginToken,
+                expires: new Date(Date.now() + 5 * 60 * 1000),
+            },
+        });
 
-        return Response.redirect(`${process.env.NEXTAUTH_URL}/login`, 302)
+        const dest = `${process.env.NEXTAUTH_URL}/verify-success?token=${autoLoginToken}&email=${encodeURIComponent(pendingAccount.email)}`;
+        return Response.redirect(dest, 302)
     } 
     catch (error) {
         console.error(error);

@@ -10,6 +10,8 @@ const GAME_APP_IDS: Record<string, string> = {
     Rust: "252490",
 }
 
+//
+
 async function checkInventory(steamId: string, game: string | null, assetId: string): Promise<InventoryResult> {
     try {
         const appId = game ? (GAME_APP_IDS[game] ?? "730") : "730";
@@ -40,8 +42,10 @@ async function completePurchase(id: string, sellerId: string, price: number) {
 
 export async function GET(req: Request) {
     const secret = process.env.CRON_SECRET;
+    
     if (secret) {
         const auth = req.headers.get("authorization");
+
         if (auth !== `Bearer ${secret}`) {
             return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -63,7 +67,9 @@ export async function GET(req: Request) {
 
         for (const p of active) {
             if (!p.buyer.steam_id) continue;
+
             const result = await checkInventory(p.buyer.steam_id, p.game, p.assetId);
+
             if (result === "has_item" || result === "private") {
                 await completePurchase(p.id, p.sellerId, p.price);
                 completed++;
@@ -75,6 +81,8 @@ export async function GET(req: Request) {
     }
     catch (error) {
         console.error(error);
+
         return Response.json({ error: "Server error" }, { status: 500 });
     }
 }
+

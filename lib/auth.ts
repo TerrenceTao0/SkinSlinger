@@ -79,9 +79,24 @@ export const authOptions: NextAuthOptions = {
                 user: { label: "Username/Email", type: "text" },
                 password: { label: "Password", type: "password" },
                 code: { label: "Code", type: "text" },
+                autoLoginToken: { label: "Auto Login Token", type: "text" },
             },
 
             async authorize(credentials) {
+                // Auto-login after email verification
+                if (credentials?.autoLoginToken && credentials?.user) {
+                    const entry = await prisma.verificationToken.findUnique({
+                        where: { identifier_token: { identifier: credentials.user, token: credentials.autoLoginToken } }
+                    });
+                    if (!entry || entry.expires < new Date()) return null;
+                    await prisma.verificationToken.delete({
+                        where: { identifier_token: { identifier: credentials.user, token: credentials.autoLoginToken } }
+                    });
+                    const user = await prisma.user.findUnique({ where: { email: credentials.user } });
+                    if (!user) return null;
+                    return { id: user.id, email: user.email ?? undefined, username: user.username ?? undefined, cash: user.cash };
+                }
+
                 if (!credentials?.user || !credentials?.password) {
                     return null;
                 }

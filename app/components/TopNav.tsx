@@ -32,7 +32,9 @@ export default function TopNav() {
 
                 {/* Desktop nav */}
                 <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm">
-                    <div className="flex justify-center items-center h-full" />
+                    <div className="flex justify-center items-center h-full">
+                        <Link href="/guide" className="right-nav-link button">Guide</Link>               
+                    </div>
 
                     <div className="flex h-full">
                         {session && (
@@ -48,8 +50,10 @@ export default function TopNav() {
                                 <Link href="/basket" className="right-nav-link button">
                                     Basket{basketCount > 0 && ` (${basketCount})`}
                                 </Link>
+                                
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
                                 <Link href="/inventory" className="right-nav-link button">Inventory</Link>
+
                                 <button className="right-nav-link button" onClick={() => signOut({ callbackUrl: '/' })}>
                                     Log out
                                 </button>
