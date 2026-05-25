@@ -4,15 +4,22 @@ import { prisma } from "@/lib/db";
 
 type InventoryResult = "has_item" | "no_item" | "private";
 
+const GAME_APP_IDS: Record<string, string> = {
+    CS2: "730",
+    Dota2: "570",
+    Rust: "252490",
+}
+
 async function checkInventory(steamId: string, game: string | null, assetId: string): Promise<InventoryResult> {
     try {
-        const appId = game ?? "730";
+        const appId = game ? (GAME_APP_IDS[game] ?? "730") : "730";
+        const rawAssetId = assetId.includes(":") ? assetId.split(":")[1] : assetId;
         const url = `https://steamcommunity.com/inventory/${steamId}/${appId}/2?l=english&count=5000`;
         const res = await fetch(url);
         if (!res.ok) return "private";
         const data = await res.json();
         if (data?.success !== 1) return "private";
-        return data?.assets?.some((a: { assetid: string }) => a.assetid === assetId) ? "has_item" : "no_item";
+        return data?.assets?.some((a: { assetid: string }) => a.assetid === rawAssetId) ? "has_item" : "no_item";
     }
     catch {
         return "private";
