@@ -1,8 +1,8 @@
 "use client"
 
 import { SteamItem } from '@/lib/steam';
-import Image from "next/image";
 import { useState } from 'react';
+import SellItemCard from './SellItemCard';
 
 //
 
@@ -73,64 +73,6 @@ function ListPrompt(
         </div>
     )
 }
-
-
-function ItemCard({market_name, quantity, icon, hexColor, priceStr, setPriceStr, remove}: {
-    market_name: string, quantity: number, icon: string, hexColor: string,
-    priceStr: string, setPriceStr: (val: string) => void, remove: () => void
-}) {
-    return (
-        <div className="bg-accent h-50 w-[95%] mt-3 mb-3 ml-2.25 rounded-sm relative">
-            <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-10">
-                <h1 className="text-1xl w-30" style={{ color: `#${hexColor}` }}>
-                    {market_name}
-                </h1>
-
-                <h1 className="text-1xl">
-                    x{quantity}
-                </h1>
-            </div>
-
-            <br></br>
-
-            <div className="flex justify-center items-center pt-1 z-0" style={{ filter: `drop-shadow(0 0 8px #${hexColor}99)` }}>
-                <Image
-                    src={icon}
-                    alt="Failed To Load"
-                    style={{ width: 'auto'}}
-                    width={100}
-                    height={100}
-                />
-            </div>
-
-            <div className="px-2 flex justify-between items-center">
-                <span className="text-[15px] opacity-70">Price</span>
-                <input
-                    type="number"
-                    min={0.01}
-                    step={0.01}
-                    value={priceStr}
-                    placeholder="0.00"
-                    onChange={e => {
-                        const val = e.target.value;
-                        if (val === "" || parseFloat(val) >= 0) setPriceStr(val);
-                    }}
-                    className="bg-accent rounded-sm w-20 h-8 text-center outline-none border border-gray-500 text-[15px]"
-                />
-            </div>
-
-            <div className="flex justify-end w-full absolute bottom-0">
-                <button
-                    className="w-full bg-remove h-7 flex justify-center items-center cursor-pointer text-[13px] button rounded-sm"
-                    onClick={remove}
-                >
-                    REMOVE
-                </button>
-            </div>
-        </div>
-    )
-}
-
 
 export default function RightPanel({ selling, setSelling, onListed }: {
     selling: SteamItem[],
@@ -205,7 +147,7 @@ export default function RightPanel({ selling, setSelling, onListed }: {
             )}
 
             <div className="fixed w-[95%] left-[2.5%] flex justify-end">
-                <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute">
+                <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute rounded-sm">
                     {stackedQueue.length > 0 && (
                         <div className="w-full flex ml-2 mt-2">
                             <p className="text-3xl">
@@ -216,7 +158,7 @@ export default function RightPanel({ selling, setSelling, onListed }: {
 
                     <div className="space-y-3">
                         {stackedQueue.map((item) => (
-                            <ItemCard
+                            <SellItemCard
                                 key={item.market_name}
                                 market_name={item.market_name}
                                 quantity={item.quantity}
@@ -231,7 +173,7 @@ export default function RightPanel({ selling, setSelling, onListed }: {
                 </div>
 
                 <button
-                    className={`mt-210 transition-all overflow-y-auto h-20 w-95 ${stackedQueue.length > 0 ? "bg-special" : "bg-accent"} absolute flex justify-center items-center cursor-pointer`}
+                    className={`mt-210 rounded-sm transition-all overflow-y-auto h-20 w-95 ${stackedQueue.length > 0 ? "bg-special" : "bg-accent"} absolute flex justify-center items-center cursor-pointer`}
                     onClick={() => setShowPrompt(true)}
                 >
                     SELL ITEMS

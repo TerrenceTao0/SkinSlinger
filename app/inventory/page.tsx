@@ -4,6 +4,12 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { getInventory } from '@/lib/steam'
 import { SteamItem } from "@/lib/steam";
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'My Inventory',
+    robots: { index: false, follow: false },
+}
 
 import InventoryClient from "./InventoryClient";
 

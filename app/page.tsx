@@ -2,6 +2,20 @@ import { prisma } from "@/lib/db";
 import HomeClient from "./components/HomeClient";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import type { Metadata } from 'next'
+import '@stripe/stripe-js';
+
+//
+
+export const metadata: Metadata = {
+    title: 'Steam Skin Marketplace',
+    description: 'Browse CS2, Dota 2, and Rust skins listed by real players. Buy at fair prices with no middleman.',
+    openGraph: {
+        title: 'SkinSlinger — Steam Skin Marketplace',
+        description: 'Browse CS2, Dota 2, and Rust skins listed by real players. Buy at fair prices with no middleman.',
+        url: '/',
+    },
+}
 
 //
 

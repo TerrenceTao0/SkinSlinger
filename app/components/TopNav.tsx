@@ -25,7 +25,7 @@ export default function TopNav() {
 
     return (
         <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
-            <div className="w-43 h-full flex justify-center items-center bg-secondary">
+            <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm">
                 <Link href="/">
                     <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
                         SkinSlinger
@@ -33,7 +33,7 @@ export default function TopNav() {
                 </Link>
             </div>
 
-            <div className="flex-1 h-full flex justify-between items-center bg-secondary ml-3">
+            <div className="flex-1 h-full flex justify-between items-center bg-secondary ml-3 rounded-sm">
                 <div className="flex justify-center items-center h-full">
                     
                 </div>
@@ -42,7 +42,7 @@ export default function TopNav() {
                     {session && (
                         <Link href="/finance">
                             <button 
-                            className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button"
+                                className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button"
                             >
                                 ${session.user.cash?.toFixed(2)}
                             </button>

@@ -17,7 +17,7 @@ export default function LeftPanel({ gameFilter, setGameFilter }: {
 
     return (
         <div className="fixed w-[95%] left-[2.5%] flex">
-            <div className="mt-20 h-210 w-43 bg-secondary absolute flex flex-col">
+            <div className="mt-20 h-210 w-43 bg-secondary absolute flex flex-col rounded-sm">
                 {options.map(({ label, value }) => (
                     <button
                         key={value}

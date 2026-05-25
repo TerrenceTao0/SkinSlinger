@@ -2,6 +2,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import BasketClient from "./BasketClient";
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+    title: 'Basket',
+    robots: { index: false, follow: false },
+}
 
 //
 

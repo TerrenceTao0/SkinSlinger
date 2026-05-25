@@ -1,5 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /inventory
+Disallow: /orders
+Disallow: /basket
+Disallow: /finance
+Disallow: /reset-password
+Disallow: /status
+Disallow: /api/
+
+Sitemap: /sitemap.xml
 
 User-agent: GPTBot
 Disallow: /

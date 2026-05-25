@@ -39,7 +39,7 @@ function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
 
             {/* Ask for Trade Url */}
             <form
-                className="flex flex-col gap-1 rounded-[5px] text-center w-96 h-80 mt-5 z-6 bg-secondary frame-shadow"
+                className="flex flex-col gap-1 rounded-[5px] text-center w-96 h-80 mt-5 z-6 bg-secondary rounded-sm frame-shadow"
                 onSubmit={onSubmit}
             >
                 <p className="mt-10 text-2xl">Enter your Steam Trade Url</p>
@@ -169,6 +169,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
         return () => controller.abort();
     }, []);
 
+
     function checkUrl(event: React.ChangeEvent<HTMLInputElement>) {
         const url = event.target.value;
         setUrl(url);
@@ -199,8 +200,8 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                 body: JSON.stringify({ url }),
             });
 
-            const data = await response.json();
 
+            const data = await response.json();
 
             if (!response.ok) {
                 if (data.error) router.push(`/status?message=${data.error}`);
@@ -234,26 +235,34 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
 
             if (item.commodity) {
                 const existing = commodityMap.get(item.market_name);
+
                 if (existing) {
                     existing.quantity += 1;
-                } else {
+                } 
+                else {
                     const entry = { ...itemWithPrice, quantity: 1 };
                     commodityMap.set(item.market_name, entry);
                     result.push(entry);
                 }
-            } else {
+            } 
+            else {
                 result.push({ ...itemWithPrice, quantity: 1 });
             }
         }
 
         return result.sort((a, b) => b.price - a.price);
     })();
+
+
     const totalValue = stackedInventory.reduce((sum, item) => {
         const priceState = livePrices.get(item.market_name);
+
         if (priceState === null) return sum;
+
         return sum + item.price * item.quantity;
     }, 0);
 
+    
     return (
         <>
             <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
@@ -266,7 +275,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                     ) : (
                         <div>
                             {/* Top info bar */}
-                            <div className="bg-secondary w-310 h-18 mt-13 absolute flex items-center px-6">
+                            <div className="bg-secondary w-310 h-18 mt-13 absolute flex items-center px-6 rounded-sm">
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-center">
                                         <span className="text-[11px] uppercase tracking-widest opacity-50">
@@ -302,7 +311,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
 
 
                             {/* Item display */}
-                            <div className="bg-secondary w-310 mr-30 overflow-y-auto h-190 mt-34 grid grid-cols-6 justify-start content-start gap-2 p-3">
+                            <div className="bg-secondary w-310 mr-30 overflow-y-auto h-190 mt-34 grid grid-cols-6 justify-start content-start gap-2 p-3 rounded-sm">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
                                     const remaining = item.quantity - currentAmount
