@@ -45,7 +45,8 @@ export async function GET(req: Request) {
 
     const pendingAddresses = pending.map(d => d.address as `0x${string}`)
 
-    // Check for USDC transfers to any pending deposit address
+    console.log(`[process-deposits] scanning blocks ${fromBlock} to ${currentBlock}, watching ${pendingAddresses.length} addresses:`, pendingAddresses)
+
     const logs = await client.getLogs({
         address: USDC_ADDRESS,
         event: TRANSFER_EVENT,
@@ -53,6 +54,8 @@ export async function GET(req: Request) {
         fromBlock,
         toBlock: currentBlock,
     })
+
+    console.log(`[process-deposits] found ${logs.length} matching logs`)
 
     let processed = 0
 
