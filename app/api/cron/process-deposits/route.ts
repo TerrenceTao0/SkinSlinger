@@ -30,10 +30,14 @@ export async function GET(req: Request) {
 
     const fromBlock = counter.lastBlock > BigInt(0) ? counter.lastBlock + BigInt(1) : currentBlock - BigInt(100)
 
+    console.warn(`[deposits] blocks ${fromBlock}→${currentBlock}`)
+
     // Get all pending deposits that haven't expired
     const pending = await prisma.crypto_deposit.findMany({
         where: { status: 'pending', expiresAt: { gt: new Date() } },
     })
+
+    console.warn(`[deposits] ${pending.length} pending deposits:`, pending.map(d => d.address))
 
     if (pending.length === 0) {
         await prisma.deposit_counter.update({
@@ -45,8 +49,6 @@ export async function GET(req: Request) {
 
     const pendingAddresses = pending.map(d => d.address as `0x${string}`)
 
-    console.log(`[process-deposits] scanning blocks ${fromBlock} to ${currentBlock}, watching ${pendingAddresses.length} addresses:`, pendingAddresses)
-
     const logs = await client.getLogs({
         address: USDC_ADDRESS,
         event: TRANSFER_EVENT,
@@ -55,7 +57,7 @@ export async function GET(req: Request) {
         toBlock: currentBlock,
     })
 
-    console.log(`[process-deposits] found ${logs.length} matching logs`)
+    console.warn(`[deposits] found ${logs.length} matching transfer logs`)
 
     let processed = 0
 
@@ -66,8 +68,13 @@ export async function GET(req: Request) {
         const received = log.args.value ?? BigInt(0)
         const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
 
+        console.warn(`[deposits] deposit ${deposit.id}: received ${received}, expected ${expected}`)
+
         // Accept if received amount is within 1% of expected (handles rounding)
-        if (received < expected * BigInt(99) / BigInt(100)) continue
+        if (received < expected * BigInt(99) / BigInt(100)) {
+            console.warn(`[deposits] deposit ${deposit.id}: amount too low, skipping`)
+            continue
+        }
 
         // Mark confirmed and sweep
         await prisma.crypto_deposit.update({
@@ -75,8 +82,12 @@ export async function GET(req: Request) {
             data: { status: 'confirmed', txHash: log.transactionHash },
         })
 
+        console.warn(`[deposits] deposit ${deposit.id}: confirmed, attempting sweep`)
+
         try {
             const sweepTx = await sweepUsdc(deposit.index, received)
+
+            console.warn(`[deposits] deposit ${deposit.id}: sweep tx ${sweepTx}`)
 
             await prisma.$transaction([
                 prisma.crypto_deposit.update({
@@ -91,7 +102,7 @@ export async function GET(req: Request) {
 
             processed++
         } catch (err) {
-            console.error(`[process-deposits] sweep failed for deposit ${deposit.id}:`, err)
+            console.warn(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
             // Leave as 'confirmed' — will retry on next cron run
         }
     }
