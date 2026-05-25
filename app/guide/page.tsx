@@ -14,17 +14,17 @@ export default function Guide() {
                 <div className="text-[15px] w-full">
                     <div className="flex justify-between w-full">
                         <p>Sales Fee:</p>
-                        <p className="text-green-400">0%</p>
+                        <p className="text-special">0%</p>
                     </div>
 
                     <div className="flex justify-between w-full">
                         <p>Deposit Fee:</p>
-                        <p className="text-green-400">0%</p>
+                        <p className="text-special">0%</p>
                     </div>
 
                     <div className="flex justify-between w-full">
                         <p>Withdrawal Fee (Stripe):</p>
-                        <p className="text-green-400">2.9% + $0.50 Flat</p>
+                        <p className="text-special">2.9% + $0.50 Flat</p>
                     </div>
                 </div>
 

@@ -155,7 +155,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                     <div className="flex justify-between">
                         <p className="opacity-60">Fees</p>
 
-                        <p className="text-green-400">0%</p>
+                        <p className="text-special">0%</p>
                     </div>
 
                     <div className="border-t border-white/10" />

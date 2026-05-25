@@ -310,8 +310,8 @@ export default function HomeClient(
             )}
 
             {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full pt-[108px]">
-                <div className="bg-secondary h-14 flex items-center px-4 shrink-0">
+            <div className="md:hidden flex flex-col h-full pt-[108px] w-[95%] mx-auto">
+                <div className="bg-secondary h-14 flex items-center px-4 shrink-0 rounded-sm">
                     <input
                         type="text"
                         placeholder="Search items..."
@@ -321,7 +321,7 @@ export default function HomeClient(
                     />
                 </div>
 
-                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3">
+                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
                         {displayListings.map(listing => (
                             <ListingCard

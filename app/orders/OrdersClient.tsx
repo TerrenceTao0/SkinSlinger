@@ -70,7 +70,7 @@ function groupPurchases(purchases: Purchase[]): PurchaseGroup[] {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
     pending:    { label: "Awaiting trade offer", color: "text-yellow-400" },
     offer_sent: { label: "Trade offer sent",     color: "text-blue-400"   },
-    completed:  { label: "Completed",            color: "text-green-400"  },
+    completed:  { label: "Completed",            color: "text-special"  },
 };
 
 //
@@ -254,7 +254,7 @@ function NextCheckTimer() {
     return (
         <div className="flex flex-col gap-1">
             <p className="opacity-60 text-lg">Next inventory check in {m}:{s.toString().padStart(2, "0")}</p>
-            <p className="opacity-40 text-sm">If your inventory is privated, we will assume the trade has been completed successfully.</p>
+            <p className="opacity-40 text-sm">If the buyer has their inventory set to private, we will assume the buyer has received the items successfully.</p>
         </div>
     );
 }

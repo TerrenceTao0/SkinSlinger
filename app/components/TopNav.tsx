@@ -13,11 +13,15 @@ export default function TopNav() {
     const [menuOpen, setMenuOpen] = useState(false);
 
     let basketCount = 0
+
     for (let i = 0; i < basket.length; i++) {
         const item = basket[i];
+
         if ("quantity" in item) basketCount += item.quantity;
+
         else basketCount += 1;
     }
+
 
     return (
         <>
@@ -30,25 +34,24 @@ export default function TopNav() {
                     </Link>
                 </div>
 
+
                 {/* Desktop nav */}
-                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm">
-                    <div className="flex justify-center items-center h-full">
+                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3">
+                    <div className="flex h-full items-center gap-3">
                         <Link href="/guide" className="right-nav-link button">Guide</Link>               
                     </div>
 
-                    <div className="flex h-full">
-                        {session && (
-                            <Link href="/finance">
-                                <button className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button">
-                                    ${session.user.cash?.toFixed(2)}
-                                </button>
-                            </Link>
-                        )}
-
+                    <div className="flex h-full items-center gap-3">
                         {session ? (
                             <>
+                                <Link href="/finance" className="h-full flex items-center">
+                                    <button className="h-[80%] flex items-center justify-center w-20 bg-special button rounded-sm">
+                                        ${session.user.cash?.toFixed(2)}
+                                    </button>
+                                </Link>
+
                                 <Link href="/basket" className="right-nav-link button">
-                                    Basket{basketCount > 0 && ` (${basketCount})`}
+                                    Basket{basketCount > 0 && `(${basketCount})`}
                                 </Link>
                                 
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
@@ -67,8 +70,9 @@ export default function TopNav() {
                     </div>
                 </div>
 
+
                 {/* Mobile nav */}
-                <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3">
+                <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3 w-[20%]">
                     {session && (
                         <Link href="/finance">
                             <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
@@ -79,30 +83,34 @@ export default function TopNav() {
 
                     <button
                         onClick={() => setMenuOpen(!menuOpen)}
-                        className="flex flex-col gap-[5px] p-2 cursor-pointer"
+                        className="flex flex-col gap-1.25 p-2 cursor-pointer"
                         aria-label="Menu"
                     >
-                        <span className="block w-5 h-[2px] bg-white" />
-                        <span className="block w-5 h-[2px] bg-white" />
-                        <span className="block w-5 h-[2px] bg-white" />
+                        <span className="block w-5 h-0.5 bg-white" />
+                        <span className="block w-5 h-0.5 bg-white" />
+                        <span className="block w-5 h-0.5 bg-white" />
                     </button>
                 </div>
             </nav>
 
+
             {/* Mobile dropdown */}
             {menuOpen && (
-                <div className="md:hidden fixed top-16 left-[2.5%] w-[95%] z-[49] bg-secondary rounded-sm">
+                <div className="md:hidden fixed top-16 right-[2.5%] w-[50%] z-49 bg-secondary rounded-sm">
                     {session ? (
                         <>
                             <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Basket{basketCount > 0 && ` (${basketCount})`}
                             </Link>
+
                             <Link href="/orders" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Orders
                             </Link>
+
                             <Link href="/inventory" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Inventory
                             </Link>
+
                             <button
                                 className="flex items-center px-4 h-12 w-full text-left button"
                                 onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false); }}
@@ -115,6 +123,7 @@ export default function TopNav() {
                             <Link href="/login" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Login
                             </Link>
+
                             <Link href="/sign-up" className="flex items-center px-4 h-12 button" onClick={() => setMenuOpen(false)}>
                                 Sign Up
                             </Link>
@@ -125,3 +134,4 @@ export default function TopNav() {
         </>
     )
 }
+

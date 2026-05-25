@@ -9,10 +9,10 @@
 @theme {
     --color-accent: #363636;
     --color-remove: #834a4a;
-    --color-special: #0077ff;
+    --color-special: #4C6B22;
     --color-less-special: #0088be;
     --color-secondary: #2c2c2c;
-    --color-primary: #1f1f1f;
+    --color-primary: #171A21;
     --font-sans: var(--font-inter);
 }
 
@@ -49,7 +49,7 @@ body {
 }
 
 .right-nav-link {
-    @apply w-40 h-full flex justify-center items-center
+    @apply w-30 flex h-[80%] justify-center items-center rounded-sm bg-accent
 }
 
 ::-webkit-scrollbar {
