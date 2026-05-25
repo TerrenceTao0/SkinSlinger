@@ -29,9 +29,6 @@ export async function sweepUsdc(index: number, amountUsdc: bigint): Promise<`0x$
         chain: polygon,
         bundlerTransport: http(`https://api.pimlico.io/v2/polygon/rpc?apikey=${process.env.PIMLICO_API_KEY}`),
         paymaster: pimlico,
-        paymasterContext: {
-            sponsorshipPolicyId: process.env.PIMLICO_SPONSORSHIP_POLICY_ID,
-        },
     })
 
     const txHash = await client.sendTransaction({
