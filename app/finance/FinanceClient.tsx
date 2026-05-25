@@ -42,7 +42,7 @@ function PaymentForm({ amountCents }: { amountCents: number }) {
             <p className="text-center text-lg font-medium mb-1">
                 Deposit ${(amountCents / 100).toFixed(2)}
             </p>
-            <PaymentElement options={{ layout: { type: 'accordion', defaultCollapsed: false, radios: 'never', spacedAccordionItems: true } }} />
+            <PaymentElement options={{ layout: 'tabs' }} />
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
             <button
                 type="submit"
@@ -67,19 +67,24 @@ export default function FinanceClient() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
+
         if (params.get('redirect_status') === 'succeeded') {
             setView("success")
             window.history.replaceState({}, '', '/finance')
         }
     }, [])
 
+    
     async function handleAmountSubmit(e: React.FormEvent) {
         e.preventDefault()
+
         const cents = Math.round(parseFloat(amountInput) * 100)
+
         if (!cents || cents < 100) {
             setError("Minimum deposit is $1.00")
             return
         }
+
 
         setLoading(true)
         setError("")
@@ -90,11 +95,14 @@ export default function FinanceClient() {
             body: JSON.stringify({ amount: cents }),
         })
 
+
         if (!res.ok) {
             setError("Failed to initialize payment")
             setLoading(false)
+
             return
         }
+
 
         const { clientSecret } = await res.json()
         setAmountCents(cents)
@@ -103,12 +111,19 @@ export default function FinanceClient() {
         setLoading(false)
     }
 
+
     if (view === "success") {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 h-60 flex flex-col justify-center items-center bg-secondary gap-4 frame-shadow rounded-[5px]">
-                    <p className="text-lg font-medium">Payment successful!</p>
-                    <p className="text-sm text-gray-400">Your balance will update shortly.</p>
+                    <p className="text-lg font-medium">
+                        Payment successful!
+                    </p>
+
+                    <p className="text-sm text-gray-400">
+                        Your balance will update shortly.
+                    </p>
+
                     <button
                         className="bg-special w-40 h-10 rounded-[5px] button"
                         onClick={() => setView("menu")}
@@ -120,26 +135,35 @@ export default function FinanceClient() {
         )
     }
 
+
     if (view === "amount") {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
-                    <form onSubmit={handleAmountSubmit} className="flex flex-col gap-3">
+                    <form 
+                        onSubmit={handleAmountSubmit} 
+                        className="flex flex-col gap-3"
+                    >
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+
                             <input
                                 type="number"
-                                min="1"
+                                min="5"
                                 step="0.01"
                                 placeholder="0.00"
                                 value={amountInput}
                                 onChange={e => setAmountInput(e.target.value)}
-                                className="w-full pl-7 pr-3 py-2 bg-primary border border-gray-600 rounded-[5px] text-white"
+                                className="w-full pl-7 pr-3 py-2 bg-primary border border-gray-600 rounded-[5px]"
                                 required
                                 autoFocus
                             />
                         </div>
-                        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                        {error && <p className="text-red-400 text-sm">
+                            {error}
+                        </p>}
+
                         <button
                             type="submit"
                             disabled={loading}
@@ -153,11 +177,12 @@ export default function FinanceClient() {
         )
     }
 
+
     if (view === "payment" && clientSecret) {
         return (
             <div className="h-full w-full flex justify-center items-center">
-                <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px] text-white">
-                    <Elements stripe={stripePromise} options={{ clientSecret, appearance: { rules: { '.Label': { color: '#ffffff' } } } }}>
+                <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
                         <PaymentForm amountCents={amountCents} />
                     </Elements>
                 </div>
@@ -165,9 +190,10 @@ export default function FinanceClient() {
         )
     }
 
+
     return (
         <div className="h-full w-full flex justify-center items-center">
-            <div className="w-100 h-30 flex justify-center items-center bg-secondary gap-5 frame-shadow">
+            <div className="w-100 h-30 flex justify-center items-center bg-secondary gap-5 frame-shadow rounded-sm">
                 <button
                     className="bg-special w-40 h-15 rounded-[5px] button"
                     onClick={() => setView("amount")}
