@@ -14,6 +14,8 @@ const CURRENCIES = [
     { id: "ltc",        label: "LTC"           },
 ]
 
+const WITHDRAWAL_FEE = 0.02
+
 type Payment = {
     paymentId: string
     payAddress: string
@@ -24,23 +26,25 @@ type Payment = {
 type PaymentStatus = "waiting" | "confirming" | "confirmed" | "finished" | "failed" | "expired" | "partially_paid"
 
 const STATUS_LABELS: Record<PaymentStatus, string> = {
-    waiting:         "Waiting for payment...",
-    confirming:      "Transaction detected — confirming...",
-    confirmed:       "Confirmed",
-    finished:        "Complete",
-    failed:          "Payment failed",
-    expired:         "Payment expired",
-    partially_paid:  "Partially paid — please send the full amount",
+    waiting:        "Waiting for payment...",
+    confirming:     "Transaction detected — confirming...",
+    confirmed:      "Confirmed",
+    finished:       "Complete",
+    failed:         "Payment failed",
+    expired:        "Payment expired",
+    partially_paid: "Partially paid — please send the full amount",
 }
 
 //
 
 export default function FinanceClient() {
-    const [view, setView] = useState<"menu" | "amount" | "payment" | "success">("menu")
+    const [view, setView] = useState<"menu" | "deposit-amount" | "payment" | "deposit-success" | "withdraw" | "withdraw-success">("menu")
     const [amountInput, setAmountInput] = useState("")
     const [currency, setCurrency] = useState("btc")
+    const [address, setAddress] = useState("")
     const [payment, setPayment] = useState<Payment | null>(null)
     const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("waiting")
+    const [withdrawResult, setWithdrawResult] = useState<{ cryptoAmount: number, currency: string } | null>(null)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<"address" | "amount" | null>(null)
@@ -60,7 +64,7 @@ export default function FinanceClient() {
                 setPaymentStatus(status)
                 if (status === "finished") {
                     clearInterval(pollRef.current!)
-                    setView("success")
+                    setView("deposit-success")
                 } else if (status === "failed" || status === "expired") {
                     clearInterval(pollRef.current!)
                 }
@@ -68,7 +72,7 @@ export default function FinanceClient() {
         }, 10000)
     }
 
-    async function handleSubmit(e: React.FormEvent) {
+    async function handleDeposit(e: React.FormEvent) {
         e.preventDefault()
 
         const amount = parseFloat(amountInput)
@@ -102,22 +106,80 @@ export default function FinanceClient() {
         startPolling(data.paymentId)
     }
 
+    async function handleWithdraw(e: React.FormEvent) {
+        e.preventDefault()
+
+        const amount = parseFloat(amountInput)
+
+        if (!amount || amount < 5) {
+            setError("Minimum withdrawal is $5.00")
+            return
+        }
+
+        if (!address.trim()) {
+            setError("Wallet address required")
+            return
+        }
+
+        setLoading(true)
+        setError("")
+
+        const res = await fetch('/api/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, address, currency }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+            setError(data.error ?? "Withdrawal failed")
+            setLoading(false)
+            return
+        }
+
+        setWithdrawResult(data)
+        setView("withdraw-success")
+        setLoading(false)
+    }
+
     function copy(text: string, type: "address" | "amount") {
         navigator.clipboard.writeText(text)
         setCopied(type)
         setTimeout(() => setCopied(null), 2000)
     }
 
+    function reset() {
+        setAmountInput("")
+        setAddress("")
+        setError("")
+        setCurrency("btc")
+        setView("menu")
+    }
 
-    if (view === "success") {
+
+    if (view === "deposit-success") {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 h-60 flex flex-col justify-center items-center bg-secondary gap-4 frame-shadow rounded-[5px]">
                     <p className="text-lg font-medium">Payment received!</p>
                     <p className="text-sm text-gray-400">Your balance will update shortly.</p>
-                    <button className="bg-special w-40 h-10 rounded-[5px] button" onClick={() => setView("menu")}>
-                        Done
-                    </button>
+                    <button className="bg-special w-40 h-10 rounded-[5px] button" onClick={reset}>Done</button>
+                </div>
+            </div>
+        )
+    }
+
+
+    if (view === "withdraw-success" && withdrawResult) {
+        return (
+            <div className="h-full w-full flex justify-center items-center">
+                <div className="w-100 flex flex-col justify-center items-center bg-secondary gap-4 frame-shadow rounded-[5px] p-8">
+                    <p className="text-lg font-medium">Withdrawal initiated!</p>
+                    <p className="text-sm text-gray-400 text-center">
+                        {withdrawResult.cryptoAmount} {withdrawResult.currency.toUpperCase()} is on its way to your wallet.
+                    </p>
+                    <button className="bg-special w-40 h-10 rounded-[5px] button" onClick={reset}>Done</button>
                 </div>
             </div>
         )
@@ -130,9 +192,7 @@ export default function FinanceClient() {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px] flex flex-col gap-4">
-                    <p className="text-center text-lg font-medium">
-                        Send {payment.payCurrency.toUpperCase()}
-                    </p>
+                    <p className="text-center text-lg font-medium">Send {payment.payCurrency.toUpperCase()}</p>
 
                     <div className="flex justify-center">
                         <QRCodeSVG value={payment.payAddress} size={160} bgColor="transparent" fgColor="white" />
@@ -158,10 +218,7 @@ export default function FinanceClient() {
                     </p>
 
                     {isTerminal && (
-                        <button
-                            onClick={() => { setView("amount"); setPayment(null) }}
-                            className="bg-accent w-full h-10 rounded-[5px] button text-sm"
-                        >
+                        <button onClick={() => { setView("deposit-amount"); setPayment(null) }} className="bg-accent w-full h-10 rounded-[5px] button text-sm">
                             Try again
                         </button>
                     )}
@@ -171,11 +228,11 @@ export default function FinanceClient() {
     }
 
 
-    if (view === "amount") {
+    if (view === "deposit-amount") {
         return (
             <div className="h-full w-full flex justify-center items-center">
                 <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <form onSubmit={handleDeposit} className="flex flex-col gap-4">
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                             <input
@@ -216,13 +273,88 @@ export default function FinanceClient() {
     }
 
 
+    if (view === "withdraw") {
+        const amount = parseFloat(amountInput) || 0
+        const fee = amount * WITHDRAWAL_FEE
+        const net = amount - fee
+
+        return (
+            <div className="h-full w-full flex justify-center items-center">
+                <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px]">
+                    <form onSubmit={handleWithdraw} className="flex flex-col gap-4">
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                            <input
+                                type="number"
+                                min="5"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={amountInput}
+                                onChange={e => setAmountInput(e.target.value)}
+                                className="w-full pl-7 pr-3 py-2 bg-primary border border-gray-600 rounded-[5px]"
+                                required
+                                autoFocus
+                            />
+                        </div>
+
+                        <input
+                            type="text"
+                            placeholder="Wallet address"
+                            value={address}
+                            onChange={e => setAddress(e.target.value)}
+                            className="w-full px-3 py-2 bg-primary border border-gray-600 rounded-[5px] text-sm"
+                            required
+                        />
+
+                        <div className="grid grid-cols-2 gap-2">
+                            {CURRENCIES.map(c => (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => setCurrency(c.id)}
+                                    className={`h-10 rounded-sm text-sm button ${currency === c.id ? "bg-special" : "bg-accent"}`}
+                                >
+                                    {c.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {amount >= 5 && (
+                            <div className="bg-primary rounded-sm px-3 py-2 flex flex-col gap-1 text-sm">
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Amount</span>
+                                    <span>${amount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-400">
+                                    <span>Fee (2%)</span>
+                                    <span>-${fee.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between font-medium border-t border-gray-700 pt-1 mt-1">
+                                    <span>You receive</span>
+                                    <span>${net.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && <p className="text-red-400 text-sm">{error}</p>}
+
+                        <button type="submit" disabled={loading} className="bg-special w-full h-10 rounded-[5px] button">
+                            {loading ? "Processing..." : "Withdraw"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+
+
     return (
         <div className="h-full w-full flex justify-center items-center">
             <div className="w-100 h-30 flex justify-center items-center bg-secondary gap-5 frame-shadow rounded-sm">
-                <button className="bg-special w-40 h-15 rounded-[5px] button" onClick={() => setView("amount")}>
+                <button className="bg-special w-40 h-15 rounded-[5px] button" onClick={() => { setAmountInput(""); setError(""); setView("deposit-amount") }}>
                     DEPOSIT
                 </button>
-                <button className="bg-special w-40 h-15 rounded-[5px] button">
+                <button className="bg-special w-40 h-15 rounded-[5px] button" onClick={() => { setAmountInput(""); setError(""); setView("withdraw") }}>
                     WITHDRAW
                 </button>
             </div>

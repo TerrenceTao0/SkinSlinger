@@ -52,12 +52,13 @@ export default function Home() {
                     <Image src="/logo.svg" alt="" width={60} height={60} />
                     <h1 className="text-4xl font-bold">SkinSlinger</h1>
                     <p className="text-gray-400 text-lg max-w-md">
-                        The *new* P2P skin marketplace. No bots, no middleman, no id, no BS - Buy and sell directly with other players straight away.
+                        The *new* P2P skin marketplace. No bots, no middleman, no hidden fees, no id, no BS.
+                        <br />
+                        Trade directly with other players straight away.
                     </p>
                 </div>
 
 
-                {/* Games */}
                 <div className="flex gap-3 text-sm flex-wrap justify-center">
                     {games.map(({ label, icon }) => (
                         <span key={label} className="bg-accent px-3 py-1.5 rounded-sm flex items-center gap-1.5 opacity-80">
@@ -68,22 +69,11 @@ export default function Home() {
                 </div>
 
 
-                {/* No trade hold callout */}
                 <div className="bg-secondary rounded-sm px-5 py-3 max-w-lg text-center text-sm text-gray-400">
-                    Items are sent directly between users.
-                    <br />
-                    Only items without an active trade hold can be listed.
-                    <br />
-                    Minimum price - $0.10
+                    Minimum item price - $0.10
                 </div>
 
 
-                {/* Lowest fees callout */}
-                <div className="flex flex-col items-center text-center gap-1">
-                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market. By far.</p>
-                </div>
-
-                {/* No KYC */}
                 <div
                     className="w-full max-w-sm rounded-sm px-6 py-5 flex flex-col items-center gap-1 bg-green-200"
                     style={{ boxShadow: "0 0 32px rgba(76, 107, 34, 0.6), 0 0 8px rgba(76, 107, 34, 0.3)" }}
@@ -93,7 +83,11 @@ export default function Home() {
                 </div>
 
 
-                {/* Fee cards */}
+                <div className="flex flex-col items-center text-center gap-1">
+                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market. By far.</p>
+                </div>
+
+                
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
                     {fees.map(({ label, value, icon }, i) => (
                         <div key={label} className={`flex items-center justify-between px-5 py-3 ${i < fees.length - 1 ? 'border-b border-gray-700' : ''}`}>
@@ -108,7 +102,6 @@ export default function Home() {
                 </div>
 
 
-                {/* Payment methods */}
                 <div className="flex flex-col items-center gap-2">
                     <p className="text-xs text-gray-500 tracking-widest">CURRENTLY SUPPORTED PAYMENT METHODS</p>
                     <div className="flex gap-2 flex-wrap justify-center">
@@ -121,7 +114,6 @@ export default function Home() {
                 </div>
 
 
-                {/* CTA */}
                 <div className="flex gap-3">
                     <Link href="/market">
                         <button className="button bg-special px-8 h-11 rounded-sm font-medium">
@@ -137,14 +129,12 @@ export default function Home() {
                 </div>
 
 
-                {/* Scroll hint */}
                 <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce mt-7">
                     <Image src="/arrow-down.svg" alt="Scroll Down" height={40} width={40} className="invert" />
                 </div>
             </div>
 
 
-            {/* Infographic */}
             <div className="w-full max-w-lg mx-auto px-4 pb-16">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
 
@@ -157,7 +147,6 @@ export default function Home() {
                     ))}
                 </div>
             </div>
-
         </div>
     )
 }
