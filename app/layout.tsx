@@ -20,8 +20,8 @@ export const metadata: Metadata = {
         default: 'SkinSlinger',
         template: '%s | SkinSlinger',
     },
-    description: 'Buy and sell CS2, Dota 2, and Rust skins peer-to-peer. The fastest Steam skin marketplace with no middleman.',
-    keywords: ['steam marketplace', 'CS2 skins', 'Dota 2 items', 'Rust skins', 'buy skins', 'sell skins', 'P2P skin trading', 'steam trading'],
+    description: 'The P2P Steam skin marketplace with 0% sales fees, no KYC, no middleman, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins directly with other players.',
+    keywords: ['steam marketplace', 'CS2 skins', 'Dota 2 items', 'Rust skins', 'TF2 items', 'buy skins', 'sell skins', 'P2P skin trading', 'no KYC', 'no fees', 'crypto payments'],
     openGraph: {
         siteName: 'SkinSlinger',
         type: 'website',

@@ -8,10 +8,10 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
     title: 'Steam Skin Marketplace',
-    description: 'Browse CS2, Dota 2, and Rust skins listed by real players. Buy at fair prices with no middleman.',
+    description: 'Browse CS2, Dota 2, Rust, and TF2 skins listed by real players. 0% sales fee, no KYC, no trade hold.',
     openGraph: {
         title: 'SkinSlinger — Steam Skin Marketplace',
-        description: 'Browse CS2, Dota 2, and Rust skins listed by real players. Buy at fair prices with no middleman.',
+        description: 'Browse CS2, Dota 2, Rust, and TF2 skins listed by real players. 0% sales fee, no KYC, no trade hold.',
         url: '/market',
     },
 }

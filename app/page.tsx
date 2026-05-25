@@ -13,8 +13,8 @@ const games = [
 const fees = [
     { label: "Sales Fee", value: "0%", icon: "/percentage.svg" },
     { label: "Deposit Fee", value: "0%", icon: "/deposit.svg" },
-    { label: "Withdrawal Fee", value: "2.9% + $0.50", icon: "/withdraw.svg" },
-    { label: "FX Fee", value: "0%", icon: "/percentage.svg" },
+    { label: "FX Fee (Crypto)", value: "0%", icon: "/percentage.svg" },
+    { label: "Withdrawal Fee", value: "Just 2%", icon: "/withdraw.svg" },
 ]
 
 const steps = [
@@ -52,7 +52,7 @@ export default function Home() {
                     <Image src="/logo.svg" alt="" width={60} height={60} />
                     <h1 className="text-4xl font-bold">SkinSlinger</h1>
                     <p className="text-gray-400 text-lg max-w-md">
-                        The new P2P Steam skin marketplace. No bots, no middleman. Buy and sell directly with other players.
+                        The *new* P2P skin marketplace. No bots, no middleman, no id, no BS - Buy and sell directly with other players straight away.
                     </p>
                 </div>
 
@@ -72,7 +72,7 @@ export default function Home() {
                 <div className="bg-secondary rounded-sm px-5 py-3 max-w-lg text-center text-sm text-gray-400">
                     Items are sent directly between users.
                     <br />
-                    Only items without an active trade hold can be listed
+                    Only items without an active trade hold can be listed.
                     <br />
                     Minimum price - $0.10
                 </div>
@@ -80,7 +80,7 @@ export default function Home() {
 
                 {/* Lowest fees callout */}
                 <div className="flex flex-col items-center text-center gap-1">
-                    <p className="text-special font-semibold text-lg">The lowest fees in the market. Guaranteed.</p>
+                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market. By far.</p>
                 </div>
 
                 {/* No KYC */}
@@ -110,7 +110,7 @@ export default function Home() {
 
                 {/* Payment methods */}
                 <div className="flex flex-col items-center gap-2">
-                    <p className="text-xs text-gray-500 uppercase tracking-widest">Payments powered by NOWPayments</p>
+                    <p className="text-xs text-gray-500 tracking-widest">CURRENTLY SUPPORTED PAYMENT METHODS</p>
                     <div className="flex gap-2 flex-wrap justify-center">
                         {paymentMethods.map(method => (
                             <span key={method} className="bg-accent text-gray-400 text-xs px-3 py-1 rounded-sm">
