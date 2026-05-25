@@ -68,11 +68,21 @@ export default function FinanceClient() {
         }, 10000)
     }
 
-    function startTimer() {
+    function startTimer(paymentAddress: string) {
         if (timerRef.current) clearInterval(timerRef.current)
-        timerRef.current = setInterval(() => {
+        timerRef.current = setInterval(async () => {
             setSecondsLeft(prev => {
-                if (prev <= 1) { clearInterval(timerRef.current!); return 0 }
+                if (prev <= 1) {
+                    clearInterval(timerRef.current!)
+                    // Final check on expiry
+                    fetch(`/api/deposit-status/${paymentAddress}`)
+                        .then(r => r.json())
+                        .then(({ status }) => {
+                            if (status === 'finished') setView('deposit-success')
+                        })
+                        .catch(() => {})
+                    return 0
+                }
                 return prev - 1
             })
         }, 1000)
@@ -111,7 +121,7 @@ export default function FinanceClient() {
         setView("payment")
         setLoading(false)
         startPolling(data.payAddress)
-        startTimer()
+        startTimer(data.payAddress)
     }
 
     async function handleWithdraw(e: React.FormEvent) {
