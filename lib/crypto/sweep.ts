@@ -9,7 +9,7 @@ import { getDepositAccount } from './account'
 
 function getPimlicoClient() {
     return createPimlicoClient({
-        transport: http(`https://api.pimlico.io/v2/polygon/rpc?apikey=${process.env.PIMLICO_API_KEY}`),
+        transport: http(`https://api.pimlico.io/v2/137/rpc?apikey=${process.env.PIMLICO_API_KEY}`),
         entryPoint: {
             address: entryPoint06Address,
             version: '0.6',
@@ -27,7 +27,7 @@ export async function sweepUsdc(index: number, amountUsdc: bigint): Promise<`0x$
     const client = createSmartAccountClient({
         account,
         chain: polygon,
-        bundlerTransport: http(`https://api.pimlico.io/v2/polygon/rpc?apikey=${process.env.PIMLICO_API_KEY}`),
+        bundlerTransport: http(`https://api.pimlico.io/v2/137/rpc?apikey=${process.env.PIMLICO_API_KEY}`),
         paymaster: pimlico,
     })
 
