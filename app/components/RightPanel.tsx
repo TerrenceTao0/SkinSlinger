@@ -80,6 +80,7 @@ export default function RightPanel({ selling, setSelling, onListed }: {
     onListed: () => void
 }) {
     const [showPrompt, setShowPrompt] = useState(false);
+    const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
     const [priceMap, setPriceMap] = useState<Record<string, string>>({});
 
     async function listItems() {
@@ -140,13 +141,59 @@ export default function RightPanel({ selling, setSelling, onListed }: {
         return sum + (isNaN(price) ? 0 : price) * item.quantity;
     }, 0);
 
+    const totalItems = stackedQueue.reduce((sum, item) => sum + item.quantity, 0);
+
     return (
         <>
             {showPrompt && (
-                <ListPrompt totalValue={totalValue} itemCount={stackedQueue.reduce((sum, item) => sum + item.quantity, 0)} onConfirm={listItems} setShowPrompt={setShowPrompt} />
+                <ListPrompt totalValue={totalValue} itemCount={totalItems} onConfirm={listItems} setShowPrompt={setShowPrompt} />
             )}
 
-            <div className="fixed w-[95%] left-[2.5%] flex justify-end">
+            {/* Mobile: full-screen queue modal */}
+            {mobileQueueOpen && (
+                <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-secondary px-4 pt-4 pb-4">
+                    <div className="flex justify-between items-center mb-4 shrink-0">
+                        <p className="text-xl">{totalItems} Items: ${totalValue.toFixed(2)}</p>
+                        <button onClick={() => setMobileQueueOpen(false)} className="text-2xl px-2">✕</button>
+                    </div>
+                    <div className="overflow-y-auto flex-1 space-y-3">
+                        {stackedQueue.map((item) => (
+                            <SellItemCard
+                                key={item.market_name}
+                                market_name={item.market_name}
+                                quantity={item.quantity}
+                                icon={item.icon}
+                                hexColor={item.hexColor}
+                                priceStr={priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)}
+                                setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
+                                remove={() => remove(item.market_name)}
+                            />
+                        ))}
+                    </div>
+                    <button
+                        className="bg-special h-12 w-full mt-4 rounded-sm button shrink-0"
+                        onClick={() => { setMobileQueueOpen(false); setShowPrompt(true); }}
+                    >
+                        SELL ITEMS
+                    </button>
+                </div>
+            )}
+
+            {/* Mobile: bottom bar shown when items queued */}
+            {selling.length > 0 && (
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-secondary border-t border-gray-700 flex items-center px-4 h-16 gap-3">
+                    <p className="flex-1 text-sm">{totalItems} item{totalItems !== 1 ? 's' : ''} · ${totalValue.toFixed(2)}</p>
+                    <button onClick={() => setMobileQueueOpen(true)} className="bg-accent px-4 h-9 rounded-sm button text-sm">
+                        View Queue
+                    </button>
+                    <button onClick={() => setShowPrompt(true)} className="bg-special px-4 h-9 rounded-sm button text-sm">
+                        List
+                    </button>
+                </div>
+            )}
+
+            {/* Desktop: right sidebar */}
+            <div className="hidden md:flex fixed w-[95%] left-[2.5%] justify-end">
                 <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute rounded-sm">
                     {stackedQueue.length > 0 && (
                         <div className="w-full flex ml-2 mt-2">

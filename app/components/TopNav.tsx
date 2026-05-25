@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useBasket } from './BasketProvider';
@@ -9,81 +10,114 @@ import { useBasket } from './BasketProvider';
 export default function TopNav() {
     const { data: session } = useSession();
     const { basket } = useBasket();
-    let basketCount = 0
+    const [menuOpen, setMenuOpen] = useState(false);
 
+    let basketCount = 0
     for (let i = 0; i < basket.length; i++) {
         const item = basket[i];
-
-        if ("quantity" in item) {
-            basketCount += item.quantity;
-        } 
-        else {
-            basketCount += 1;
-        }
+        if ("quantity" in item) basketCount += item.quantity;
+        else basketCount += 1;
     }
 
-
     return (
-        <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
-            <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm">
-                <Link href="/">
-                    <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
-                        SkinSlinger
-                    </p>
-                </Link>
-            </div>
-
-            <div className="flex-1 h-full flex justify-between items-center bg-secondary ml-3 rounded-sm">
-                <div className="flex justify-center items-center h-full">
-                    
+        <>
+            <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
+                <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm shrink-0">
+                    <Link href="/">
+                        <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
+                            SkinSlinger
+                        </p>
+                    </Link>
                 </div>
 
-                <div className="flex h-full">
+                {/* Desktop nav */}
+                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm">
+                    <div className="flex justify-center items-center h-full" />
+
+                    <div className="flex h-full">
+                        {session && (
+                            <Link href="/finance">
+                                <button className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button">
+                                    ${session.user.cash?.toFixed(2)}
+                                </button>
+                            </Link>
+                        )}
+
+                        {session ? (
+                            <>
+                                <Link href="/basket" className="right-nav-link button">
+                                    Basket{basketCount > 0 && ` (${basketCount})`}
+                                </Link>
+                                <Link href="/orders" className="right-nav-link button">Orders</Link>
+                                <Link href="/inventory" className="right-nav-link button">Inventory</Link>
+                                <button className="right-nav-link button" onClick={() => signOut({ callbackUrl: '/' })}>
+                                    Log out
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="right-nav-link button">Login</Link>
+                                <Link href="/sign-up" className="right-nav-link button">Sign Up</Link>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Mobile nav */}
+                <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3">
                     {session && (
                         <Link href="/finance">
-                            <button 
-                                className="h-full cursor-pointer flex items-center justify-center w-20 bg-special button"
-                            >
+                            <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
                                 ${session.user.cash?.toFixed(2)}
                             </button>
                         </Link>
                     )}
 
+                    <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="flex flex-col gap-[5px] p-2 cursor-pointer"
+                        aria-label="Menu"
+                    >
+                        <span className="block w-5 h-[2px] bg-white" />
+                        <span className="block w-5 h-[2px] bg-white" />
+                        <span className="block w-5 h-[2px] bg-white" />
+                    </button>
+                </div>
+            </nav>
+
+            {/* Mobile dropdown */}
+            {menuOpen && (
+                <div className="md:hidden fixed top-16 left-[2.5%] w-[95%] z-[49] bg-secondary rounded-sm">
                     {session ? (
                         <>
-                            <Link href="/basket" className="right-nav-link button">
+                            <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Basket{basketCount > 0 && ` (${basketCount})`}
                             </Link>
-
-                            <Link href="/orders" className="right-nav-link button">
+                            <Link href="/orders" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Orders
                             </Link>
-
-                            <Link href="/inventory" className="right-nav-link button">
+                            <Link href="/inventory" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Inventory
                             </Link>
-
                             <button
-                                className="right-nav-link button"
-                                onClick={() => signOut({ callbackUrl: '/' })}
+                                className="flex items-center px-4 h-12 w-full text-left button"
+                                onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false); }}
                             >
                                 Log out
                             </button>
                         </>
                     ) : (
                         <>
-                            <Link href="/login" className="right-nav-link button">
+                            <Link href="/login" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
                                 Login
                             </Link>
-
-                            <Link href="/sign-up" className="right-nav-link button">
+                            <Link href="/sign-up" className="flex items-center px-4 h-12 button" onClick={() => setMenuOpen(false)}>
                                 Sign Up
                             </Link>
                         </>
                     )}
                 </div>
-            </div>
-        </nav>
+            )}
+        </>
     )
 }
-

@@ -58,6 +58,7 @@ export default function HomeClient(
 
     const loadingRef = useRef(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
+    const mobileSentinelRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
     const isFirstSearchRender = useRef(true);
     const searchRef = useRef(search);
@@ -120,18 +121,14 @@ export default function HomeClient(
 
     // Infinite scroll via IntersectionObserver
     useEffect(() => {
-        const el = sentinelRef.current;
-
-        if (!el) return;
-
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && hasMore) {
                 load(gameFilterRef.current, cursor, false, searchRef.current);
             }
         }, { threshold: 0.1 });
 
-
-        observer.observe(el);
+        if (sentinelRef.current) observer.observe(sentinelRef.current);
+        if (mobileSentinelRef.current) observer.observe(mobileSentinelRef.current);
 
         return () => observer.disconnect();
     }, [hasMore, cursor, gameFilter, load]);
@@ -312,7 +309,36 @@ export default function HomeClient(
                 </div>
             )}
 
-            <div className="h-full w-full flex justify-center items-center">
+            {/* Mobile layout */}
+            <div className="md:hidden flex flex-col h-full pt-[108px]">
+                <div className="bg-secondary h-14 flex items-center px-4 shrink-0">
+                    <input
+                        type="text"
+                        placeholder="Search items..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
+                    />
+                </div>
+
+                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
+                        {displayListings.map(listing => (
+                            <ListingCard
+                                key={listing.id} {...listing}
+                                currentUserId={currentUserId}
+                                onBuy={() => handleBuy(listing)}
+                                onPreview={() => { setPreview(listing); setPreviewQtyStr(""); }}
+                            />
+                        ))}
+
+                        <div ref={mobileSentinelRef} className="col-span-full h-1" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop layout (original) */}
+            <div className="hidden md:flex h-full w-full justify-center items-center">
                 <div className="bg-secondary w-200 h-150 flex justify-center items-center">
                     <div>
                         <div className="bg-secondary w-310 h-14 mt-14 absolute flex items-center px-4">
@@ -334,7 +360,7 @@ export default function HomeClient(
                                     onPreview={() => { setPreview(listing); setPreviewQtyStr(""); }}
                                 />
                             ))}
-                            
+
                             <div ref={sentinelRef} className="col-span-7 h-1" />
                         </div>
                     </div>

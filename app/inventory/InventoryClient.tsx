@@ -268,7 +268,59 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
             <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
             <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} />
 
-            <div className="h-full w-full flex justify-center items-center">
+            {/* Mobile layout */}
+            <div className="md:hidden flex flex-col h-full pt-[108px]">
+                {!isSteamLinked ? (
+                    <div className="flex items-center justify-center flex-1">
+                        <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
+                    </div>
+                ) : (
+                    <div className={`flex flex-col flex-1 overflow-hidden${selling.length > 0 ? ' pb-16' : ''}`}>
+                        {/* Info bar */}
+                        <div className="bg-secondary flex items-center px-4 py-3 rounded-sm shrink-0 gap-6">
+                            <div className="flex flex-col items-center">
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">Items</span>
+                                <span className="text-xl">{stackedInventory.length}</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">Steam Value</span>
+                                <span className="text-xl">${totalValue.toFixed(2)}</span>
+                            </div>
+                            <div className="flex flex-col items-center ml-auto">
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">Last Updated</span>
+                                <span className="text-xl">{lastRefreshDisplay}</span>
+                            </div>
+                        </div>
+
+                        {/* Grid */}
+                        <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
+                                {stackedInventory.map((item) => {
+                                    const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
+                                    const remaining = item.quantity - currentAmount;
+
+                                    if (remaining <= 0) return;
+
+                                    return (
+                                        <InventoryItemCard
+                                            key={item.assetId}
+                                            item={item}
+                                            quantity={remaining}
+                                            selling={selling}
+                                            setSelling={setSelling}
+                                            hexColor={item.hexColor}
+                                            loading={livePrices.get(item.market_name) === null}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop layout (original) */}
+            <div className="hidden md:flex h-full w-full justify-center items-center">
                 <div className="w-200 h-150 flex justify-center items-center">
                     {!isSteamLinked ? (
                         <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
@@ -308,7 +360,6 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                                     </span>
                                 </div>
                             </div>
-
 
                             {/* Item display */}
                             <div className="bg-secondary w-310 mr-30 overflow-y-auto h-190 mt-34 grid grid-cols-6 justify-start content-start gap-2 p-3 rounded-sm">
