@@ -39,10 +39,15 @@ export default function FinanceClient() {
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<"address" | "amount" | null>(null)
+    const [secondsLeft, setSecondsLeft] = useState(0)
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     useEffect(() => {
-        return () => { if (pollRef.current) clearInterval(pollRef.current) }
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current)
+            if (timerRef.current) clearInterval(timerRef.current)
+        }
     }, [])
 
     function startPolling(paymentId: string) {
@@ -61,6 +66,16 @@ export default function FinanceClient() {
                 }
             } catch {}
         }, 10000)
+    }
+
+    function startTimer() {
+        if (timerRef.current) clearInterval(timerRef.current)
+        timerRef.current = setInterval(() => {
+            setSecondsLeft(prev => {
+                if (prev <= 1) { clearInterval(timerRef.current!); return 0 }
+                return prev - 1
+            })
+        }, 1000)
     }
 
     async function handleDeposit(e: React.FormEvent) {
@@ -92,9 +107,11 @@ export default function FinanceClient() {
 
         setPayment(data)
         setPaymentStatus("waiting")
+        setSecondsLeft(20 * 60)
         setView("payment")
         setLoading(false)
         startPolling(data.paymentId)
+        startTimer()
     }
 
     async function handleWithdraw(e: React.FormEvent) {
@@ -206,6 +223,12 @@ export default function FinanceClient() {
                     <p className={`text-center text-sm ${isTerminal ? "text-red-400" : "text-gray-400"}`}>
                         {STATUS_LABELS[paymentStatus]}
                     </p>
+
+                    {!isTerminal && (
+                        <p className={`text-center text-sm font-mono ${secondsLeft < 60 ? "text-red-400" : "text-gray-500"}`}>
+                            Expires in {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
+                        </p>
+                    )}
 
                     {isTerminal && (
                         <button onClick={() => { setView("deposit-amount"); setPayment(null) }} className="bg-accent w-full h-10 rounded-[5px] button text-sm">

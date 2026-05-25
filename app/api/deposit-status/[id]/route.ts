@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { completeDeposit } from '@/lib/completeDeposit'
 
 //
 
@@ -22,6 +23,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const data = await res.json()
+
+    if (data.payment_status === 'finished') {
+        await completeDeposit(
+            String(data.payment_id),
+            session.user.id,
+            data.price_amount as number,
+        )
+    }
 
     return NextResponse.json({ status: data.payment_status })
 }

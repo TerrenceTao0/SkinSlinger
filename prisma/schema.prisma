@@ -102,6 +102,13 @@ model verificationToken {
   @@unique([identifier, token])
 }
 
+model deposit {
+  id        String   @id // NOWPayments payment_id — used as idempotency key
+  userId    String
+  amount    Float
+  createdAt DateTime @default(now())
+}
+
 model item {
   marketName String @id
   price Float 

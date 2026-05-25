@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import { prisma } from '@/lib/db'
+import { completeDeposit } from '@/lib/completeDeposit'
 
 //
 
@@ -28,13 +28,11 @@ export async function POST(req: Request) {
     }
 
     if (parsed.payment_status === 'finished') {
-        const userId = parsed.order_id as string
-        const amount = parsed.price_amount as number
-
-        await prisma.user.update({
-            where: { id: userId },
-            data: { cash: { increment: amount } },
-        })
+        await completeDeposit(
+            String(parsed.payment_id),
+            parsed.order_id as string,
+            parsed.price_amount as number,
+        )
     }
 
     return NextResponse.json({ received: true })
