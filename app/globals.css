@@ -64,6 +64,20 @@ body {
     background: var(--color-special);
 }
 
+.no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.info-card {
+    @apply bg-secondary rounded-sm p-4 transition-colors hover:bg-accent cursor-default
+}
+
 .frame-shadow {
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 }

@@ -1,6 +1,6 @@
 "use client"
 
-type GameFilter = "all" | "CS2" | "Dota2" | "Rust"
+type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
 
 //
 
@@ -13,6 +13,7 @@ export default function LeftPanel({ gameFilter, setGameFilter }: {
         { label: "CS2", value: "CS2" },
         { label: "Dota 2", value: "Dota2" },
         { label: "Rust", value: "Rust" },
+        { label: "TF2", value: "TF2" },
     ]
 
     return (

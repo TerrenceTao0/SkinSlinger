@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 //
 
-type GameFilter = "all" | "CS2" | "Dota2" | "Rust"
+type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
 
 export type ListingCard = {
     id: string,

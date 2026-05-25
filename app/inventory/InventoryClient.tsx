@@ -88,7 +88,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
     const [url, setUrl] = useState("");
     const [waiting, setWaiting] = useState(false);
     const [selling, setSelling] = useState<SteamItem[]>([])
-    const [gameFilter, setGameFilter] = useState<"all" | "CS2" | "Dota2" | "Rust">("all")
+    const [gameFilter, setGameFilter] = useState<"all" | "CS2" | "Dota2" | "Rust" | "TF2">("all")
     const [lastRefreshDisplay, setLastRefreshDisplay] = useState(() => timeAgo(lastRefresh));
 
     // null = still loading, number = resolved (0 means not found / too cheap)

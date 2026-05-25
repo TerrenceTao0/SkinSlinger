@@ -8,6 +8,7 @@ const GAME_APP_IDS: Record<string, string> = {
     CS2: "730",
     Dota2: "570",
     Rust: "252490",
+    TF2: "440",
 }
 
 //

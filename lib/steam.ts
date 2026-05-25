@@ -4,7 +4,8 @@ const api_headers = { "x-api-key": process.env.STEAM_APIS_KEY! };
 const game_ids = {
     "CS2": 730,
     "Dota2": 570,
-    "Rust": 252490
+    "Rust": 252490,
+    "TF2": 440,
 }
 
 export type SteamItem = {
@@ -96,13 +97,14 @@ async function fetchGameInventory(steam_id: string, app_id: number, game: string
 
 // Fetches a user's combined inventory.
 export async function getInventory(steam_id: string): Promise<SteamItem[]> {
-    const [cs2, dota2, rust] = await Promise.all([
+    const [cs2, dota2, rust, tf2] = await Promise.all([
         fetchGameInventory(steam_id, game_ids["CS2"], "CS2"),
         fetchGameInventory(steam_id, game_ids["Dota2"], "Dota2"),
         fetchGameInventory(steam_id, game_ids["Rust"], "Rust"),
+        fetchGameInventory(steam_id, game_ids["TF2"], "TF2"),
     ]);
 
 
-    return [...cs2, ...dota2, ...rust];
+    return [...cs2, ...dota2, ...rust, ...tf2];
 }
 
