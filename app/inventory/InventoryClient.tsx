@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SteamItem } from '@/lib/steam';
 import InventoryItemCard from '../components/InventoryItemCard';
-import LeftPanel from '../components/LeftPanel';
 import RightPanel from '../components/RightPanel';
 
 //
@@ -265,11 +264,40 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
     
     return (
         <>
-            <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
+            {/* Desktop game filter sidebar */}
+            <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 w-43">
+                <div className="bg-secondary rounded-sm px-3 py-3">
+                    <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1.5">Games</p>
+                    <div className="flex flex-col gap-0.5">
+                        {(["all", "CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
+                            <button
+                                key={g}
+                                onClick={() => setGameFilter(g)}
+                                className={`h-9 px-2.5 rounded-sm text-sm text-left button transition-colors ${gameFilter === g ? "bg-special font-medium" : "hover:bg-accent"}`}
+                            >
+                                {g === "all" ? "All" : g === "Dota2" ? "Dota 2" : g}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
             <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} />
 
             {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full pt-[108px]">
+            <div className="md:hidden flex flex-col h-full pt-[72px]">
+                {/* Mobile game filter */}
+                <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar bg-secondary border-b border-gray-700/50">
+                    {(["all", "CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
+                        <button
+                            key={g}
+                            onClick={() => setGameFilter(g)}
+                            className={`shrink-0 px-3 h-8 text-sm rounded-sm button transition-colors ${gameFilter === g ? "bg-special font-medium" : "bg-accent"}`}
+                        >
+                            {g === "all" ? "All" : g === "Dota2" ? "Dota 2" : g}
+                        </button>
+                    ))}
+                </div>
                 {!isSteamLinked ? (
                     <div className="flex items-center justify-center flex-1">
                         <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />

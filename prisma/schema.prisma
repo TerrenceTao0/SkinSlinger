@@ -164,7 +164,7 @@ model buy_order {
 model purchase {
   id            String   @id @default(cuid())
   createdAt     DateTime @default(now())
-  // pending | offer_sent | completed | cancelled
+  // pending | completed (cancelled = row deleted)
   status        String   @default("pending")
   price         Float
   assetId       String

@@ -30,6 +30,13 @@ export async function POST(request: Request) {
             return Response.json({ error: "Invalid quantity" }, { status: 400 });
         }
 
+        const existingOrder = await prisma.buy_order.findFirst({
+            where: { userId: buyer.id, marketName },
+        });
+        if (existingOrder) {
+            return Response.json({ error: "You already have an active buy order for this item. Cancel it before placing a new one." }, { status: 409 });
+        }
+
         const totalCost = price * quantity;
 
         if (buyer.cash < totalCost) {
