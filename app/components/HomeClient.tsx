@@ -351,7 +351,7 @@ export default function HomeClient(
                             />
                         </div>
 
-                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-50 p-3 rounded-sm">
+                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-2 p-3 rounded-sm">
                             {displayListings.map(listing => (
                                 <ListingCard
                                     key={listing.id} {...listing}

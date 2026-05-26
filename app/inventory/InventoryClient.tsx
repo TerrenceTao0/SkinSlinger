@@ -228,7 +228,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
             // Skip items resolved as too cheap (keep null = loading)
-            if (priceState !== null && (priceState ?? 0) < 0.10) continue;
+            if (priceState !== null && (priceState ?? 0) < 0.30) continue;
 
             const price = priceState ?? 0;
             const itemWithPrice = { ...item, price };
@@ -266,7 +266,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
     return (
         <>
             <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
-            <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} />
+            <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} />
 
             {/* Mobile layout */}
             <div className="md:hidden flex flex-col h-full pt-[108px]">

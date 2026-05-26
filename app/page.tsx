@@ -70,7 +70,7 @@ export default function Home() {
 
 
                 <div className="bg-secondary rounded-sm px-5 py-3 max-w-lg text-center text-sm text-gray-400">
-                    Minimum item price - $0.10
+                    Minimum item price - $0.30
                 </div>
 
 

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
                 const result = await fetchItemPrice(item.market_hash_name, item.game);
                 const price = result?.price ?? 0;
 
-                if (result && price >= 0.10) {
+                if (result && price >= 0.30) {
                     await prisma.item.upsert({
                         where: { marketName: item.market_name },
                         update: { price },

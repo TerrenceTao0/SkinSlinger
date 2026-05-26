@@ -6,78 +6,52 @@ import SellItemCard from './SellItemCard';
 
 //
 
-function ListPrompt(
-        {
-            totalValue,
-            itemCount,
-            onConfirm,
-            setShowPrompt
-        } :
-        {
-            totalValue: number
-            itemCount: number
-            onConfirm: () => void
-            setShowPrompt: (value: boolean) => void
-        }
-    ) {
+function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
+    totalValue: number
+    itemCount: number
+    onConfirm: () => void
+    setShowPrompt: (value: boolean) => void
+}) {
     return (
-        <div className="w-full h-full absolute flex justify-center items-center z-5">
-            {/* Blur background */}
-            <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-6"
-                onClick={() => setShowPrompt(false)}
-            ></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPrompt(false)}>
+            <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+                <p className="text-lg font-medium">Confirm listing</p>
 
-
-            {/* Prompt listing */}
-            <div className="w-90 h-100 bg-accent z-7 flex flex-col items-center p-6 gap-3">
-                <p className="text-3xl mt-4">
-                    Confirm Listing
-                </p>
-
-                <div className="w-full border-t border-white mt-2" />
-
-                <div className="w-full flex justify-between px-2">
-                    <p className="text-lg">
-                        {itemCount} Items:
-                    </p>
-
-                    <p className="text-lg">
-                        ${totalValue.toFixed(2)}
-                    </p>
+                <div className="flex flex-col gap-2 text-sm">
+                    <div className="flex justify-between">
+                        <span className="opacity-60">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+                        <span>${totalValue.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="opacity-60">Listing fee</span>
+                        <span className="text-special">0%</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-700 pt-2 mt-1 font-medium">
+                        <span>Total earnings</span>
+                        <span>${totalValue.toFixed(2)}</span>
+                    </div>
                 </div>
 
-                <div className="w-full flex justify-between px-2">
-                    <p className="text-lg">
-                        Fees
-                    </p>
+                <p className="text-xs opacity-40">Only a 2% fee applies on withdrawals.</p>
 
-                    <p className="text-lg text-special">
-                        0%
-                    </p>
+                <div className="flex gap-3">
+                    <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm}>
+                        Confirm
+                    </button>
+                    <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)}>
+                        Cancel
+                    </button>
                 </div>
-
-                <div className="w-full border-t border-white" />
-
-                <p className="text-ms text-center px-4 opacity-60">
-                    We only apply a flat $3 fee to withdrawals.
-                </p>
-
-                <button
-                    className="bg-special button w-full h-10 mt-auto animate-pulse"
-                    onClick={onConfirm}
-                >
-                    CONFIRM
-                </button>
             </div>
         </div>
     )
 }
 
-export default function RightPanel({ selling, setSelling, onListed }: {
+export default function RightPanel({ selling, setSelling, onListed, livePrices }: {
     selling: SteamItem[],
     setSelling: React.Dispatch<React.SetStateAction<SteamItem[]>>,
-    onListed: () => void
+    onListed: () => void,
+    livePrices: Map<string, number | null>
 }) {
     const [showPrompt, setShowPrompt] = useState(false);
     const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
@@ -136,8 +110,13 @@ export default function RightPanel({ selling, setSelling, onListed }: {
 
         return result;
     })();
+    function defaultPrice(item: SteamItem & { quantity: number }): string {
+        const livePrice = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
+        return (livePrice * 0.80).toFixed(2);
+    }
+
     const totalValue = stackedQueue.reduce((sum, item) => {
-        const price = parseFloat(priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2));
+        const price = parseFloat(priceMap[item.market_name] ?? defaultPrice(item));
         return sum + (isNaN(price) ? 0 : price) * item.quantity;
     }, 0);
 
@@ -164,8 +143,9 @@ export default function RightPanel({ selling, setSelling, onListed }: {
                                 quantity={item.quantity}
                                 icon={item.icon}
                                 hexColor={item.hexColor}
-                                priceStr={priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)}
+                                priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
+                                marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
                                 remove={() => remove(item.market_name)}
                             />
                         ))}
@@ -196,14 +176,38 @@ export default function RightPanel({ selling, setSelling, onListed }: {
             <div className="hidden md:flex fixed w-[95%] left-[2.5%] justify-end">
                 <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute rounded-sm">
                     {stackedQueue.length > 0 && (
+                        <>
                         <div className="w-full flex ml-2 mt-2">
                             <p className="text-3xl">
                                 {stackedQueue.length} Items: ${totalValue.toFixed(2)}
                             </p>
                         </div>
+
+                        <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
+                            <p className="text-xs opacity-40">Global discount modifiers</p>
+                            <div className="flex gap-1">
+                                {[0, 10, 20, 30, 40].map(d => (
+                                    <button
+                                        key={d}
+                                        onClick={() => {
+                                            const next: Record<string, string> = {};
+                                            for (const item of stackedQueue) {
+                                                const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
+                                                next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
+                                            }
+                                            setPriceMap(next);
+                                        }}
+                                        className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
+                                    >
+                                        {d === 0 ? '0%' : `-${d}%`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        </>
                     )}
 
-                    <div className="space-y-3">
+                    <div className="flex flex-col pb-2">
                         {stackedQueue.map((item) => (
                             <SellItemCard
                                 key={item.market_name}
@@ -211,8 +215,9 @@ export default function RightPanel({ selling, setSelling, onListed }: {
                                 quantity={item.quantity}
                                 icon={item.icon}
                                 hexColor={item.hexColor}
-                                priceStr={priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)}
+                                priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
+                                marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
                                 remove={() => remove(item.market_name)}
                             />
                         ))}
