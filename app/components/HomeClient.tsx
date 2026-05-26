@@ -341,7 +341,7 @@ export default function HomeClient(
             <div className="hidden md:flex h-full w-full justify-center items-center">
                 <div className="bg-secondary w-200 h-150 flex justify-center items-center">
                     <div>
-                        <div className="bg-secondary w-310 h-14 mt-14 absolute flex items-center px-4">
+                        <div className="bg-secondary w-310 h-14 mt-16 absolute flex items-center px-4 rounded-sm">
                             <input
                                 type="text"
                                 placeholder="Search items..."
@@ -351,7 +351,7 @@ export default function HomeClient(
                             />
                         </div>
 
-                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-50 p-3">
+                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-50 p-3 rounded-sm">
                             {displayListings.map(listing => (
                                 <ListingCard
                                     key={listing.id} {...listing}

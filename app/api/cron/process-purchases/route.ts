@@ -56,7 +56,7 @@ export async function GET(req: Request) {
         // Check buyer's Steam inventory for accepted trades
         const active = await prisma.purchase.findMany({
             where: {
-                status: "offer_sent",
+                status: "pending",
                 buyer: { steam_id: { not: null } },
             },
             include: {

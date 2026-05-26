@@ -67,19 +67,46 @@ function groupPurchases(purchases: Purchase[]): PurchaseGroup[] {
 
 //
 
+function CancelModal({ refundMessage, onConfirm, onClose, loading }: {
+    refundMessage: string
+    onConfirm: () => void
+    onClose: () => void
+    loading: boolean
+}) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+            <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+                <p className="text-lg font-medium">Cancel order?</p>
+                <p className="text-sm opacity-60">{refundMessage}</p>
+                <p className="text-sm opacity-60">If the trade has already gone through, it will be detected and marked complete instead - use this to complete trades faster.</p>
+                <div className="flex gap-3">
+                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-remove button flex-1">
+                        {loading ? "..." : "Yes, cancel"}
+                    </button>
+                    <button onClick={onClose} disabled={loading} className="h-9 px-4 rounded-sm bg-accent button flex-1">
+                        Go back
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+//
+
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-    pending:    { label: "Awaiting trade offer", color: "text-yellow-400" },
-    offer_sent: { label: "Trade offer sent",     color: "text-blue-400"   },
-    completed:  { label: "Completed",            color: "text-special"  },
+    pending:   { label: "Awaiting trade offer", color: "text-yellow-400" },
+    completed: { label: "Completed",            color: "text-special"   },
 };
 
 //
 
 function PurchaseRow({ group }: { group: PurchaseGroup }) {
     const router = useRouter();
+    const [confirming, setConfirming] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const isActive = group.status === "pending" || group.status === "offer_sent";
+    const isActive = group.status === "pending";
     const { label, color } = STATUS_LABEL[group.status] ?? { label: group.status, color: "" };
     const sellerName = group.seller.username ?? group.seller.email ?? "Seller";
 
@@ -126,20 +153,20 @@ function PurchaseRow({ group }: { group: PurchaseGroup }) {
 
             {isActive && (
                 <div className="flex flex-col gap-2 text-sm">
-                    {group.status === "pending" && (
-                        <p className="opacity-60">Waiting for the seller to send a trade offer.</p>
-                    )}
-                    {group.status === "offer_sent" && (
-                        <p className="opacity-60">Accept the trade offer on Steam.</p>
-                    )}
-                    <button
-                        onClick={cancel}
-                        disabled={loading}
-                        className="h-9 px-4 rounded-sm bg-remove button w-fit"
-                    >
-                        {loading ? "..." : "Cancel"}
+                    <p className="opacity-60">Seller taking too long to send the trade offer?</p>
+                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-remove button w-fit">
+                        Cancel
                     </button>
                     {error && <p className="text-red-400">{error}</p>}
+
+                    {confirming && (
+                        <CancelModal
+                            refundMessage="Your funds will be refunded to your balance."
+                            onConfirm={cancel}
+                            onClose={() => setConfirming(false)}
+                            loading={loading}
+                        />
+                    )}
                 </div>
             )}
         </div>
@@ -150,17 +177,18 @@ function PurchaseRow({ group }: { group: PurchaseGroup }) {
 
 function SaleRow({ group }: { group: PurchaseGroup }) {
     const router = useRouter();
+    const [confirming, setConfirming] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const isActive = group.status === "pending" || group.status === "offer_sent";
     const { label, color } = STATUS_LABEL[group.status] ?? { label: group.status, color: "" };
     const buyerName = group.buyer.username ?? group.buyer.email ?? "Buyer";
+    const isActive = group.status === "pending";
 
-    async function markOfferSent() {
+    async function cancel() {
         setLoading(true);
         setError("");
         for (const id of group.ids) {
-            const res = await fetch(`/api/purchase/${id}/offer-sent`, { method: "POST" });
+            const res = await fetch(`/api/purchase/${id}/cancel`, { method: "POST" });
             if (!res.ok) {
                 const data = await res.json();
                 setError(data.error ?? "Something went wrong");
@@ -209,22 +237,20 @@ function SaleRow({ group }: { group: PurchaseGroup }) {
                             <p className="text-red-400">Buyer has no trade URL on file</p>
                         )}
                     </div>
-                    {group.status === "pending" && (
-                        <>
-                            <p className="opacity-60">Send the buyer a trade offer on Steam, then mark it as sent.</p>
-                            <button
-                                onClick={markOfferSent}
-                                disabled={loading}
-                                className="h-9 px-4 rounded-sm bg-less-special button w-fit"
-                            >
-                                {loading ? "..." : "I've sent the trade offer"}
-                            </button>
-                        </>
-                    )}
-                    {group.status === "offer_sent" && (
-                        <p className="opacity-60">Waiting for the buyer to confirm receipt.</p>
-                    )}
+                    <p className="opacity-60">Buyer taking too long to accept the trade offer?</p>
+                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-remove button w-fit">
+                        Cancel
+                    </button>
                     {error && <p className="text-red-400">{error}</p>}
+
+                    {confirming && (
+                        <CancelModal
+                            refundMessage="The buyer will be refunded to their balance."
+                            onConfirm={cancel}
+                            onClose={() => setConfirming(false)}
+                            loading={loading}
+                        />
+                    )}
                 </div>
             )}
         </div>
