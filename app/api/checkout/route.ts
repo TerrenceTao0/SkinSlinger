@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         }
 
         const pendingCount = await prisma.purchase.count({
-            where: { buyerId: buyer.id, status: { in: ["pending", "offer_sent"] } },
+            where: { buyerId: buyer.id, status: "pending" },
         });
         if (pendingCount > 0) {
             return Response.json({ error: "You have an active order. Complete or cancel it before checking out." }, { status: 409 });
@@ -92,16 +92,13 @@ export async function POST(request: Request) {
 
         const total = toPurchase.reduce((sum, listing) => sum + listing.price, 0);
 
-        if (buyer.cash < total) {
-            return Response.json({ error: "Insufficient balance" }, { status: 402 });
-        }
-
         // Require public Steam inventory so the cron can verify trade completion
         if (!buyer.steam_id) {
             return Response.json({ error: "You must link your Steam account before making purchases." }, { status: 400 });
         }
 
-        const games = [...new Set(toPurchase.map(l => l.game ?? "730"))];
+        const GAME_APP_IDS: Record<string, string> = { CS2: "730", Dota2: "570", Rust: "252490", TF2: "440" };
+        const games = [...new Set(toPurchase.map(l => GAME_APP_IDS[l.game ?? ""] ?? "730"))];
         for (const game of games) {
             const invRes = await fetch(`https://steamcommunity.com/inventory/${buyer.steam_id}/${game}/2?l=english&count=1`);
             if (invRes.status === 403) {
@@ -118,15 +115,17 @@ export async function POST(request: Request) {
 
         // Deduct buyer cash and create pending purchases
         const purchases = await prisma.$transaction(async (tx) => {
-            await tx.user.update({
-                where: { id: buyer.id },
+            const deducted = await tx.user.updateMany({
+                where: { id: buyer.id, cash: { gte: total } },
                 data: { cash: { decrement: total } },
             });
+            if (deducted.count === 0) throw new Error("Insufficient balance");
 
             const created = [];
 
             for (const listing of toPurchase) {
-                await tx.item_listing.delete({ where: { id: listing.id } });
+                const deleted = await tx.item_listing.deleteMany({ where: { id: listing.id } });
+                if (deleted.count === 0) throw new Error("Item no longer available");
 
                 const purchase = await tx.purchase.create({
                     data: {
@@ -175,6 +174,12 @@ export async function POST(request: Request) {
         return Response.json({ newCash: updated!.cash });
     }
     catch (error) {
+        if (error instanceof Error && error.message === "Insufficient balance") {
+            return Response.json({ error: "Insufficient balance" }, { status: 402 });
+        }
+        if (error instanceof Error && error.message === "Item no longer available") {
+            return Response.json({ error: "One or more items were purchased by someone else. Please refresh." }, { status: 409 });
+        }
         console.error(error);
         return Response.json({ error: "Server error" }, { status: 500 });
     }
