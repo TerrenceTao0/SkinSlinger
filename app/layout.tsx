@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/next"
 import Providers from "./components/Providers"
 import TopNav from "./components/TopNav"
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 //
 
@@ -14,21 +14,38 @@ const inter = Inter({
 
 //
 
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    themeColor: '#171A21',
+}
+
+const OG_IMAGE = { url: '/logo.svg', width: 512, height: 512, alt: 'SkinSlinger' }
+
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
     title: {
-        default: 'SkinSlinger',
+        default: 'SkinSlinger — Buy & Sell Steam Skins with Crypto',
         template: '%s | SkinSlinger',
     },
-    description: 'The P2P Steam skin marketplace with 0% sales fees, no KYC, no middleman, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins directly with other players.',
-    keywords: ['steam marketplace', 'CS2 skins', 'Dota 2 items', 'Rust skins', 'TF2 items', 'buy skins', 'sell skins', 'P2P skin trading', 'no KYC', 'no fees', 'crypto payments'],
+    description: 'SkinSlinger is the P2P Steam skin marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks.',
+    keywords: [
+        'CS2 skins', 'buy CS2 skins', 'sell CS2 skins', 'CS2 skin marketplace',
+        'Dota 2 items', 'Rust skins', 'TF2 items', 'Steam marketplace',
+        'buy skins with crypto', 'no KYC skin marketplace', '0% fee skin marketplace',
+        'P2P skin trading', 'crypto skin marketplace', 'no trade hold',
+    ],
     openGraph: {
         siteName: 'SkinSlinger',
         type: 'website',
         locale: 'en_US',
+        images: [OG_IMAGE],
     },
     twitter: {
-        card: 'summary_large_image',
+        card: 'summary',
+        images: ['/logo.svg'],
     },
     icons: {
         icon: '/logo.svg',

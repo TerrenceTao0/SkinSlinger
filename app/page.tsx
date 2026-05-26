@@ -44,6 +44,93 @@ const paymentMethods = ["USDC (Polygon Network)"]
 
 //
 
+import type { Metadata } from 'next'
+
+const description = 'SkinSlinger is the P2P Steam skin marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks, instant trades.'
+
+export const metadata: Metadata = {
+    title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC',
+    description,
+    alternates: { canonical: '/' },
+    openGraph: {
+        title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
+        description,
+        url: '/',
+        images: [{ url: '/logo.svg', width: 512, height: 512, alt: 'SkinSlinger' }],
+    },
+    twitter: {
+        card: 'summary',
+        title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
+        description,
+        images: ['/logo.svg'],
+    },
+}
+
+const base = process.env.NEXTAUTH_URL ?? '';
+
+const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "SkinSlinger",
+    "url": base,
+    "potentialAction": {
+        "@type": "SearchAction",
+        "target": { "@type": "EntryPoint", "urlTemplate": `${base}/market/cs2?search={search_term_string}` },
+        "query-input": "required name=search_term_string",
+    },
+};
+
+const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "SkinSlinger",
+    "url": base,
+    "logo": `${base}/logo.svg`,
+    "description": "P2P Steam skin marketplace with 0% sales fee, no KYC, and crypto payments.",
+};
+
+const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "Does SkinSlinger charge a sales fee?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger charges a 0% sales fee. Sellers keep 100% of their listed price." },
+        },
+        {
+            "@type": "Question",
+            "name": "Is KYC required on SkinSlinger?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger requires no identity verification (KYC). Sign up with just an email and password." },
+        },
+        {
+            "@type": "Question",
+            "name": "How do I pay on SkinSlinger?",
+            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger accepts USDC on the Polygon network. Deposit crypto and use your balance to buy skins instantly." },
+        },
+        {
+            "@type": "Question",
+            "name": "Is there a trade hold on SkinSlinger?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades." },
+        },
+        {
+            "@type": "Question",
+            "name": "What games does SkinSlinger support?",
+            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2." },
+        },
+        {
+            "@type": "Question",
+            "name": "Are my skins safe?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We only ask for your Steam trade URL to check your inventory and trade eligibility. We have no direct access to your inventory or skins. The marketplace is P2P so you trade your skins directly with other players rather than giving it to a bot." },
+        },
+        {
+            "@type": "Question",
+            "name": "How long does it take to deposit/withdraw?",
+            "acceptedAnswer": { "@type": "Answer", "text": "It should typically take less than 5 minutes for both." },
+        },
+    ],
+};
+
 export default function Home() {
     return (
         <div className="overflow-y-auto h-full w-full no-scrollbar">
@@ -134,6 +221,9 @@ export default function Home() {
                 </div>
             </div>
 
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
             <div className="w-full max-w-lg mx-auto px-4 pb-16">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
@@ -143,6 +233,19 @@ export default function Home() {
                         <div key={i} className="info-card">
                             <p className="font-semibold text-sm">{step.title}</p>
                             <p className="text-gray-400 text-sm mt-1">{step.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="w-full max-w-lg mx-auto px-4 pb-20">
+                <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+
+                <div className="flex flex-col gap-3">
+                    {faqJsonLd.mainEntity.map((q, i) => (
+                        <div key={i} className="info-card">
+                            <p className="font-semibold text-sm">{q.name}</p>
+                            <p className="text-gray-400 text-sm mt-1">{q.acceptedAnswer.text}</p>
                         </div>
                     ))}
                 </div>

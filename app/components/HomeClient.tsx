@@ -316,21 +316,28 @@ export default function HomeClient(
         initialHasMore,
         currentUserId,
         hasPendingPurchase,
+        initialGame,
+        gameBlurb,
     }: {
         initialListings: ListingCard[],
         initialHasMore: boolean,
         currentUserId: string | null,
         hasPendingPurchase: boolean,
+        initialGame?: GameFilter,
+        gameBlurb?: string,
     })
     {
 
-    const [gameFilter, setGameFilter] = useState<GameFilter>("all");
+    const [gameFilter, setGameFilter] = useState<GameFilter>(initialGame ?? "all");
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
     const [preview, setPreview] = useState<DisplayCard | null>(null);
     const [previewQtyStr, setPreviewQtyStr] = useState("");
     const [pendingNotice, setPendingNotice] = useState(false);
     const previewQty = parseInt(previewQtyStr) || 1;
     const [search, setSearch] = useState("");
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const [wear, setWear] = useState<string | null>(null);
     const { basket, setBasket } = useBasket();
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
@@ -347,13 +354,20 @@ export default function HomeClient(
     const mobileSentinelRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
     const isFirstSearchRender = useRef(true);
+    const isFirstFilterRender = useRef(true);
     const searchRef = useRef(search);
     const gameFilterRef = useRef(gameFilter);
+    const minPriceRef = useRef(minPrice);
+    const maxPriceRef = useRef(maxPrice);
+    const wearRef = useRef(wear);
 
     useEffect(() => { searchRef.current = search; }, [search]);
     useEffect(() => { gameFilterRef.current = gameFilter; }, [gameFilter]);
+    useEffect(() => { minPriceRef.current = minPrice; }, [minPrice]);
+    useEffect(() => { maxPriceRef.current = maxPrice; }, [maxPrice]);
+    useEffect(() => { wearRef.current = wear; }, [wear]);
 
-    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string) => {
+    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string, minP: string, maxP: string, wearFilter: string | null) => {
         if (loadingRef.current) return;
 
         loadingRef.current = true;
@@ -363,6 +377,9 @@ export default function HomeClient(
         if (game !== "all") params.set("game", game);
         if (cur) params.set("cursor", cur);
         if (search) params.set("search", search);
+        if (minP) params.set("minPrice", minP);
+        if (maxP) params.set("maxPrice", maxP);
+        if (wearFilter) params.set("wear", wearFilter);
 
         const res = await fetch(`/api/listings?${params}`);
         const data = await res.json();
@@ -388,7 +405,7 @@ export default function HomeClient(
             return;
         }
 
-        load(gameFilter, null, true, searchRef.current);
+        load(gameFilter, null, true, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current);
     }, [gameFilter, load]);
 
 
@@ -399,16 +416,27 @@ export default function HomeClient(
             return;
         }
 
-        const id = setTimeout(() => load(gameFilterRef.current, null, true, search), 300);
+        const id = setTimeout(() => load(gameFilterRef.current, null, true, search, minPriceRef.current, maxPriceRef.current, wearRef.current), 300);
         return () => clearTimeout(id);
     }, [search, load]);
+
+
+    // On price/wear change, debounce then reset and fetch (skip initial mount)
+    useEffect(() => {
+        if (isFirstFilterRender.current) {
+            isFirstFilterRender.current = false;
+            return;
+        }
+        const id = setTimeout(() => load(gameFilterRef.current, null, true, searchRef.current, minPrice, maxPrice, wear), 400);
+        return () => clearTimeout(id);
+    }, [minPrice, maxPrice, wear, load]);
 
 
     // Infinite scroll via IntersectionObserver
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && hasMore) {
-                load(gameFilterRef.current, cursor, false, searchRef.current);
+                load(gameFilterRef.current, cursor, false, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current);
             }
         }, { threshold: 0.1 });
 
@@ -536,7 +564,12 @@ export default function HomeClient(
 
     return (
         <>
-            <LeftPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
+            <LeftPanel
+                currentGame={gameFilter}
+                minPrice={minPrice} setMinPrice={setMinPrice}
+                maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+                wear={wear} setWear={setWear}
+            />
 
             {pendingNotice && (
                 <div
@@ -648,6 +681,10 @@ export default function HomeClient(
                     />
                 </div>
 
+                {gameBlurb && (
+                    <p className="text-xs text-gray-500 px-1 pt-2 shrink-0">{gameBlurb}</p>
+                )}
+
                 <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
                         {displayListings.map(listing => (
@@ -668,7 +705,7 @@ export default function HomeClient(
             <div className="hidden md:flex h-full w-full justify-center items-center">
                 <div className="bg-secondary w-200 h-150 flex justify-center items-center">
                     <div>
-                        <div className="bg-secondary w-310 h-14 mt-16 absolute flex items-center px-4 rounded-sm">
+                        <div className="bg-secondary w-310 h-13 mt-14 absolute flex items-center px-4 rounded-sm">
                             <input
                                 type="text"
                                 placeholder="Search items..."

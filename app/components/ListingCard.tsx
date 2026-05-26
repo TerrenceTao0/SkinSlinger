@@ -1,12 +1,18 @@
 "use client"
 
 import Image from "next/image";
+import Link from "next/link";
 import { DisplayCard } from "./HomeClient";
+
+function toSlug(name: string): string {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
 //
 
 export default function ListingCard(
     {
+        id,
         marketName,
         price,
         icon,
@@ -27,9 +33,9 @@ export default function ListingCard(
             style={{ '--glow': `#${hexColor}44` } as React.CSSProperties}
         >
             <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-2">
-                <h1 style={{ color: `#${hexColor}` }} className="text-[12px] w-35">
+                <Link href={`/item/${toSlug(marketName)}/${id}`} onClick={e => e.stopPropagation()} style={{ color: `#${hexColor}` }} className="text-[12px] w-35 hover:underline">
                     {marketName}
-                </h1>
+                </Link>
 
                 {quantity > 1 && (
                     <h1 className="text-[12px]">[x{quantity}]</h1>

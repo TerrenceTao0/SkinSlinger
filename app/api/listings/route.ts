@@ -12,10 +12,21 @@ export async function GET(request: Request) {
         const cursor = searchParams.get("cursor");
         const game = searchParams.get("game");
         const search = searchParams.get("search");
+        const minPrice = searchParams.get("minPrice");
+        const maxPrice = searchParams.get("maxPrice");
+        const wear = searchParams.get("wear");
+
+        const andFilters: object[] = [];
+        if (search) andFilters.push({ marketName: { contains: search, mode: 'insensitive' as const } });
+        if (wear) andFilters.push({ marketName: { contains: `(${wear})`, mode: 'insensitive' as const } });
 
         const where = {
             ...(game ? { game } : {}),
-            ...(search ? { marketName: { contains: search, mode: 'insensitive' as const } } : {}),
+            ...(andFilters.length > 0 ? { AND: andFilters } : {}),
+            ...((minPrice || maxPrice) ? { price: {
+                ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
+                ...(maxPrice ? { lte: parseFloat(maxPrice) } : {}),
+            }} : {}),
         };
 
         const rows = await prisma.item_listing.findMany({
