@@ -40,11 +40,15 @@ export default async function App() {
     const hasMore = rows.length > PAGE_SIZE;
 
     const assetIds = page.map(listing => listing.assetId);
-    const inventoryItems = await prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } });
+    const [inventoryItems, floatItems] = await Promise.all([
+        prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } }),
+        prisma.item_float.findMany({ where: { assetId: { in: assetIds } } }),
+    ]);
     const itemMap = new Map(inventoryItems.map(item => [item.assetId, item]));
+    const floatMap = new Map(floatItems.map(item => [item.assetId, item]));
 
     const cards = page
-        .map(listing => ({ ...listing, inv: itemMap.get(listing.assetId) }))
+        .map(listing => ({ ...listing, inv: itemMap.get(listing.assetId), float: floatMap.get(listing.assetId) }))
         .filter(listing => listing.inv)
         .map(listing => ({
             id: listing.id,
@@ -55,6 +59,9 @@ export default async function App() {
             game: listing.inv!.game,
             commodity: listing.inv!.commodity,
             sellerId: listing.userId,
+            floatValue: listing.float?.floatValue ?? null,
+            paintSeed: listing.float?.paintSeed ?? null,
+            stickers: (listing.float?.stickers ?? null) as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null,
         }));
 
 

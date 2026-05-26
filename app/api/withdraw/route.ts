@@ -2,87 +2,37 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { createWalletClient, http, erc20Abi, parseUnits } from 'viem'
-import { polygon } from 'viem/chains'
-import { privateKeyToAccount } from 'viem/accounts'
-
-//
-
-const FEE_RATE = 0.02
-const MIN_WITHDRAWAL = 1
-const USDC_DECIMALS = 6
-
-//
+import { processWithdrawal } from '@/lib/crypto'
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { amount, address } = await req.json()
+    const userId = session.user.id
 
-    if (!amount || amount < MIN_WITHDRAWAL) {
-        return NextResponse.json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL}.00` }, { status: 400 })
-    }
-
-    if (!address?.trim()) {
-        return NextResponse.json({ error: 'Wallet address required' }, { status: 400 })
-    }
-
-    // Deduct balance atomically
-    const updated = await prisma.user.updateMany({
-        where: { id: session.user.id, cash: { gte: amount } },
-        data: { cash: { decrement: amount } },
-    })
-
-    if (updated.count === 0) {
-        return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
-    }
-
-    const netAmount = amount * (1 - FEE_RATE)
-    const feeAmount = amount * FEE_RATE
-    const usdcAmount = parseUnits(netAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
-    const usdcFee = parseUnits(feeAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
-
-    const account = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
-
-    const walletClient = createWalletClient({
-        account,
-        chain: polygon,
-        transport: http(process.env.ALCHEMY_POLYGON_RPC!),
-    })
-
-    // Transfer USDC to user — refund cash if this fails
-    let txHash: `0x${string}`
     try {
-        txHash = await walletClient.writeContract({
-            address: process.env.USDC_ADDRESS as `0x${string}`,
-            abi: erc20Abi,
-            functionName: 'transfer',
-            args: [address as `0x${string}`, usdcAmount],
-        })
+        const result = await processWithdrawal(
+            amount,
+            address,
+            async () => {
+                const updated = await prisma.user.updateMany({
+                    where: { id: userId, cash: { gte: amount } },
+                    data: { cash: { decrement: amount } },
+                })
+                return updated.count > 0
+            },
+            async () => {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: { cash: { increment: amount } },
+                })
+            },
+        )
+        return NextResponse.json(result)
     } catch (err) {
-        await prisma.user.update({
-            where: { id: session.user.id },
-            data: { cash: { increment: amount } },
-        })
         const message = err instanceof Error ? err.message : 'Withdrawal failed'
-        return NextResponse.json({ error: message }, { status: 500 })
+        const status = message === 'Insufficient balance' || message.startsWith('Minimum') ? 400 : 500
+        return NextResponse.json({ error: message }, { status })
     }
-
-    // Collect fee — user already has their USDC, do not refund on failure
-    try {
-        await walletClient.writeContract({
-            address: process.env.USDC_ADDRESS as `0x${string}`,
-            abi: erc20Abi,
-            functionName: 'transfer',
-            args: [process.env.USDC_PROFIT_ADDRESS as `0x${string}`, usdcFee],
-        })
-    } catch (err) {
-        console.error('Fee transfer failed:', err)
-    }
-
-    return NextResponse.json({ txHash, usdcAmount: netAmount })
 }
