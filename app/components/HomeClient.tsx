@@ -13,6 +13,14 @@ import { useRouter } from "next/navigation";
 
 type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
 
+function wearLabel(f: number): string {
+    if (f < 0.07) return 'FN';
+    if (f < 0.15) return 'MW';
+    if (f < 0.38) return 'FT';
+    if (f < 0.45) return 'WW';
+    return 'BS';
+}
+
 export type ListingCard = {
     id: string,
     marketName: string,
@@ -22,9 +30,283 @@ export type ListingCard = {
     game: string,
     commodity: boolean,
     sellerId: string,
+    floatValue: number | null,
+    paintSeed: number | null,
+    stickers: { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null,
 }
 
 export type DisplayCard = ListingCard & { quantity: number }
+
+type PriceLevel = { price: number; quantity: number }
+type MyBuyOrder = { id: string; price: number; quantity: number }
+type OrderBookData = {
+    sellOrders: PriceLevel[]
+    buyOrders: PriceLevel[]
+    myBuyOrders: MyBuyOrder[]
+}
+
+//
+
+function OrderBookModal({ card, data, loading, currentUserId, hasPendingPurchase, userCash, onBuy, onClose, onOrderChanged }: {
+    card: DisplayCard
+    data: OrderBookData | null
+    loading: boolean
+    currentUserId: string | null
+    hasPendingPurchase: boolean
+    userCash: number
+    onBuy: (price: number, qty: number) => void
+    onClose: () => void
+    onOrderChanged: () => void
+}) {
+    const [selectedSellPrice, setSelectedSellPrice] = useState<number | null>(null);
+    const [sellQtyStr, setSellQtyStr] = useState("1");
+    const [bidPriceStr, setBidPriceStr] = useState("");
+    const [bidQtyStr, setBidQtyStr] = useState("1");
+    const [placingBid, setPlacingBid] = useState(false);
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
+    const [bidError, setBidError] = useState("");
+
+    const sellOrders = data?.sellOrders ?? [];
+    const buyOrders = data?.buyOrders ?? [];
+    const myBuyOrders = data?.myBuyOrders ?? [];
+
+    useEffect(() => {
+        if (sellOrders.length > 0 && selectedSellPrice === null) {
+            setSelectedSellPrice(sellOrders[0].price);
+        }
+    }, [sellOrders, selectedSellPrice]);
+
+    const selectedSellLevel = sellOrders.find(l => l.price === selectedSellPrice) ?? null;
+    const sellQty = Math.max(1, Math.min(parseInt(sellQtyStr) || 1, selectedSellLevel?.quantity ?? 1));
+    const sellTotal = (selectedSellPrice ?? 0) * sellQty;
+
+    const bidPrice = parseFloat(bidPriceStr);
+    const bidQty = Math.max(1, parseInt(bidQtyStr) || 1);
+    const bidTotal = (isNaN(bidPrice) ? 0 : bidPrice) * bidQty;
+    const canAffordBid = !isNaN(bidPrice) && bidPrice > 0 && bidTotal <= userCash;
+
+    async function placeBid() {
+        if (!canAffordBid) return;
+        setPlacingBid(true);
+        setBidError("");
+        const res = await fetch("/api/market/orders/buy", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                marketName: card.marketName,
+                price: bidPrice,
+                quantity: bidQty,
+                game: card.game,
+                icon: card.icon,
+                hexColor: card.hexColor,
+            }),
+        });
+        if (!res.ok) {
+            const d = await res.json();
+            setBidError(d.error ?? "Failed to place order");
+        } else {
+            setBidPriceStr("");
+            setBidQtyStr("1");
+            onOrderChanged();
+        }
+        setPlacingBid(false);
+    }
+
+    async function cancelBid(id: string, price: number, qty: number) {
+        setCancellingId(id);
+        const res = await fetch(`/api/market/orders/buy/${id}`, { method: "DELETE" });
+        if (res.ok) onOrderChanged();
+        setCancellingId(null);
+        void price; void qty;
+    }
+
+    const lowestAsk = sellOrders[0]?.price ?? null;
+    const highestBid = buyOrders[0]?.price ?? null;
+
+    const colHeader = (label: "sell" | "buy") => (
+        <div className="grid grid-cols-3 text-xs text-gray-500 border-b border-gray-700 pb-1">
+            <span>{label === "sell" ? "Ask" : "Bid"}</span>
+            <span className="text-center">Qty</span>
+            <span className="text-right">Total</span>
+        </div>
+    );
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+            <div
+                className="bg-secondary rounded-sm w-full mx-4 max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col"
+                style={{ boxShadow: `0 0 40px #${card.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center gap-4 px-5 py-4 border-b border-gray-700">
+                    <div style={{ filter: `drop-shadow(0 0 10px #${card.hexColor}88)` }} className="shrink-0">
+                        <Image src={card.icon} alt={card.marketName} width={52} height={52} style={{ width: 'auto', height: 52 }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p style={{ color: `#${card.hexColor}` }} className="font-medium leading-tight truncate">{card.marketName}</p>
+                        {!loading && (
+                            <div className="flex gap-4 mt-1">
+                                <span className="text-xs text-gray-500">Lowest ask: <span className="text-red-400 font-medium">{lowestAsk !== null ? `$${lowestAsk.toFixed(2)}` : "—"}</span></span>
+                                <span className="text-xs text-gray-500">Highest bid: <span className="text-green-400 font-medium">{highestBid !== null ? `$${highestBid.toFixed(2)}` : "—"}</span></span>
+                            </div>
+                        )}
+                    </div>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none shrink-0 cursor-pointer">✕</button>
+                </div>
+
+                {loading ? (
+                    <div className="flex items-center justify-center py-12 text-gray-500 text-sm">Loading...</div>
+                ) : (
+                    <div className="flex flex-col gap-5 px-5 pb-5 pt-2">
+                        {/* Sell Orders */}
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-sm font-semibold text-gray-200">Sell Orders</h3>
+                            {sellOrders.length === 0 ? (
+                                <p className="text-sm text-gray-500">No listings available.</p>
+                            ) : (
+                                <>
+                                    {colHeader("sell")}
+                                    <div className="flex flex-col max-h-40 overflow-y-auto">
+                                        {sellOrders.map(level => (
+                                            <button
+                                                key={level.price}
+                                                onClick={() => { setSelectedSellPrice(level.price); setSellQtyStr("1"); }}
+                                                className={`grid grid-cols-3 px-2 py-2 text-sm transition-colors cursor-pointer rounded-sm ${
+                                                    selectedSellPrice === level.price
+                                                        ? "bg-red-950/70 border border-red-800/60"
+                                                        : "bg-red-950/30 hover:bg-red-950/50"
+                                                }`}
+                                            >
+                                                <span className="text-left">${level.price.toFixed(2)}</span>
+                                                <span className="text-center text-gray-400">{level.quantity}</span>
+                                                <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Buy Orders */}
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-sm font-semibold text-gray-200">Buy Orders</h3>
+                            {buyOrders.length === 0 ? (
+                                <p className="text-sm text-gray-500">No buy orders yet.</p>
+                            ) : (
+                                <>
+                                    {colHeader("buy")}
+                                    <div className="flex flex-col max-h-40 overflow-y-auto">
+                                        {buyOrders.map(level => (
+                                            <div key={level.price} className="grid grid-cols-3 px-2 py-2 text-sm rounded-sm bg-green-950/30 border border-green-800/60">
+                                                <span className="text-left">${level.price.toFixed(2)}</span>
+                                                <span className="text-center text-gray-400">{level.quantity}</span>
+                                                <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            {currentUserId && myBuyOrders.length > 0 && (
+                                <div className="flex flex-col gap-1 mt-1">
+                                    <p className="text-xs text-gray-500 uppercase tracking-wider">Your orders</p>
+                                    {myBuyOrders.map(order => (
+                                        <div key={order.id} className="flex items-center gap-2 px-2 py-2 bg-accent rounded-sm text-sm">
+                                            <span className="text-green-400 font-medium">${order.price.toFixed(2)}</span>
+                                            <span className="text-gray-400">×{order.quantity}</span>
+                                            <span className="text-gray-500 flex-1">${(order.price * order.quantity).toFixed(2)} held</span>
+                                            <button
+                                                onClick={() => cancelBid(order.id, order.price, order.quantity)}
+                                                disabled={cancellingId === order.id}
+                                                className="text-xs text-red-400 hover:text-red-300 cursor-pointer transition-colors"
+                                            >
+                                                {cancellingId === order.id ? "..." : "Cancel"}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {currentUserId && (
+                            <>
+                                <div className="border-t border-gray-700" />
+
+                                {/* Place Buy Order */}
+                                <div className="flex flex-col gap-3">
+                                    <h3 className="text-sm font-semibold text-gray-200">Place Buy Order</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Price (USD)</label>
+                                            <input
+                                                type="number" min={0.01} step={0.01} placeholder="0.00"
+                                                value={bidPriceStr}
+                                                onChange={e => setBidPriceStr(e.target.value)}
+                                                className="bg-accent rounded-sm h-9 px-3 outline-none border border-gray-600 text-sm w-full"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-500">Quantity</label>
+                                            <input
+                                                type="number" min={1} placeholder="1"
+                                                value={bidQtyStr}
+                                                onChange={e => setBidQtyStr(e.target.value)}
+                                                className="bg-accent rounded-sm h-9 px-3 outline-none border border-gray-600 text-sm w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    {bidTotal > 0 && <p className="text-sm text-gray-300">Total held: <span className="font-medium">${bidTotal.toFixed(2)}</span></p>}
+                                    {bidTotal > 0 && !canAffordBid && <p className="text-red-400 text-sm">Insufficient balance — you have ${userCash.toFixed(2)}</p>}
+                                    {bidError && <p className="text-red-400 text-sm">{bidError}</p>}
+                                    <button
+                                        onClick={placeBid}
+                                        disabled={!canAffordBid || placingBid || !bidPriceStr}
+                                        className={`h-9 rounded-sm text-sm font-medium w-full ${canAffordBid && bidPriceStr ? "bg-special button" : "bg-accent text-gray-500 cursor-not-allowed"}`}
+                                    >
+                                        {placingBid ? "Placing..." : "Place Buy Order"}
+                                    </button>
+                                </div>
+
+                                <div className="border-t border-gray-700" />
+                            </>
+                        )}
+
+                        {/* Buy Instantly */}
+                        {selectedSellLevel ? (
+                            <div className="flex flex-col gap-3">
+                                <h3 className="text-sm font-semibold text-gray-200">Buy Instantly</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex flex-col gap-1 flex-1">
+                                        <label className="text-xs text-gray-500">Quantity (max {selectedSellLevel.quantity})</label>
+                                        <input
+                                            type="number" min={1} max={selectedSellLevel.quantity}
+                                            value={sellQtyStr}
+                                            onChange={e => setSellQtyStr(e.target.value)}
+                                            className="bg-accent rounded-sm h-9 px-3 outline-none border border-gray-600 text-sm w-full"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1 shrink-0 text-right">
+                                        <span className="text-xs text-gray-500">Total</span>
+                                        <span className="text-sm font-medium text-gray-200 h-9 flex items-center justify-end">${sellTotal.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => { onBuy(selectedSellPrice!, sellQty); onClose(); }}
+                                    disabled={hasPendingPurchase}
+                                    className="h-9 rounded-sm bg-special button text-sm font-medium w-full"
+                                >
+                                    Add to Basket — ${sellTotal.toFixed(2)}
+                                </button>
+                            </div>
+                        ) : sellOrders.length > 0 ? (
+                            <p className="text-sm text-gray-500">Select a price above to buy instantly.</p>
+                        ) : null}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 //
 
@@ -54,6 +336,10 @@ export default function HomeClient(
     const [hasMore, setHasMore] = useState(initialHasMore);
     const { data: session } = useSession();
 
+    const [orderBookCard, setOrderBookCard] = useState<DisplayCard | null>(null);
+    const [orderBookData, setOrderBookData] = useState<OrderBookData | null>(null);
+    const [orderBookLoading, setOrderBookLoading] = useState(false);
+
     const router = useRouter();
 
     const loadingRef = useRef(false);
@@ -82,12 +368,11 @@ export default function HomeClient(
         const data = await res.json();
 
         if (reset) {
-            setListings(data.listings);
+            setListings(data.listings ?? []);
         }
         else {
-            setListings(prev => [...prev, ...data.listings]);
+            setListings(prev => [...prev, ...(data.listings ?? [])]);
         }
-
 
         setCursor(data.nextCursor);
         setHasMore(data.nextCursor !== null);
@@ -134,6 +419,29 @@ export default function HomeClient(
     }, [hasMore, cursor, gameFilter, load]);
 
 
+    async function openOrderBook(card: DisplayCard) {
+        setOrderBookCard(card);
+        setOrderBookData(null);
+        setOrderBookLoading(true);
+        const res = await fetch(`/api/market/orders?marketName=${encodeURIComponent(card.marketName)}`);
+        const data = await res.json();
+        setOrderBookData({ sellOrders: data.sellOrders ?? [], buyOrders: data.buyOrders ?? [], myBuyOrders: data.myBuyOrders ?? [] });
+        setOrderBookLoading(false);
+    }
+
+    async function refreshOrderBook() {
+        if (!orderBookCard) return;
+        const res = await fetch(`/api/market/orders?marketName=${encodeURIComponent(orderBookCard.marketName)}`);
+        const data = await res.json();
+        setOrderBookData({ sellOrders: data.sellOrders ?? [], buyOrders: data.buyOrders ?? [], myBuyOrders: data.myBuyOrders ?? [] });
+    }
+
+    function closeOrderBook() {
+        setOrderBookCard(null);
+        setOrderBookData(null);
+    }
+
+
     function handleBuy(item: DisplayCard, qty: number = 1) {
         if (session === null) {
             router.push("/sign-up");
@@ -144,7 +452,6 @@ export default function HomeClient(
             setPendingNotice(true);
             return;
         }
-
 
         const current = basket;
         let updated: BasketItem[];
@@ -170,8 +477,14 @@ export default function HomeClient(
             updated = [...current, { id: item.id, marketName: item.marketName, price: item.price, icon: item.icon, hexColor: item.hexColor, commodity: false, quantity: 1, maxQuantity: 1 } as BasketItem];
         }
 
-
         setBasket(updated);
+    }
+
+    function handleBuyFromOrderBook(price: number, qty: number) {
+        if (!orderBookCard || !orderBookData) return;
+        const level = orderBookData.sellOrders.find(l => l.price === price);
+        if (!level) return;
+        handleBuy({ ...orderBookCard, price, quantity: level.quantity }, qty);
     }
 
 
@@ -185,6 +498,7 @@ export default function HomeClient(
 
                 if (existing) {
                     existing.quantity += 1;
+                    if (listing.price < existing.price) existing.price = listing.price;
                 }
                 else {
                     const entry: DisplayCard = { ...listing, quantity: 1 };
@@ -206,7 +520,6 @@ export default function HomeClient(
 
                     return inBasket ? { ...item, quantity: item.quantity - inBasket.quantity } : item;
                 }
-
 
                 return item;
             })
@@ -238,6 +551,7 @@ export default function HomeClient(
                 </div>
             )}
 
+            {/* Non-commodity preview modal */}
             {preview && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -267,33 +581,31 @@ export default function HomeClient(
                             <span>${(preview.price * previewQty).toFixed(2)}</span>
                         </div>
 
-                        {preview.quantity > 1 && (
+                        {preview.floatValue !== null && (
                             <div className="flex justify-between w-full text-sm">
-                                <span className="opacity-60">Available</span>
-                                <span>{preview.quantity}</span>
+                                <span className="opacity-60">Float</span>
+                                <span className="font-mono">{wearLabel(preview.floatValue)} {preview.floatValue.toFixed(10).replace(/0+$/, '')}</span>
                             </div>
                         )}
 
-                        {preview.commodity && preview.quantity > 1 && (
-                            <div className="flex justify-between items-center w-full text-sm">
-                                <span className="opacity-60">Quantity</span>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={preview.quantity}
-                                    value={previewQtyStr}
-                                    placeholder="1"
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val === "") {
-                                            setPreviewQtyStr("");
-                                        } else {
-                                            const num = parseInt(val);
-                                            if (!isNaN(num)) setPreviewQtyStr(String(Math.min(Math.max(1, num), preview.quantity)));
-                                        }
-                                    }}
-                                    className="bg-accent rounded-sm w-16 h-8 text-center outline-none border border-gray-500"
-                                />
+                        {preview.paintSeed !== null && (
+                            <div className="flex justify-between w-full text-sm">
+                                <span className="opacity-60">Pattern</span>
+                                <span>#{preview.paintSeed}</span>
+                            </div>
+                        )}
+
+                        {preview.stickers && preview.stickers.length > 0 && (
+                            <div className="flex flex-col gap-1 w-full">
+                                <span className="opacity-60 text-sm">Stickers</span>
+                                <div className="flex gap-2 flex-wrap">
+                                    {preview.stickers.map((s, i) => (
+                                        <div key={i} className="flex flex-col items-center gap-0.5" title={s.name}>
+                                            <Image src={s.image} alt={s.name} width={40} height={40} style={{ width: 'auto', height: 40 }} />
+                                            <span className="text-[10px] opacity-40 text-center max-w-10 truncate">{s.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -307,6 +619,21 @@ export default function HomeClient(
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Commodity order book modal */}
+            {orderBookCard && (
+                <OrderBookModal
+                    card={orderBookCard}
+                    data={orderBookData}
+                    loading={orderBookLoading}
+                    currentUserId={currentUserId}
+                    hasPendingPurchase={hasPendingPurchase}
+                    userCash={session?.user?.cash ?? 0}
+                    onBuy={handleBuyFromOrderBook}
+                    onClose={closeOrderBook}
+                    onOrderChanged={refreshOrderBook}
+                />
             )}
 
             {/* Mobile layout */}
@@ -327,8 +654,8 @@ export default function HomeClient(
                             <ListingCard
                                 key={listing.id} {...listing}
                                 currentUserId={currentUserId}
-                                onBuy={() => handleBuy(listing)}
-                                onPreview={() => { setPreview(listing); setPreviewQtyStr(""); }}
+                                onBuy={() => listing.commodity ? openOrderBook(listing) : handleBuy(listing)}
+                                onPreview={() => listing.commodity ? openOrderBook(listing) : (setPreview(listing), setPreviewQtyStr(""))}
                             />
                         ))}
 
@@ -356,8 +683,8 @@ export default function HomeClient(
                                 <ListingCard
                                     key={listing.id} {...listing}
                                     currentUserId={currentUserId}
-                                    onBuy={() => handleBuy(listing)}
-                                    onPreview={() => { setPreview(listing); setPreviewQtyStr(""); }}
+                                    onBuy={() => listing.commodity ? openOrderBook(listing) : handleBuy(listing)}
+                                    onPreview={() => listing.commodity ? openOrderBook(listing) : (setPreview(listing), setPreviewQtyStr(""))}
                                 />
                             ))}
 

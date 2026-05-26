@@ -40,6 +40,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                     marketName: i.marketName,
                     commodity: i.commodity,
                     quantity: i.quantity,
+                    expectedPrice: i.price,
                 })),
             }),
         });

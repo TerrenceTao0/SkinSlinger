@@ -27,7 +27,7 @@ export default async function App() {
     const currentUserId = session?.user?.id ?? null;
 
     const hasPendingPurchase = currentUserId ? (await prisma.purchase.count({
-        where: { buyerId: currentUserId, status: { in: ["pending", "offer_sent"] } },
+        where: { buyerId: currentUserId, status: "pending" },
     })) > 0 : false;
 
     const rows = await prisma.item_listing.findMany({

@@ -29,11 +29,15 @@ export async function GET(request: Request) {
         const nextCursor = rows.length > PAGE_SIZE ? page[page.length - 1].id : null;
 
         const assetIds = page.map(l => l.assetId);
-        const inventoryItems = await prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } });
+        const [inventoryItems, floatItems] = await Promise.all([
+            prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } }),
+            prisma.item_float.findMany({ where: { assetId: { in: assetIds } } }),
+        ]);
         const itemMap = new Map(inventoryItems.map(i => [i.assetId, i]));
+        const floatMap = new Map(floatItems.map(f => [f.assetId, f]));
 
         const listings = page
-            .map(l => ({ ...l, inv: itemMap.get(l.assetId) }))
+            .map(l => ({ ...l, inv: itemMap.get(l.assetId), float: floatMap.get(l.assetId) }))
             .filter(l => l.inv)
             .map(l => ({
                 id: l.id,
@@ -44,6 +48,9 @@ export async function GET(request: Request) {
                 game: l.inv!.game,
                 commodity: l.inv!.commodity,
                 sellerId: l.userId,
+                floatValue: l.float?.floatValue ?? null,
+                paintSeed: l.float?.paintSeed ?? null,
+                stickers: l.float?.stickers ?? null,
             }));
 
         return Response.json({ listings, nextCursor });
@@ -113,11 +120,6 @@ export async function POST(request: Request) {
         }
 
         await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
-
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastInventoryRefresh: new Date(0) },
-        });
 
         return Response.json(null, { status: 200 });
     }

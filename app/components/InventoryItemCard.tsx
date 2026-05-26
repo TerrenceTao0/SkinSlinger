@@ -41,9 +41,12 @@ export default function InventoryItemCard({ item, quantity, selling, setSelling,
                 />
             </div>
 
-            <p className="text-[15px] pl-2 absolute bottom-10 z-2">
-                {loading ? '...' : `$${item.price.toFixed(2)}`}
-            </p>
+            <div className="absolute bottom-10 left-0 px-2 flex items-baseline gap-2 z-2">
+                <p className="text-[15px]">{loading ? '...' : `$${item.price.toFixed(2)}`}</p>
+                {item.floatValue !== null && (
+                    <p className="text-[11px] opacity-50 font-mono">{item.floatValue.toFixed(4)}</p>
+                )}
+            </div>
 
             <div className="flex justify-center bottom-0 w-full absolute">
                 <button

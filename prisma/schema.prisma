@@ -35,6 +35,7 @@ model user {
   inventory_item inventory_item[]
   purchases_as_buyer  purchase[] @relation("buyer_purchases")
   purchases_as_seller purchase[] @relation("seller_purchases")
+  buy_orders buy_order[]
 }
 
 model inventory_item {
@@ -121,9 +122,19 @@ model deposit_counter {
 }
 
 model item {
-  marketName String @id
-  price Float 
-  docId String
+  marketName     String   @id
+  marketHashName String
+  price          Float
+  game           String
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model item_float {
+  assetId    String   @id
+  floatValue Float?
+  paintSeed  Int?
+  stickers   Json?
+  fetchedAt  DateTime @default(now())
 }
 
 model item_listing {
@@ -135,6 +146,19 @@ model item_listing {
   price Float
   game String?
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model buy_order {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  userId     String
+  marketName String
+  price      Float
+  quantity   Int
+  game       String?
+  icon       String?
+  hexColor   String?
+  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model purchase {
@@ -150,7 +174,6 @@ model purchase {
   hexColor      String?
   commodity     Boolean  @default(false)
   buyerTradeUrl String?
-  tradeOfferId  String?
 
   buyerId  String
   sellerId String

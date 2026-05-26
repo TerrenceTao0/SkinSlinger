@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
+import { checkCanTrade } from "@/lib/steam";
 
 //
 
@@ -24,6 +25,13 @@ export async function POST(request: Request) {
             return Response.json({ error: "User not found" }, { status: 404 });
         }
 
+        if (buyer.steam_id) {
+            const { allowed, reason } = await checkCanTrade(buyer.steam_id, buyer.steam_trade_url);
+            if (!allowed) {
+                return Response.json({ error: reason ?? "Your Steam account cannot trade at this time." }, { status: 403 });
+            }
+        }
+
         const pendingCount = await prisma.purchase.count({
             where: { buyerId: buyer.id, status: "pending" },
         });
@@ -32,7 +40,7 @@ export async function POST(request: Request) {
         }
 
         const { items } = await request.json() as {
-            items: { id: string, marketName: string, commodity: boolean, quantity: number }[]
+            items: { id: string, marketName: string, commodity: boolean, quantity: number, expectedPrice: number }[]
         };
 
         if (!Array.isArray(items) || items.length === 0) {
@@ -69,6 +77,12 @@ export async function POST(request: Request) {
                     return Response.json({ error: `Not enough "${item.marketName}" available` }, { status: 409 });
                 }
 
+                const resolvedCost = listings.reduce((sum, l) => sum + l.price, 0);
+                const expectedCost = item.expectedPrice * item.quantity;
+                if (resolvedCost > expectedCost + 0.01) {
+                    return Response.json({ error: `The price for "${item.marketName}" has changed. Please refresh your basket.` }, { status: 409 });
+                }
+
                 for (const listing of listings) {
                     const inv = await prisma.inventory_item.findUnique({ where: { assetId: listing.assetId }, select: { icon: true, hexColor: true, commodity: true } });
                     toPurchase.push({ id: listing.id, price: listing.price, sellerId: listing.userId, assetId: listing.assetId, marketName: listing.marketName, game: listing.game, icon: inv?.icon ?? null, hexColor: inv?.hexColor ?? null, commodity: inv?.commodity ?? true });
@@ -83,6 +97,10 @@ export async function POST(request: Request) {
 
                 if (listing.userId === buyer.id) {
                     return Response.json({ error: "You cannot buy your own listing" }, { status: 400 });
+                }
+
+                if (listing.price > item.expectedPrice + 0.01) {
+                    return Response.json({ error: `The price for "${item.marketName}" has changed to $${listing.price.toFixed(2)}. Please refresh your basket.` }, { status: 409 });
                 }
 
                 const inv = await prisma.inventory_item.findUnique({ where: { assetId: listing.assetId }, select: { icon: true, hexColor: true, commodity: true } });

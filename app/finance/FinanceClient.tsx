@@ -35,7 +35,7 @@ export default function FinanceClient() {
     const [address, setAddress] = useState("")
     const [payment, setPayment] = useState<Payment | null>(null)
     const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("waiting")
-    const [withdrawResult, setWithdrawResult] = useState<{ cryptoAmount: number } | null>(null)
+    const [withdrawResult, setWithdrawResult] = useState<{ usdcAmount: number } | null>(null)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<"address" | "amount" | null>(null)
@@ -194,7 +194,7 @@ export default function FinanceClient() {
                 <div className="w-100 flex flex-col justify-center items-center bg-secondary gap-4 frame-shadow rounded-[5px] p-8">
                     <p className="text-lg font-medium">Withdrawal initiated!</p>
                     <p className="text-sm text-gray-400 text-center">
-                        {withdrawResult.cryptoAmount} USDC is on its way to your wallet.
+                        {withdrawResult.usdcAmount} USDC is on its way to your wallet.
                     </p>
                     <button className="bg-special w-40 h-10 rounded-[5px] button" onClick={reset}>Done</button>
                 </div>

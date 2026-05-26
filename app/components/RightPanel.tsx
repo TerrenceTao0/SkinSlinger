@@ -1,7 +1,7 @@
 "use client"
 
 import { SteamItem } from '@/lib/steam';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SellItemCard from './SellItemCard';
 
 //
@@ -56,6 +56,17 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
     const [showPrompt, setShowPrompt] = useState(false);
     const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
     const [priceMap, setPriceMap] = useState<Record<string, string>>({});
+    const [bidMap, setBidMap] = useState<Record<string, number | null>>({});
+    const fetchedRef = useRef<Set<string>>(new Set());
+
+    function applyInstantSell() {
+        const next: Record<string, string> = { ...priceMap };
+        for (const item of stackedQueue) {
+            const bid = bidMap[item.market_name];
+            if (bid) next[item.market_name] = bid.toFixed(2);
+        }
+        setPriceMap(next);
+    }
 
     async function listItems() {
         const items = stackedQueue.map(item => ({
@@ -85,6 +96,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
 
         if (index >= 0) {
             setSelling(selling.filter((_, i) => i !== index));
+            fetchedRef.current.delete(market_name);
         }
     }
 
@@ -110,6 +122,26 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
 
         return result;
     })();
+    // Auto-fetch buy order prices for new queue items
+    useEffect(() => {
+        for (const item of stackedQueue) {
+            if (fetchedRef.current.has(item.market_name)) continue;
+            fetchedRef.current.add(item.market_name);
+            fetch(`/api/market/orders?marketName=${encodeURIComponent(item.market_name)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const highestBid: number | null = data.buyOrders?.[0]?.price ?? null;
+                    setBidMap(prev => ({ ...prev, [item.market_name]: highestBid }));
+                    if (highestBid) {
+                        setPriceMap(prev => {
+                            if (prev[item.market_name] !== undefined) return prev;
+                            return { ...prev, [item.market_name]: highestBid.toFixed(2) };
+                        });
+                    }
+                });
+        }
+    }, [stackedQueue]);
+
     function defaultPrice(item: SteamItem & { quantity: number }): string {
         const livePrice = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
         return (livePrice * 0.80).toFixed(2);
@@ -146,6 +178,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
                                 priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
                                 marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
+                                bidPrice={bidMap[item.market_name] ?? null}
                                 remove={() => remove(item.market_name)}
                             />
                         ))}
@@ -179,14 +212,14 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
                         <>
                         <div className="w-full flex ml-2 mt-2">
                             <p className="text-3xl">
-                                {stackedQueue.length} Items: ${totalValue.toFixed(2)}
+                                {totalItems} Items: ${totalValue.toFixed(2)}
                             </p>
                         </div>
 
                         <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
                             <p className="text-xs opacity-40">Global discount modifiers</p>
                             <div className="flex gap-1">
-                                {[0, 10, 20, 30, 40].map(d => (
+                                {[0, 20, 30, 40].map(d => (
                                     <button
                                         key={d}
                                         onClick={() => {
@@ -202,6 +235,20 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
                                         {d === 0 ? '0%' : `-${d}%`}
                                     </button>
                                 ))}
+                                {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
+                                    const allMatch = stackedQueue.every(item => {
+                                        const bid = bidMap[item.market_name];
+                                        return bid && priceMap[item.market_name] === bid.toFixed(2);
+                                    });
+                                    return (
+                                        <button
+                                            onClick={applyInstantSell}
+                                            className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                                        >
+                                            Instant
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         </div>
                         </>
@@ -218,6 +265,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
                                 priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
                                 marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
+                                bidPrice={bidMap[item.market_name] ?? null}
                                 remove={() => remove(item.market_name)}
                             />
                         ))}

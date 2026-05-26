@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 
-const DISCOUNTS = [0, 10, 20, 30, 40];
+const DISCOUNTS = [0, 20, 30, 40];
 
-export default function SellItemCard({ market_name, quantity, icon, hexColor, priceStr, setPriceStr, marketPrice, remove }: {
+export default function SellItemCard({ market_name, quantity, icon, hexColor, priceStr, setPriceStr, marketPrice, bidPrice, remove }: {
     market_name: string, quantity: number, icon: string, hexColor: string,
-    priceStr: string, setPriceStr: (val: string) => void, marketPrice: number, remove: () => void
+    priceStr: string, setPriceStr: (val: string) => void, marketPrice: number, bidPrice: number | null, remove: () => void
 }) {
     const basePrice = parseFloat(marketPrice.toFixed(2))
     const price = parseFloat(priceStr)
@@ -63,6 +63,14 @@ export default function SellItemCard({ market_name, quantity, icon, hexColor, pr
                             {d === 0 ? '0%' : `-${d}%`}
                         </button>
                     ))}
+                    {bidPrice !== null && (
+                        <button
+                            onClick={() => setPriceStr(bidPrice.toFixed(2))}
+                            className={`flex-1 h-6 rounded-sm text-xs cursor-pointer transition-colors ${priceStr === bidPrice.toFixed(2) ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                        >
+                            Instant
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

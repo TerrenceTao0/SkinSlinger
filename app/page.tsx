@@ -52,7 +52,7 @@ export default function Home() {
                     <Image src="/logo.svg" alt="" width={60} height={60} />
                     <h1 className="text-4xl font-bold">SkinSlinger</h1>
                     <p className="text-gray-400 text-lg max-w-md">
-                        The *new* P2P skin marketplace. No bots, no middleman, no hidden fees, no id, no BS.
+                        The *new* P2P skin marketplace. No bots, no middleman, no hidden fees, no BS.
                         <br />
                         Trade directly with other players straight away.
                     </p>
@@ -84,7 +84,7 @@ export default function Home() {
 
 
                 <div className="flex flex-col items-center text-center gap-1">
-                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market. By far.</p>
+                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market.</p>
                 </div>
 
                 

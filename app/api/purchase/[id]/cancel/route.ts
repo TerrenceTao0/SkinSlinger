@@ -57,7 +57,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         }
 
         // Check the buyer's inventory before cancelling to prevent scamming
-        if (purchase.status === "pending" && purchase.buyer.steam_id) {
+        if (purchase.buyer.steam_id) {
             const result = await checkInventory(purchase.buyer.steam_id, purchase.game, purchase.assetId);
             if (result === "has_item") {
                 // Buyer already received the item — complete instead of cancel

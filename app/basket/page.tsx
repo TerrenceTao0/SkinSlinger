@@ -16,7 +16,7 @@ export default async function BasketPage() {
     const userId = session?.user?.id ?? null;
 
     const hasPendingPurchase = userId ? (await prisma.purchase.count({
-        where: { buyerId: userId, status: { in: ["pending", "offer_sent"] } },
+        where: { buyerId: userId, status: "pending" },
     })) > 0 : false;
 
     return <BasketClient hasPendingPurchase={hasPendingPurchase} />;

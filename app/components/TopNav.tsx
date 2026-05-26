@@ -38,7 +38,7 @@ export default function TopNav() {
                 {/* Desktop nav */}
                 <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3">
                     <div className="flex h-full items-center gap-3">
-                        <Link href="/market" className="right-nav-link button">Market</Link>               
+                        <Link href="/market" className="right-nav-link button">Market</Link>
                     </div>
 
                     <div className="flex h-full items-center gap-3">
@@ -50,10 +50,13 @@ export default function TopNav() {
                                     </button>
                                 </Link>
 
-                                <Link href="/basket" className="right-nav-link button">
-                                    Basket{basketCount > 0 && `(${basketCount})`}
-                                </Link>
-                                
+                                {basketCount > 0 && (
+                                    <Link href="/basket" className="right-nav-link button">
+                                        Basket ({basketCount})
+                                    </Link>
+                                )}
+
+                                <Link href="/listings" className="right-nav-link button">Listings</Link>
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
                                 <Link href="/inventory" className="right-nav-link button">Inventory</Link>
 
@@ -103,8 +106,14 @@ export default function TopNav() {
                                 Market
                             </Link>
 
-                            <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
-                                Basket{basketCount > 0 && ` (${basketCount})`}
+                            {basketCount > 0 && (
+                                <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                                    Basket ({basketCount})
+                                </Link>
+                            )}
+
+                            <Link href="/listings" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                                Listings
                             </Link>
 
                             <Link href="/orders" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
@@ -142,4 +151,3 @@ export default function TopNav() {
         </>
     )
 }
-
