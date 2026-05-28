@@ -272,7 +272,7 @@ function OrderBookModal({ card, data, loading, currentUserId, hasPendingPurchase
                         )}
 
                         {/* Buy Instantly */}
-                        {selectedSellLevel ? (
+                        {currentUserId === card.sellerId ? null : selectedSellLevel ? (
                             <div className="flex flex-col gap-3">
                                 <h3 className="text-sm font-semibold text-gray-200">Buy Instantly</h3>
                                 <div className="flex items-center gap-3">
@@ -372,29 +372,31 @@ export default function HomeClient(
 
         loadingRef.current = true;
 
-        const params = new URLSearchParams();
+        try {
+            const params = new URLSearchParams();
 
-        if (game !== "all") params.set("game", game);
-        if (cur) params.set("cursor", cur);
-        if (search) params.set("search", search);
-        if (minP) params.set("minPrice", minP);
-        if (maxP) params.set("maxPrice", maxP);
-        if (wearFilter) params.set("wear", wearFilter);
+            if (game !== "all") params.set("game", game);
+            if (cur) params.set("cursor", cur);
+            if (search) params.set("search", search);
+            if (minP) params.set("minPrice", minP);
+            if (maxP) params.set("maxPrice", maxP);
+            if (wearFilter) params.set("wear", wearFilter);
 
-        const res = await fetch(`/api/listings?${params}`);
-        const data = await res.json();
+            const res = await fetch(`/api/listings?${params}`);
+            const data = await res.json();
 
-        if (reset) {
-            setListings(data.listings ?? []);
+            if (reset) {
+                setListings(data.listings ?? []);
+            }
+            else {
+                setListings(prev => [...prev, ...(data.listings ?? [])]);
+            }
+
+            setCursor(data.nextCursor);
+            setHasMore(data.nextCursor !== null);
+        } finally {
+            loadingRef.current = false;
         }
-        else {
-            setListings(prev => [...prev, ...(data.listings ?? [])]);
-        }
-
-        setCursor(data.nextCursor);
-        setHasMore(data.nextCursor !== null);
-
-        loadingRef.current = false;
     }, []);
 
 
@@ -475,6 +477,8 @@ export default function HomeClient(
             router.push("/sign-up");
             return;
         }
+
+        if (!item.commodity && item.sellerId === currentUserId) return;
 
         if (hasPendingPurchase) {
             setPendingNotice(true);

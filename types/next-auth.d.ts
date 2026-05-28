@@ -8,7 +8,6 @@ declare module "next-auth" {
         steam_trade_url?: string;
         username?: string;
         cash?: number;
-        lastInventoryRefresh?: Date | null;
     }
 
     interface Session {
@@ -18,7 +17,6 @@ declare module "next-auth" {
             steam_trade_url?: string;
             username?: string;
             cash?: number;
-            lastInventoryRefresh?: Date | null;
         } & DefaultSession["user"]
     }
 }
@@ -31,7 +29,6 @@ declare module "next-auth/jwt" {
         steam_trade_url?: string;
         username?: string;
         cash?: number;
-        lastInventoryRefresh?: Date | null;
     }
 }
 

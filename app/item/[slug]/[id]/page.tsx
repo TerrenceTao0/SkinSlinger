@@ -34,15 +34,10 @@ function wearLabel(f: number): string {
 
 const getListing = cache(async (id: string) => {
     const listing = await prisma.item_listing.findUnique({ where: { id } });
-    if (!listing) return null;
+    if (!listing || !listing.icon || !listing.hexColor || !listing.game) return null;
 
-    const [inv, float] = await Promise.all([
-        prisma.inventory_item.findUnique({ where: { assetId: listing.assetId } }),
-        prisma.item_float.findUnique({ where: { assetId: listing.assetId } }),
-    ]);
-
-    if (!inv) return null;
-    return { listing, inv, float };
+    const float = await prisma.item_float.findUnique({ where: { assetId: listing.assetId } });
+    return { listing, float };
 });
 
 //
@@ -52,8 +47,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const data = await getListing(id);
     if (!data) return {};
 
-    const { listing, inv } = data;
-    const gameName = GAME_NAMES[inv.game] ?? inv.game;
+    const { listing } = data;
+    const gameName = GAME_NAMES[listing.game!] ?? listing.game!;
     const title = `${listing.marketName} - ${gameName} - SkinSlinger`;
     const description = `Buy ${listing.marketName}. No KYC, 0% sales fee, pay with crypto. Your ${gameName} skin marketplace.`;
 
@@ -67,13 +62,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             title,
             description,
             url: `/item/${slug}/${id}`,
-            images: [{ url: inv.icon, alt: listing.marketName }],
+            images: [{ url: listing.icon!, alt: listing.marketName }],
         },
         twitter: {
             card: 'summary_large_image',
             title,
             description,
-            images: [inv.icon],
+            images: [listing.icon!],
         },
     };
 }
@@ -85,9 +80,9 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
     const data = await getListing(id);
     if (!data) notFound();
 
-    const { listing, inv, float } = data;
-    const gameName = GAME_NAMES[inv.game] ?? inv.game;
-    const gameSlug = GAME_SLUGS[inv.game] ?? "cs2";
+    const { listing, float } = data;
+    const gameName = GAME_NAMES[listing.game!] ?? listing.game!;
+    const gameSlug = GAME_SLUGS[listing.game!] ?? "cs2";
     const stickers = float?.stickers as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null;
 
     const base = process.env.NEXTAUTH_URL ?? '';
@@ -97,7 +92,7 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
         "@type": "Product",
         "name": `${listing.marketName} - ${gameName}`,
         "url": `${base}/item/${slug}/${id}`,
-        "image": inv.icon,
+        "image": listing.icon,
         "description": `Buy ${listing.marketName}. No KYC, 0% sales fee, pay with crypto.`,
         "offers": {
             "@type": "Offer",
@@ -128,13 +123,13 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
 
                 <div
                     className="bg-secondary rounded-sm p-8 flex flex-col items-center gap-4"
-                    style={{ boxShadow: `0 0 40px #${inv.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
+                    style={{ boxShadow: `0 0 40px #${listing.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
                 >
-                    <div style={{ filter: `drop-shadow(0 0 16px #${inv.hexColor}99)` }}>
-                        <Image src={inv.icon} alt={listing.marketName} width={220} height={220} style={{ width: 'auto' }} />
+                    <div style={{ filter: `drop-shadow(0 0 16px #${listing.hexColor}99)` }}>
+                        <Image src={listing.icon!} alt={listing.marketName} width={220} height={220} style={{ width: 'auto' }} />
                     </div>
 
-                    <h1 style={{ color: `#${inv.hexColor}` }} className="text-xl font-semibold text-center">
+                    <h1 style={{ color: `#${listing.hexColor}` }} className="text-xl font-semibold text-center">
                         {listing.marketName}
                     </h1>
 
@@ -186,9 +181,9 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
                         id={listing.id}
                         marketName={listing.marketName}
                         price={listing.price}
-                        icon={inv.icon}
-                        hexColor={inv.hexColor}
-                        commodity={inv.commodity}
+                        icon={listing.icon!}
+                        hexColor={listing.hexColor!}
+                        commodity={listing.commodity}
                     />
                 </div>
             </div>

@@ -34,19 +34,20 @@ const getItem = cache(async (slug: string) => {
 
     const { marketName } = rows[0];
 
-    const [listings, inv] = await Promise.all([
+    const [listings, listingMeta] = await Promise.all([
         prisma.item_listing.findMany({
             where: { marketName },
             select: { id: true, price: true },
             orderBy: { price: "asc" },
         }),
-        prisma.inventory_item.findFirst({
-            where: { market_name: marketName },
+        prisma.item_listing.findFirst({
+            where: { marketName },
             select: { icon: true, hexColor: true, game: true },
         }),
     ]);
 
-    if (!listings.length || !inv) return null;
+    if (!listings.length || !listingMeta?.icon || !listingMeta?.hexColor || !listingMeta?.game) return null;
+    const inv = { icon: listingMeta.icon, hexColor: listingMeta.hexColor, game: listingMeta.game };
     return { marketName, listings, inv };
 });
 

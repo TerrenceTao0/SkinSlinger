@@ -25,32 +25,15 @@ model user {
   steam_id String?
   steamApiKey String?
   cash Float @default(0)
-  lastInventoryRefresh DateTime @default("1970-01-01T00:00:00Z")
   twoFactorCode String?
   twoFactorExpires DateTime?
 
   accounts account[]
   sessions session[]
   listings item_listing[]
-  inventory_item inventory_item[]
   purchases_as_buyer  purchase[] @relation("buyer_purchases")
   purchases_as_seller purchase[] @relation("seller_purchases")
   buy_orders buy_order[]
-}
-
-model inventory_item {
-  id String @id @default(cuid())
-  userId String
-  assetId String @unique
-  market_name String
-  market_hash_name String
-  icon String
-  type String
-  hexColor String
-  game String
-  commodity Boolean @default(false)
-
-  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model account {
@@ -145,6 +128,9 @@ model item_listing {
   marketName String
   price Float
   game String?
+  icon String?
+  hexColor String?
+  commodity Boolean @default(false)
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

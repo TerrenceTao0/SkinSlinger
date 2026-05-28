@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import type { Metadata } from 'next'
 
 //
 
@@ -41,11 +42,6 @@ const steps = [
 ]
 
 const paymentMethods = ["USDC (Polygon Network)"]
-
-//
-
-import type { Metadata } from 'next'
-
 const description = 'SkinSlinger is the P2P Steam skin marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks, instant trades.'
 
 export const metadata: Metadata = {
@@ -131,15 +127,30 @@ const faqJsonLd = {
     ],
 };
 
+//
+
+function PointDown() { 
+    return (
+        <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce mt-3">
+            <Image src="/arrow-down.svg" alt="Scroll Down" height={40} width={40} className="invert" />
+        </div>
+    )
+}
+
+
 export default function Home() {
     return (
         <div className="overflow-y-auto h-full w-full no-scrollbar">
-            <div className="flex flex-col justify-center items-center gap-6 px-4 pt-35 pb-16">
+            <div className="flex flex-col justify-center items-center gap-6 px-4 pt-20">
                 <div className="flex flex-col items-center text-center gap-3">
                     <Image src="/logo.svg" alt="" width={60} height={60} />
-                    <h1 className="text-4xl font-bold">SkinSlinger</h1>
+                    
+                    <h1 className="text-4xl font-bold">
+                        SkinSlinger
+                    </h1>
+                    
                     <p className="text-gray-400 text-lg max-w-md">
-                        The *new* P2P skin marketplace. No bots, no middleman, no hidden fees, no BS.
+                        No bots, no middleman, no hidden fees, no BS.
                         <br />
                         Trade directly with other players straight away.
                     </p>
@@ -153,11 +164,6 @@ export default function Home() {
                             {label}
                         </span>
                     ))}
-                </div>
-
-
-                <div className="bg-secondary rounded-sm px-5 py-3 max-w-lg text-center text-sm text-gray-400">
-                    Minimum item price - $0.30
                 </div>
 
 
@@ -216,16 +222,14 @@ export default function Home() {
                 </div>
 
 
-                <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce mt-7">
-                    <Image src="/arrow-down.svg" alt="Scroll Down" height={40} width={40} className="invert" />
-                </div>
+                <PointDown />
             </div>
 
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-            <div className="w-full max-w-lg mx-auto px-4 pb-16">
+            <div className="w-full max-w-lg mx-auto px-4 pb-12">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
 
                 <div className="flex flex-col gap-3">
@@ -237,6 +241,8 @@ export default function Home() {
                     ))}
                 </div>
             </div>
+
+            <PointDown />
 
             <div className="w-full max-w-lg mx-auto px-4 pb-20">
                 <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>

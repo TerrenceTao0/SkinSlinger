@@ -17,7 +17,12 @@
 }
 
 body {
-    background: linear-gradient(to top, #1a1a1a, var(--color-primary));
+    background-color: var(--color-primary);
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.25) 1px, transparent 1px),
+        linear-gradient(to top, #1a1a1a, var(--color-primary));
+    background-size: 40px 40px, 40px 40px, 100% 100%;
     min-height: 100vh;
     margin: 0px;
 }

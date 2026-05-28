@@ -88,28 +88,23 @@ export default async function GameMarketPage({ params }: { params: Promise<{ gam
     const hasMore = rows.length > PAGE_SIZE;
 
     const assetIds = page.map(l => l.assetId);
-    const [inventoryItems, floatItems] = await Promise.all([
-        prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } }),
-        prisma.item_float.findMany({ where: { assetId: { in: assetIds } } }),
-    ]);
-    const itemMap = new Map(inventoryItems.map(i => [i.assetId, i]));
+    const floatItems = await prisma.item_float.findMany({ where: { assetId: { in: assetIds } } });
     const floatMap = new Map(floatItems.map(i => [i.assetId, i]));
 
     const cards = page
-        .map(l => ({ ...l, inv: itemMap.get(l.assetId), float: floatMap.get(l.assetId) }))
-        .filter(l => l.inv)
+        .filter(l => l.icon)
         .map(l => ({
             id: l.id,
             marketName: l.marketName,
             price: l.price,
-            icon: l.inv!.icon,
-            hexColor: l.inv!.hexColor,
-            game: l.inv!.game,
-            commodity: l.inv!.commodity,
+            icon: l.icon!,
+            hexColor: l.hexColor!,
+            game: l.game ?? '',
+            commodity: l.commodity,
             sellerId: l.userId,
-            floatValue: l.float?.floatValue ?? null,
-            paintSeed: l.float?.paintSeed ?? null,
-            stickers: (l.float?.stickers ?? null) as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null,
+            floatValue: floatMap.get(l.assetId)?.floatValue ?? null,
+            paintSeed: floatMap.get(l.assetId)?.paintSeed ?? null,
+            stickers: (floatMap.get(l.assetId)?.stickers ?? null) as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null,
         }));
 
     const seen = new Set<string>();

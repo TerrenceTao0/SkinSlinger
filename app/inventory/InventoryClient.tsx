@@ -81,13 +81,13 @@ function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
 }
 
 
-export default function InventoryClient({ isSteamLinked, inventory, lastRefresh }: { isSteamLinked: boolean, inventory: SteamItem[], lastRefresh: Date }) {
+export default function InventoryClient({ isSteamLinked, inventory, lastRefresh, inventoryToken }: { isSteamLinked: boolean, inventory: SteamItem[], lastRefresh: Date, inventoryToken: string }) {
     const router = useRouter();
     const [error, setError] = useState("");
     const [url, setUrl] = useState("");
     const [waiting, setWaiting] = useState(false);
     const [selling, setSelling] = useState<SteamItem[]>([])
-    const [gameFilter, setGameFilter] = useState<"all" | "CS2" | "Dota2" | "Rust" | "TF2">("all")
+    const [gameFilter, setGameFilter] = useState<"CS2" | "Dota2" | "Rust" | "TF2">("CS2")
     const [lastRefreshDisplay, setLastRefreshDisplay] = useState(() => timeAgo(lastRefresh));
 
     // null = still loading, number = resolved (0 means not found / too cheap)
@@ -95,7 +95,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
         const map = new Map<string, number | null>();
         for (const item of inventory) {
             if (!map.has(item.market_name)) {
-                map.set(item.market_name, item.price > 0 ? item.price : null);
+                map.set(item.market_name, item.price > 0 ? item.price : 0);
             }
         }
         return map;
@@ -154,14 +154,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                 }
             } catch (e) {
                 if ((e as Error).name === 'AbortError') return;
-                // On error, resolve all still-loading items as 0 so they're filtered out
-                setLivePrices(prev => {
-                    const next = new Map(prev);
-                    for (const item of unpriced) {
-                        if (next.get(item.market_name) === null) next.set(item.market_name, 0);
-                    }
-                    return next;
-                });
+                // On error, leave prices as null — items stay visible rather than disappearing
             }
         })();
 
@@ -218,7 +211,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
     }
 
 
-    const filtered = gameFilter === "all" ? inventory : inventory.filter(i => i.game === gameFilter);
+    const filtered = inventory.filter(i => i.game === gameFilter);
 
     const stackedInventory = (() => {
         const result: (SteamItem & { quantity: number })[] = [];
@@ -226,7 +219,6 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
 
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
-            // Skip items resolved as too cheap (keep null = loading)
             if (priceState !== null && (priceState ?? 0) < 0.30) continue;
 
             const price = priceState ?? 0;
@@ -269,32 +261,32 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh 
                 <div className="bg-secondary rounded-sm px-3 py-3">
                     <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1.5">Games</p>
                     <div className="flex flex-col gap-0.5">
-                        {(["all", "CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
+                        {(["CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
                             <button
                                 key={g}
                                 onClick={() => setGameFilter(g)}
                                 className={`h-9 px-2.5 rounded-sm text-sm text-left button transition-colors ${gameFilter === g ? "bg-special font-medium" : "hover:bg-accent"}`}
                             >
-                                {g === "all" ? "All" : g === "Dota2" ? "Dota 2" : g}
+                                {g === "Dota2" ? "Dota 2" : g}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} />
+            <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} inventoryToken={inventoryToken} />
 
             {/* Mobile layout */}
             <div className="md:hidden flex flex-col h-full pt-[72px]">
                 {/* Mobile game filter */}
                 <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar bg-secondary border-b border-gray-700/50">
-                    {(["all", "CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
+                    {(["CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
                         <button
                             key={g}
                             onClick={() => setGameFilter(g)}
                             className={`shrink-0 px-3 h-8 text-sm rounded-sm button transition-colors ${gameFilter === g ? "bg-special font-medium" : "bg-accent"}`}
                         >
-                            {g === "all" ? "All" : g === "Dota2" ? "Dota 2" : g}
+                            {g === "Dota2" ? "Dota 2" : g}
                         </button>
                     ))}
                 </div>

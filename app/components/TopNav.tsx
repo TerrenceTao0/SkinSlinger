@@ -26,7 +26,7 @@ export default function TopNav() {
     return (
         <>
             <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
-                <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm shrink-0">
+                <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm shrink-0 frame-shadow">
                     <Link href="/">
                         <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
                             SkinSlinger
@@ -36,7 +36,7 @@ export default function TopNav() {
 
 
                 {/* Desktop nav */}
-                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3">
+                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3 frame-shadow">
                     <div className="flex h-full items-center gap-3">
                         <Link href="/market" className="right-nav-link button">Market</Link>
                     </div>
@@ -51,7 +51,7 @@ export default function TopNav() {
                                 </Link>
 
                                 {basketCount > 0 && (
-                                    <Link href="/basket" className="right-nav-link button">
+                                    <Link href="/basket" className="right-nav-link button bg-special">
                                         Basket ({basketCount})
                                     </Link>
                                 )}

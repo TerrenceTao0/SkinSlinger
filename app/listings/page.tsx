@@ -28,23 +28,18 @@ export default async function ListingsPage() {
         orderBy: { createdAt: "desc" },
     });
 
-    const assetIds = rows.map(l => l.assetId);
-    const inventoryItems = await prisma.inventory_item.findMany({ where: { assetId: { in: assetIds } } });
-    const itemMap = new Map(inventoryItems.map(i => [i.assetId, i]));
-
     const listings = rows
         .map(l => {
-            const inv = itemMap.get(l.assetId);
-            if (!inv || lockedAssetIds.has(l.assetId)) return null;
+            if (lockedAssetIds.has(l.assetId)) return null;
             return {
                 id: l.id,
                 assetId: l.assetId,
                 marketName: l.marketName,
                 price: l.price,
                 game: l.game,
-                icon: inv.icon,
-                hexColor: inv.hexColor,
-                commodity: inv.commodity,
+                icon: l.icon,
+                hexColor: l.hexColor,
+                commodity: l.commodity,
             };
         })
         .filter((l): l is NonNullable<typeof l> => l !== null);

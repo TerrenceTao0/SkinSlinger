@@ -62,30 +62,21 @@ export async function POST(request: Request) {
             },
         });
 
-        const assetIds = matchable.map(l => l.assetId);
-        const invItems = await prisma.inventory_item.findMany({
-            where: { assetId: { in: assetIds } },
-            select: { assetId: true, icon: true, hexColor: true, commodity: true },
-        });
-        const invMap = new Map(invItems.map(i => [i.assetId, i]));
-
         let matched = 0;
         const sellerNotifications = new Map<string, { email: string | null; items: { marketName: string; price: number }[] }>();
 
         if (matchable.length > 0) {
             await prisma.$transaction(async (tx) => {
                 for (const listing of matchable) {
-                    const inv = invMap.get(listing.assetId);
-
                     await tx.purchase.create({
                         data: {
                             price: listing.price,
                             assetId: listing.assetId,
                             marketName: listing.marketName,
                             game: listing.game,
-                            icon: inv?.icon ?? icon ?? null,
-                            hexColor: inv?.hexColor ?? hexColor ?? null,
-                            commodity: inv?.commodity ?? true,
+                            icon: listing.icon,
+                            hexColor: listing.hexColor,
+                            commodity: listing.commodity,
                             buyerTradeUrl: buyer.steam_trade_url,
                             buyerId: buyer.id,
                             sellerId: listing.userId,
@@ -134,6 +125,20 @@ export async function POST(request: Request) {
             });
         } else {
             // All matched — refund any leftover held balance for unmatched portion (already handled per-match above)
+        }
+
+        // If auto-match consumed all listings for this item, clean up any remaining buy orders
+        if (matched > 0) {
+            const listingsLeft = await prisma.item_listing.count({ where: { marketName } });
+            if (listingsLeft === 0) {
+                const orders = await prisma.buy_order.findMany({ where: { marketName } });
+                if (orders.length > 0) {
+                    await prisma.$transaction([
+                        prisma.buy_order.deleteMany({ where: { marketName } }),
+                        ...orders.map(o => prisma.user.update({ where: { id: o.userId }, data: { cash: { increment: o.price * o.quantity } } })),
+                    ]);
+                }
+            }
         }
 
         // Notify sellers

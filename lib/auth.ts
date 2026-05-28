@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
             if (token.id) {
                 const dbUser = await prisma.user.findUnique({
                     where: { id: token.id as string },
-                    select: { cash: true, steam_trade_url: true, lastInventoryRefresh: true, steam_id: true },
+                    select: { cash: true, steam_trade_url: true, steam_id: true },
                 });
 
                 
@@ -44,7 +44,6 @@ export const authOptions: NextAuthOptions = {
                     token.cash = dbUser.cash;
                     token.steam_id = dbUser.steam_id ?? undefined;
                     token.steam_trade_url = dbUser.steam_trade_url ?? undefined;
-                    token.lastInventoryRefresh = dbUser.lastInventoryRefresh ?? undefined;
                 }
             }
 
@@ -58,7 +57,6 @@ export const authOptions: NextAuthOptions = {
             session.user.steam_id = token.steam_id
             session.user.steam_trade_url = token.steam_trade_url
             session.user.cash = token.cash
-            session.user.lastInventoryRefresh = token.lastInventoryRefresh
           }
 
 

@@ -39,20 +39,33 @@ export function getStacked(inventory: SteamItem[]) {
 }
 
 
+const tradeCache = new Map<string, { allowed: boolean; reason: string | null; at: number }>();
+const TRADE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 // Checks whether a Steam account can trade. Returns { allowed, reason }.
 // Fails open (allows trade) if external APIs are unavailable.
 export async function checkCanTrade(
     steamId: string,
     tradeUrl?: string | null,
 ): Promise<{ allowed: boolean; reason: string | null }> {
+    const cached = tradeCache.get(steamId);
+    if (cached && Date.now() - cached.at < TRADE_CACHE_TTL) {
+        return { allowed: cached.allowed, reason: cached.reason };
+    }
+
+    const store = (result: { allowed: boolean; reason: string | null }) => {
+        tradeCache.set(steamId, { ...result, at: Date.now() });
+        return result;
+    };
+
     try {
         // 1. Check economy/community ban via steamapis
         const banRes = await fetch(`${base_url}/v2/steam/users/${steamId}/bans`, { headers: api_headers });
         if (banRes.ok) {
             const data = await banRes.json();
             const result = data.result;
-            if (result?.CommunityBanned) return { allowed: false, reason: "Your Steam account is community banned." };
-            if (result?.EconomyBan === "banned") return { allowed: false, reason: "Your Steam account has a trade ban." };
+            if (result?.CommunityBanned) return store({ allowed: false, reason: "Your Steam account is community banned." });
+            if (result?.EconomyBan === "banned") return store({ allowed: false, reason: "Your Steam account has a trade ban." });
         }
 
         // 2. Check trade hold via GetTradeHoldDurations (requires bot API key + trade URL token)
@@ -65,19 +78,24 @@ export async function checkCanTrade(
                 );
                 if (holdRes.ok) {
                     const holdData = await holdRes.json();
-                    const escrowEnd = holdData.response?.their_escrow?.escrow_end_date ?? 0;
+                    const theirEscrow = holdData.response?.their_escrow;
+                    // Empty response (no their_escrow) means the account cannot trade at all (limited/new account)
+                    if (!theirEscrow) {
+                        return store({ allowed: false, reason: "Your Steam account is not eligible to trade. It may be a new account, limited, or missing Steam Guard." });
+                    }
+                    const escrowEnd = theirEscrow.escrow_end_date ?? 0;
                     if (escrowEnd > 0) {
                         const liftDate = new Date(escrowEnd * 1000);
                         const formatted = liftDate.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" });
-                        return { allowed: false, reason: `Your Steam account has a trade hold due to Steam Guard settings. It lifts on ${formatted}.` };
+                        return store({ allowed: false, reason: `Your Steam account has a trade hold due to Steam Guard settings. It lifts on ${formatted}.` });
                     }
                 }
             }
         }
 
-        return { allowed: true, reason: null };
+        return store({ allowed: true, reason: null });
     } catch {
-        return { allowed: true, reason: null }; // fail open
+        return { allowed: true, reason: null }; // fail open — don't cache errors
     }
 }
 

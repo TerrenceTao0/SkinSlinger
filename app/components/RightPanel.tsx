@@ -47,11 +47,12 @@ function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
     )
 }
 
-export default function RightPanel({ selling, setSelling, onListed, livePrices }: {
+export default function RightPanel({ selling, setSelling, onListed, livePrices, inventoryToken }: {
     selling: SteamItem[],
     setSelling: React.Dispatch<React.SetStateAction<SteamItem[]>>,
     onListed: () => void,
-    livePrices: Map<string, number | null>
+    livePrices: Map<string, number | null>,
+    inventoryToken: string,
 }) {
     const [showPrompt, setShowPrompt] = useState(false);
     const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
@@ -76,12 +77,14 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices }
             game: item.game,
             commodity: item.commodity,
             quantity: item.quantity,
+            icon: item.icon,
+            hexColor: item.hexColor,
         }));
 
         const response = await fetch("/api/listings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items }),
+            body: JSON.stringify({ items, inventoryToken }),
         });
 
         if (response.ok) {
