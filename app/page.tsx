@@ -52,13 +52,13 @@ export const metadata: Metadata = {
         title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
         description,
         url: '/',
-        images: [{ url: '/logo.svg', width: 512, height: 512, alt: 'SkinSlinger' }],
+        images: [{ url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger' }],
     },
     twitter: {
         card: 'summary',
         title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
         description,
-        images: ['/logo.svg'],
+        images: ['/logo.png'],
     },
 }
 
@@ -148,7 +148,7 @@ export default function Home() {
         <div className="overflow-y-auto h-full w-full no-scrollbar">
             <div className="flex flex-col justify-center items-center gap-6 px-4 pt-20">
                 <div className="flex flex-col items-center text-center gap-3">
-                    <Image src="/logo.svg" alt="" width={60} height={60} />
+                    <Image src="/logo.png" alt="" width={60} height={60} />
                     
                     <h1 className="text-4xl font-bold">
                         SkinSlinger

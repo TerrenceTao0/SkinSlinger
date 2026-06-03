@@ -36,7 +36,7 @@ const GAMES: Record<string, { dbValue: string; displayName: string; slug: string
     },
 };
 
-const OG_IMAGE = { url: '/logo.svg', width: 512, height: 512, alt: 'SkinSlinger' };
+const OG_IMAGE = { url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger' };
 
 //
 
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
             card: 'summary',
             title,
             description: config.description,
-            images: ['/logo.svg'],
+            images: ['/logo.png'],
         },
     };
 }

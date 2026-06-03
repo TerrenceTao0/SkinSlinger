@@ -22,7 +22,7 @@ export const viewport: Viewport = {
     themeColor: '#171A21',
 }
 
-const OG_IMAGE = { url: '/logo.svg', width: 512, height: 512, alt: 'SkinSlinger' }
+const OG_IMAGE = { url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger' }
 
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
@@ -45,10 +45,10 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary',
-        images: ['/logo.svg'],
+        images: ['/logo.png'],
     },
     icons: {
-        icon: '/logo.svg',
+        icon: '/logo.png',
     },
 }
 
