@@ -27,8 +27,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { url: `${base}/market/dota2`, lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
         { url: `${base}/market/rust`,  lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
         { url: `${base}/market/tf2`,   lastModified: new Date(), changeFrequency: 'hourly',  priority: 0.9 },
-        { url: `${base}/login`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-        { url: `${base}/sign-up`,      lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
         ...itemUrls,
     ];
 }

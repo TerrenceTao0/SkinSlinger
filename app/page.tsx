@@ -81,7 +81,12 @@ const organizationJsonLd = {
     "@type": "Organization",
     "name": "SkinSlinger",
     "url": base,
-    "logo": `${base}/logo.svg`,
+    "logo": {
+        "@type": "ImageObject",
+        "url": `${base}/logo.png`,
+        "width": 512,
+        "height": 512,
+    },
     "description": "P2P Steam skin marketplace with 0% sales fee, no KYC, and crypto payments.",
 };
 

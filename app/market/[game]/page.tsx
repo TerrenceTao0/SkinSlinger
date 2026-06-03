@@ -119,6 +119,7 @@ export default async function GameMarketPage({ params }: { params: Promise<{ gam
             .map((c, i) => ({
                 "@type": "ListItem",
                 "position": i + 1,
+                "name": c.marketName,
                 "url": `${process.env.NEXTAUTH_URL}/item/${toSlug(c.marketName)}`,
             })),
     };

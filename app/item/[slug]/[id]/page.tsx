@@ -55,8 +55,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title,
         description,
-        // noindex — canonical item type page is /item/{slug}
-        robots: { index: false, follow: true },
         alternates: { canonical: `/item/${slug}` },
         openGraph: {
             title,
@@ -98,8 +96,9 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
             "@type": "Offer",
             "price": listing.price.toFixed(2),
             "priceCurrency": "USD",
-            "availability": "http://schema.org/InStock",
+            "availability": "https://schema.org/InStock",
             "url": `${base}/item/${slug}/${id}`,
+            "seller": { "@type": "Organization", "name": "SkinSlinger", "url": base },
         },
     };
 

@@ -110,9 +110,10 @@ export default async function ItemTypePage({ params }: { params: Promise<{ slug:
             "@type": "AggregateOffer",
             "lowPrice": lowPrice.toFixed(2),
             "highPrice": highPrice.toFixed(2),
-            "offerCount": String(listings.length),
+            "offerCount": listings.length,
             "priceCurrency": "USD",
-            "availability": "http://schema.org/InStock",
+            "availability": "https://schema.org/InStock",
+            "seller": { "@type": "Organization", "name": "SkinSlinger", "url": base },
         },
     };
 
