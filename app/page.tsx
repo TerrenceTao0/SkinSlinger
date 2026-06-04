@@ -259,8 +259,8 @@ export default function Home() {
                 </div>
             </div>
 
-            <footer className="border-t border-gray-700/50 mt-4 py-8 px-6 flex flex-col items-center gap-3 text-center">
-                <p className="text-xs text-gray-500 w-200">
+            <footer className="border-t border-gray-700/50 mt-4 py-8 px-6 flex flex-col w-full items-center gap-3 text-center">
+                <p className="text-xs text-gray-500">
                     SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
                 </p>
 
