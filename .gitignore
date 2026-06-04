@@ -42,5 +42,6 @@ next-env.d.ts
 
 .vercel
 .env*.local
+.mcp.json
 
 /lib/generated/prisma

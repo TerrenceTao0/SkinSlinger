@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DisplayCard } from "./HomeClient";
+import FloatBar from "./FloatBar";
 
 function toSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -20,6 +21,8 @@ export default function ListingCard(
         quantity,
         sellerId,
         currentUserId,
+        floatValue,
+        paintSeed,
         onBuy,
         onPreview,
     }:
@@ -29,48 +32,69 @@ export default function ListingCard(
 
     return (
         <div
-            className="bg-accent h-50 w-full rounded-sm relative transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="bg-accent flex flex-col rounded-sm overflow-hidden w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${hexColor}44` } as React.CSSProperties}
         >
-            <div className="flex justify-between mt-2 pl-2 pr-2 w-full absolute z-2">
-                <Link href={`/item/${toSlug(marketName)}/${id}`} onClick={e => e.stopPropagation()} style={{ color: `#${hexColor}` }} className="text-[12px] w-35 hover:underline">
-                    {marketName}
-                </Link>
-
-                {quantity > 1 && (
-                    <h1 className="text-[12px]">[x{quantity}]</h1>
-                )}
+            {/* Header: rarity dot + name */}
+            <div className="flex flex-col gap-0.5 px-2 pt-2 pb-1">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `#${hexColor}` }} />
+                <div className="flex items-start justify-between gap-1">
+                    <Link
+                        href={`/item/${toSlug(marketName)}/${id}`}
+                        onClick={e => e.stopPropagation()}
+                        className="text-[11px] font-semibold leading-tight line-clamp-2 hover:underline"
+                        style={{ color: `#${hexColor}` }}
+                    >
+                        {marketName}
+                    </Link>
+                    {quantity > 1 && (
+                        <span className="text-[10px] text-gray-500 shrink-0">[x{quantity}]</span>
+                    )}
+                </div>
             </div>
 
+            {/* Image */}
             <button
-                className="cursor-pointer absolute inset-0 flex justify-center items-center z-0 mb-5"
+                className="flex items-center justify-center h-24 cursor-pointer"
                 style={{ filter: `drop-shadow(0 0 8px #${hexColor}99)` }}
                 onClick={onPreview}
             >
                 <Image
                     src={icon}
-                    alt="Failed To Load"
-                    style={{ width: 'auto' }}
+                    alt={marketName}
                     width={100}
-                    height={100}
+                    height={80}
+                    style={{ width: 'auto', maxHeight: '80px' }}
                 />
             </button>
 
-            <div className="flex justify-between mt-34 z-2">
-                <p className="text-[12px] pl-2">
-                    ${price.toFixed(2)}
-                </p>
-            </div>
+            {/* Footer */}
+            <div className="flex flex-col gap-1 px-2 pt-1 pb-0">
+                {/* Metadata */}
+                {floatValue !== null && (
+                    <div className="flex flex-col gap-0.5 text-[10px] text-gray-400">
+                        {paintSeed != null && (
+                            <span>Pattern Template: <span className="text-gray-200">{paintSeed}</span></span>
+                        )}
+                        <span>Wear Rating: <span className="text-gray-200 font-mono">{floatValue.toFixed(9).replace(/0+$/, '')}</span></span>
+                    </div>
+                )}
 
-            <div className="flex justify-center bottom-0 w-full absolute">
-                <button
-                    onClick={onBuy}
-                    disabled={isOwned}
-                    className={`rounded-sm w-full h-10 ${isOwned ? "bg-accent opacity-50 cursor-default" : "bg-less-special button"}`}
-                    style={!isOwned && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
-                >
-                    {isOwned ? "OWNED" : "BUY"}
-                </button>
+                {/* Float bar */}
+                {floatValue !== null && <FloatBar value={floatValue} showLabels={false} />}
+
+                {/* Price + Buy */}
+                <div className="flex items-center justify-between h-10 border-t border-gray-700/40">
+                    <span className="text-sm">${price.toFixed(2)}</span>
+                    <button
+                        onClick={onBuy}
+                        disabled={isOwned}
+                        className={`rounded-sm px-3 h-7 text-xs ${isOwned ? 'opacity-40 cursor-default' : 'bg-less-special button'}`}
+                        style={!isOwned && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
+                    >
+                        {isOwned ? 'OWNED' : 'BUY'}
+                    </button>
+                </div>
             </div>
         </div>
     );

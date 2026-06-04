@@ -1,12 +1,12 @@
-const base_url = "https://api.steamapis.com";
-const api_headers = { "x-api-key": process.env.STEAM_APIS_KEY! };
+const base_url = "https://www.steamwebapi.com";
+const api_key = process.env.STEAM_WEB_KEY!;
 
-const game_ids = {
-    "CS2": 730,
-    "Dota2": 570,
-    "Rust": 252490,
-    "TF2": 440,
-}
+const game_slugs: Record<string, string> = {
+    "CS2": "cs2",
+    "Dota2": "dota2",
+    "Rust": "rust",
+    "TF2": "tf2",
+};
 
 export type SteamSticker = {
     stickerId: number
@@ -58,39 +58,26 @@ export async function checkCanTrade(
         return result;
     };
 
+    if (!tradeUrl) return store({ allowed: true, reason: null });
+
     try {
-        // 1. Check economy/community ban via steamapis
-        const banRes = await fetch(`${base_url}/v2/steam/users/${steamId}/bans`, { headers: api_headers });
-        if (banRes.ok) {
-            const data = await banRes.json();
-            const result = data.result;
-            if (result?.CommunityBanned) return store({ allowed: false, reason: "Your Steam account is community banned." });
-            if (result?.EconomyBan === "banned") return store({ allowed: false, reason: "Your Steam account has a trade ban." });
+        const url = new URL(`${base_url}/steam/api/profile/trade-eligibility`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("trade_url", tradeUrl);
+
+        const res = await fetch(url.toString());
+        if (!res.ok) return { allowed: true, reason: null }; // fail open — don't cache errors
+
+        const data = await res.json();
+
+        if (!data.tradeurlvalid) {
+            return store({ allowed: false, reason: "Your Steam trade URL is invalid or your account cannot trade." });
         }
 
-        // 2. Check trade hold via GetTradeHoldDurations (requires bot API key + trade URL token)
-        const botKey = process.env.STEAM_SECRET;
-        if (botKey && tradeUrl) {
-            const token = new URL(tradeUrl).searchParams.get("token");
-            if (token) {
-                const holdRes = await fetch(
-                    `https://api.steampowered.com/IEconService/GetTradeHoldDurations/v1/?key=${botKey}&steamid_target=${steamId}&trade_offer_access_token=${token}`
-                );
-                if (holdRes.ok) {
-                    const holdData = await holdRes.json();
-                    const theirEscrow = holdData.response?.their_escrow;
-                    // Empty response (no their_escrow) means the account cannot trade at all (limited/new account)
-                    if (!theirEscrow) {
-                        return store({ allowed: false, reason: "Your Steam account is not eligible to trade. It may be a new account, limited, or missing Steam Guard." });
-                    }
-                    const escrowEnd = theirEscrow.escrow_end_date ?? 0;
-                    if (escrowEnd > 0) {
-                        const liftDate = new Date(escrowEnd * 1000);
-                        const formatted = liftDate.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" });
-                        return store({ allowed: false, reason: `Your Steam account has a trade hold due to Steam Guard settings. It lifts on ${formatted}.` });
-                    }
-                }
-            }
+        if (data.isescrow && data.escrowdays > 0) {
+            const liftDate = new Date(Date.now() + data.escrowdays * 24 * 60 * 60 * 1000);
+            const formatted = liftDate.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" });
+            return store({ allowed: false, reason: `Your Steam account has a trade hold due to Steam Guard settings. It lifts on ${formatted}.` });
         }
 
         return store({ allowed: true, reason: null });
@@ -100,46 +87,44 @@ export async function checkCanTrade(
 }
 
 
-// Fetches item metadata and today's price from steamapis using the market hash name.
-// Returns the steamapis document ID (used to identify the item in our DB) and price.
+// Fetches today's price for an item from steamwebapi using the market hash name.
 // Returns null if the item is not found or the request fails.
-export async function fetchItemPrice(market_hash_name: string, game: string): Promise<{ price: number, docId: string } | null> {
-    const app_id = game_ids[game as keyof typeof game_ids] ?? game_ids["CS2"];
+export async function fetchItemPrice(market_hash_name: string, _game: string, _name: string): Promise<number | null> {
+    try {
+        const url = new URL(`${base_url}/steam/api/item`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("market_hash_name", market_hash_name);
+        url.searchParams.set("markets", "skinport");
 
-    const response = await fetch(
-        `${base_url}/v2/steam/items/${app_id}/${encodeURIComponent(market_hash_name)}`,
-        { headers: api_headers }
-    );
+        const response = await fetch(url.toString());
+        if (!response.ok) return null;
 
+        const data = await response.json();
+        const price = data.pricereal || data.pricelatest || 0;
 
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const result = data.result;
-
-    if (!result) return null;
-
-    const docId = result.item?._id;
-    const price = result.priceHistory?.data?.[0]?.price ?? 0;
-
-    if (!docId) return null;
-
-    return { price, docId };
+        return price || null;
+    } catch {
+        return null;
+    }
 }
 
 
 // Fetches float, pattern, and sticker data for a CS2 item via its inspect link.
 export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue: number | null; paintSeed: number | null; stickers: SteamSticker[] } | null> {
     try {
-        const res = await fetch(`https://api.csgofloat.com/?url=${encodeURIComponent(inspectLink)}`);
+        const url = new URL(`${base_url}/steam/api/float`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("url", inspectLink);
+
+        const res = await fetch(url.toString());
         if (!res.ok) return null;
+
         const data = await res.json();
-        const info = data.iteminfo;
-        if (!info) return null;
+
         return {
-            floatValue: info.floatvalue ?? null,
-            paintSeed: info.paintseed ?? null,
-            stickers: (info.stickers ?? []).map((s: any) => ({
+            floatValue: data.float ?? null,
+            paintSeed: data.paintseed ?? null,
+            stickers: (data.stickers ?? []).map((s: any) => ({
                 stickerId: s.stickerId,
                 slot: s.slot,
                 name: s.name,
@@ -153,64 +138,53 @@ export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue:
 }
 
 
-// Fetches a player's inventory for a given app from steamapis.
-// Returns an array of tradable items with price set to 0 (prices are looked up separately from our DB).
-async function fetchGameInventory(steam_id: string, app_id: number, game: string): Promise<SteamItem[]> {
-    const response = await fetch(
-        `${base_url}/steam/inventory/${steam_id}/${app_id}/2`,
-        { headers: api_headers }
-    );
+// Fetches a player's inventory for any supported game from steamwebapi.
+// Returns tradable items with price set to 0 (prices are looked up separately from our DB).
+async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
+    try {
+        const slug = game_slugs[game] ?? "cs2";
+        const url = new URL(`${base_url}/steam/api/inventory`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("steam_id", steam_id);
+        url.searchParams.set("game", slug);
 
-    if (!response.ok) return [];
+        const response = await fetch(url.toString());
+        if (!response.ok) return [];
 
-    const data = await response.json();
+        const items: any[] = await response.json();
+        if (!Array.isArray(items)) return [];
 
-    if (!data.assets || !data.descriptions) return [];
-
-    const descriptions = new Map<string, any>(
-        data.descriptions.map((d: any) => [d.classid, d])
-    );
-
-    const items = data.assets.map((asset: any) => {
-        const desc = descriptions.get(asset.classid);
-
-        const actions: { link: string; name: string }[] = desc.actions ?? [];
-        const inspectAction = actions.find(a => a.name?.includes('Inspect'));
-        const rawLink = inspectAction?.link ?? null;
-        const inspectLink = rawLink
-            ? rawLink.replace('%owner_steamid%', steam_id).replace('%assetid%', asset.assetid)
-            : null;
-
-        return {
-            assetId: `${game}:${asset.assetid}`,
-            market_name: desc.market_name,
-            market_hash_name: desc.market_hash_name,
-            icon: `https://community.cloudflare.steamstatic.com/economy/image/${desc.icon_url}`,
-            tradable: desc.tradable === 1,
-            type: desc.type,
-            price: 0,
-            hexColor: desc.name_color,
-            game,
-            commodity: desc.commodity === 1,
-            inspectLink,
-            floatValue: null,
-            paintSeed: null,
-            stickers: null,
-        };
-    });
-
-
-    return items.filter((item: any) => item.tradable);
+        return items
+            .filter((item: any) => item.tradable)
+            .map((item: any) => ({
+                assetId: `${game}:${item.assetid}`,
+                market_name: item.marketname,
+                market_hash_name: item.markethashname,
+                icon: item.image,
+                tradable: true,
+                type: item.itemtype ?? '',
+                price: 0,
+                hexColor: item.color ?? item.bordercolor ?? '',
+                game,
+                commodity: game === 'CS2' ? !(item.float?.paintindex) : false,
+                inspectLink: item.inspectlink ?? null,
+                floatValue: item.float?.floatvalue ?? null,
+                paintSeed: item.float?.paintseed ?? null,
+                stickers: item.float?.stickers ?? null,
+            }));
+    } catch {
+        return [];
+    }
 }
 
 
 // Fetches a user's combined inventory.
 export async function getInventory(steam_id: string): Promise<SteamItem[]> {
     const [cs2, dota2, rust, tf2] = await Promise.all([
-        fetchGameInventory(steam_id, game_ids["CS2"], "CS2"),
-        fetchGameInventory(steam_id, game_ids["Dota2"], "Dota2"),
-        fetchGameInventory(steam_id, game_ids["Rust"], "Rust"),
-        fetchGameInventory(steam_id, game_ids["TF2"], "TF2"),
+        fetchGameInventory(steam_id, 'CS2'),
+        fetchGameInventory(steam_id, 'Dota2'),
+        fetchGameInventory(steam_id, 'Rust'),
+        fetchGameInventory(steam_id, 'TF2'),
     ]);
 
 

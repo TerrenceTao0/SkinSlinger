@@ -27,6 +27,8 @@ model user {
   cash Float @default(0)
   twoFactorCode String?
   twoFactorExpires DateTime?
+  lastInventoryRefresh DateTime?
+  inventoryCache       Json?
 
   accounts account[]
   sessions session[]

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { SteamItem } from '@/lib/steam'
+import FloatBar from './FloatBar'
 
 //
 
@@ -41,10 +42,13 @@ export default function InventoryItemCard({ item, quantity, selling, setSelling,
                 />
             </div>
 
-            <div className="absolute bottom-10 left-0 px-2 flex items-baseline gap-2 z-2">
+            <div className="absolute bottom-10 left-0 right-0 px-2 z-2 flex flex-col gap-1">
                 <p className="text-[15px]">{loading ? '...' : `$${item.price.toFixed(2)}`}</p>
                 {item.floatValue !== null && (
-                    <p className="text-[11px] opacity-50 font-mono">{item.floatValue.toFixed(4)}</p>
+                    <>
+                        <FloatBar value={item.floatValue} showLabels={false} />
+                        <p className="text-[10px] opacity-50 font-mono">{item.floatValue.toFixed(6)}</p>
+                    </>
                 )}
             </div>
 

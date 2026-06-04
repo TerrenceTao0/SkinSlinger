@@ -90,44 +90,37 @@ const organizationJsonLd = {
     "description": "P2P Steam skin marketplace with 0% sales fee, no KYC, and crypto payments.",
 };
 
-const faqJsonLd = {
+const faq = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
         {
-            "@type": "Question",
-            "name": "Does SkinSlinger charge a sales fee?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger charges a 0% sales fee. Sellers keep 100% of their listed price." },
+            "question": "How are the fees so low?",
+            "answer": "As we use crypto, we do not have to worry about using a payment processor like Stripe. We can use our own custom-made payment processor to cut out the middleman.",
         },
         {
-            "@type": "Question",
-            "name": "Is KYC required on SkinSlinger?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger requires no identity verification (KYC). Sign up with just an email and password." },
+            "question": "Is KYC required on withdrawals?",
+            "answer": "No. SkinSlinger requires no identity verification (KYC) at all.",
         },
         {
-            "@type": "Question",
-            "name": "How do I pay on SkinSlinger?",
-            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger accepts USDC on the Polygon network. Deposit crypto and use your balance to buy skins instantly." },
+            "question": "How do I pay on SkinSlinger?",
+            "answer": "SkinSlinger accepts USDC on the Polygon network. Deposit crypto and use your balance to buy skins instantly.",
         },
         {
-            "@type": "Question",
-            "name": "Is there a trade hold on SkinSlinger?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades." },
+            "question": "Is there a trade hold on SkinSlinger?",
+            "answer": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades.",
         },
         {
-            "@type": "Question",
-            "name": "What games does SkinSlinger support?",
-            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2." },
+            "question": "What games does SkinSlinger support?",
+            "answer": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2.",
         },
         {
-            "@type": "Question",
-            "name": "Are my skins safe?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We only ask for your Steam trade URL to check your inventory and trade eligibility. We have no direct access to your inventory or skins. The marketplace is P2P so you trade your skins directly with other players rather than giving it to a bot." },
+            "question": "Are my skins safe?",
+            "answer": "Yes. We only ask for your Steam trade URL to check your inventory and trade eligibility. We have no direct access to your inventory or skins. The marketplace is P2P so you trade your skins directly with other players rather than giving it to a bot.",
         },
         {
-            "@type": "Question",
-            "name": "How long does it take to deposit/withdraw?",
-            "acceptedAnswer": { "@type": "Answer", "text": "It should typically take less than 5 minutes for both." },
+            "question": "How long does it take to deposit/withdraw?",
+            "answer": "It should only take ~1 minute for your transaction to be detected once it's sent but confirmation might take ~5 minutes.",
         },
     ],
 };
@@ -232,7 +225,7 @@ export default function Home() {
 
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
 
             <div className="w-full max-w-lg mx-auto px-4 pb-12">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
@@ -253,10 +246,10 @@ export default function Home() {
                 <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
 
                 <div className="flex flex-col gap-3">
-                    {faqJsonLd.mainEntity.map((q, i) => (
+                    {faq.mainEntity.map((q, i) => (
                         <div key={i} className="info-card">
-                            <p className="font-semibold text-sm">{q.name}</p>
-                            <p className="text-gray-400 text-sm mt-1">{q.acceptedAnswer.text}</p>
+                            <p className="font-semibold text-sm">{q.question}</p>
+                            <p className="text-gray-400 text-sm mt-1">{q.answer}</p>
                         </div>
                     ))}
                 </div>

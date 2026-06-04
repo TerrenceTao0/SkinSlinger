@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 
-const DISCOUNTS = [0, 20, 30, 40];
+//
+
+const discounts = [0, 5, 15, 20];
+
+//
 
 export default function SellItemCard({ market_name, quantity, icon, hexColor, priceStr, setPriceStr, marketPrice, bidPrice, remove }: {
     market_name: string, quantity: number, icon: string, hexColor: string,
@@ -10,7 +14,7 @@ export default function SellItemCard({ market_name, quantity, icon, hexColor, pr
 }) {
     const basePrice = parseFloat(marketPrice.toFixed(2))
     const price = parseFloat(priceStr)
-    const activeDiscount = DISCOUNTS.find(d => priceStr === (basePrice * (1 - d / 100)).toFixed(2)) ?? null
+    const activeDiscount = discounts.find(d => priceStr === (basePrice * (1 - d / 100)).toFixed(2)) ?? null
     const calculatedDiscount = basePrice > 0 && !isNaN(price) ? Math.round((1 - price / basePrice) * 100) : 0
     const displayDiscount = activeDiscount !== null ? activeDiscount : calculatedDiscount
 
@@ -54,7 +58,7 @@ export default function SellItemCard({ market_name, quantity, icon, hexColor, pr
                     </p>
                 </div>
                 <div className="flex gap-1">
-                    {DISCOUNTS.map(d => (
+                    {discounts.map(d => (
                         <button
                             key={d}
                             onClick={() => setPriceStr((basePrice * (1 - d / 100)).toFixed(2))}

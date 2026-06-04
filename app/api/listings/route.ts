@@ -135,6 +135,12 @@ export async function POST(request: Request) {
 
         await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
 
+        // Invalidate inventory cache so the next page load fetches live data from Steam
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { lastInventoryRefresh: null, inventoryCache: null },
+        });
+
         return Response.json(null, { status: 200 });
     }
     catch (error) {

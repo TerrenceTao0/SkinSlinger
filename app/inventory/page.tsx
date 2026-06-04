@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { getInventory, fetchItemFloat, checkCanTrade, SteamSticker } from '@/lib/steam'
+import { getInventory, checkCanTrade, SteamSticker } from '@/lib/steam'
 import { SteamItem } from "@/lib/steam";
 import { signInventoryToken } from "@/lib/inventoryToken";
 import type { Metadata } from 'next'
@@ -41,35 +41,46 @@ export default async function Inventory() {
         }
     }
 
+    const COOLDOWN_MS = 30 * 60 * 1000;
+    const now = new Date();
+    const cacheValid = user.lastInventoryRefresh
+        && (now.getTime() - user.lastInventoryRefresh.getTime()) < COOLDOWN_MS;
+
     let rawInventory: SteamItem[] = [];
 
     if (user.steam_id) {
-        const fetched = await getInventory(user.steam_id);
-        if (fetched.length > 0) {
-            rawInventory = [...new Map(fetched.map(i => [i.assetId, i])).values()];
+        if (cacheValid && user.inventoryCache) {
+            rawInventory = user.inventoryCache as SteamItem[];
+        } else {
+            const fetched = await getInventory(user.steam_id);
+            if (fetched.length > 0) {
+                rawInventory = [...new Map(fetched.map(i => [i.assetId, i])).values()];
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { lastInventoryRefresh: now, inventoryCache: rawInventory as any },
+                });
+            }
         }
     }
 
-    // Fire-and-forget: fetch & cache float data for CS2 non-commodity items not yet cached.
-    // Does not block page render — data appears on next inventory refresh.
-    const floatCandidates = rawInventory.filter(i => i.game === 'CS2' && !i.commodity && i.inspectLink);
+    const [listings, pendingSales] = await Promise.all([
+        prisma.item_listing.findMany({ where: { userId: user.id }, select: { assetId: true } }),
+        prisma.purchase.findMany({ where: { sellerId: user.id, status: 'pending' }, select: { assetId: true } }),
+    ]);
+    const listedAssetIds = new Set([...listings.map(l => l.assetId), ...pendingSales.map(p => p.assetId)]);
+
+    // Cache float data from CS2 inventory items (float data comes directly from steamwebapi).
+    const floatCandidates = rawInventory.filter(i =>
+        i.game === 'CS2' && !i.commodity && !listedAssetIds.has(i.assetId) && i.floatValue !== null
+    );
     if (floatCandidates.length > 0) {
-        prisma.item_float.findMany({
-            where: { assetId: { in: floatCandidates.map(i => i.assetId) } },
-            select: { assetId: true },
-        }).then(cached => {
-            const cachedIds = new Set(cached.map(f => f.assetId));
-            const toFetch = floatCandidates.filter(i => !cachedIds.has(i.assetId));
-            return Promise.all(toFetch.map(async (item) => {
-                const result = await fetchItemFloat(item.inspectLink!);
-                if (!result) return;
-                await prisma.item_float.upsert({
-                    where: { assetId: item.assetId },
-                    update: { floatValue: result.floatValue, paintSeed: result.paintSeed, stickers: result.stickers as any, fetchedAt: new Date() },
-                    create: { assetId: item.assetId, floatValue: result.floatValue, paintSeed: result.paintSeed, stickers: result.stickers as any },
-                });
-            }));
-        }).catch(() => {});
+        await Promise.all(floatCandidates.map(async (item) => {
+            await prisma.item_float.upsert({
+                where: { assetId: item.assetId },
+                update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers, fetchedAt: new Date() },
+                create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers },
+            });
+        }));
     }
 
     // Join float data
@@ -81,12 +92,6 @@ export default async function Inventory() {
     const names = rawInventory.map(i => i.market_name);
     const prices = await prisma.item.findMany({ where: { marketName: { in: names } } });
     const priceMap = new Map(prices.map(p => [p.marketName, p.price]));
-
-    const [listings, pendingSales] = await Promise.all([
-        prisma.item_listing.findMany({ where: { userId: user.id }, select: { assetId: true } }),
-        prisma.purchase.findMany({ where: { sellerId: user.id, status: 'pending' }, select: { assetId: true } }),
-    ]);
-    const listedAssetIds = new Set([...listings.map(l => l.assetId), ...pendingSales.map(p => p.assetId)]);
 
     const inventoryWithPrices = rawInventory.map(item => {
         const f = floatMap.get(item.assetId);
@@ -108,7 +113,7 @@ export default async function Inventory() {
     return <InventoryClient
         isSteamLinked={!!(user?.steam_id && user?.steam_trade_url)}
         inventory={inventoryWithPrices}
-        lastRefresh={new Date()}
+        lastRefresh={cacheValid ? user.lastInventoryRefresh! : now}
         inventoryToken={inventoryToken}
     />;
 }

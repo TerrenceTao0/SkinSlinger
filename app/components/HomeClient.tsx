@@ -8,6 +8,7 @@ import { BasketItem } from "@/lib/basket";
 import { useBasket } from "./BasketProvider";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import FloatBar from "./FloatBar";
 
 //
 
@@ -619,9 +620,12 @@ export default function HomeClient(
                         </div>
 
                         {preview.floatValue !== null && (
-                            <div className="flex justify-between w-full text-sm">
-                                <span className="opacity-60">Float</span>
-                                <span className="font-mono">{wearLabel(preview.floatValue)} {preview.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                            <div className="flex flex-col gap-1.5 w-full">
+                                <div className="flex justify-between text-sm">
+                                    <span className="opacity-60">Float</span>
+                                    <span className="font-mono">{wearLabel(preview.floatValue)} · {preview.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                                </div>
+                                <FloatBar value={preview.floatValue} />
                             </div>
                         )}
 

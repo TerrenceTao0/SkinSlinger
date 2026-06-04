@@ -10,12 +10,22 @@ export async function POST(request: Request) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { items } = await request.json();
+    let items: { market_name: string; market_hash_name: string; game: string }[];
+    try {
+        ({ items } = await request.json());
+    } catch {
+        return Response.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+        return Response.json({ error: 'items must be a non-empty array' }, { status: 400 });
+    }
 
     const encoder = new TextEncoder();
 
-    const todayUtc = new Date();
-    todayUtc.setUTCHours(0, 0, 0, 0);
+    const weekAgoUtc = new Date();
+    weekAgoUtc.setDate(weekAgoUtc.getDate() - 7);
+    weekAgoUtc.setUTCHours(0, 0, 0, 0);
 
     // Load all cached prices for the requested items
     const marketNames = items.map((i: { market_name: string }) => i.market_name);
@@ -31,17 +41,16 @@ export async function POST(request: Request) {
                 const hit = cacheMap.get(item.market_name);
 
                 // Return cached price if it was updated today
-                if (hit && hit.updatedAt >= todayUtc) {
+                if (hit && hit.updatedAt >= weekAgoUtc) {
                     controller.enqueue(encoder.encode(
                         JSON.stringify({ market_name: item.market_name, price: hit.price }) + '\n'
                     ));
                     return;
                 }
 
-                const result = await fetchItemPrice(item.market_hash_name, item.game);
-                const price = result?.price ?? 0;
-
-                if (result && price >= 0.30) {
+                const price = await fetchItemPrice(item.market_hash_name, item.game, item.market_name) ?? 0;
+   
+                if (price >= 0.30) {
                     await prisma.item.upsert({
                         where: { marketName: item.market_name },
                         update: { price },

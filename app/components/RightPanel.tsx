@@ -6,6 +6,10 @@ import SellItemCard from './SellItemCard';
 
 //
 
+const discounts = [0, 5, 15, 20];
+
+//
+
 function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
     totalValue: number
     itemCount: number
@@ -73,7 +77,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
         const items = stackedQueue.map(item => ({
             assetId: item.assetId,
             marketName: item.market_name,
-            price: parseFloat(priceMap[item.market_name] ?? (item.price * 0.80).toFixed(2)),
+            price: parseFloat(priceMap[item.market_name] ?? item.price.toFixed(2)),
             game: item.game,
             commodity: item.commodity,
             quantity: item.quantity,
@@ -147,7 +151,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
 
     function defaultPrice(item: SteamItem & { quantity: number }): string {
         const livePrice = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
-        return (livePrice * 0.80).toFixed(2);
+        return livePrice.toFixed(2);
     }
 
     const totalValue = stackedQueue.reduce((sum, item) => {
@@ -222,7 +226,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                         <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
                             <p className="text-xs opacity-40">Global discount modifiers</p>
                             <div className="flex gap-1">
-                                {[0, 20, 30, 40].map(d => (
+                                {discounts.map(d => (
                                     <button
                                         key={d}
                                         onClick={() => {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
 import BuyButton from "./BuyButton";
+import FloatBar from "@/app/components/FloatBar";
 
 //
 
@@ -141,16 +142,12 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
                         </div>
 
                         {float?.floatValue != null && (
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Condition</span>
-                                <span>{wearLabel(float.floatValue)}</span>
-                            </div>
-                        )}
-
-                        {float?.floatValue != null && (
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Float</span>
-                                <span className="font-mono text-xs">{float.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                            <div className="flex flex-col gap-1.5">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">Float</span>
+                                    <span className="font-mono text-xs">{wearLabel(float.floatValue)} · {float.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                                </div>
+                                <FloatBar value={float.floatValue} />
                             </div>
                         )}
 

@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "community.cloudflare.steamstatic.com",
       },
+      {
+        protocol: "https",
+        hostname: "community.akamai.steamstatic.com",
+      },
     ],
   },
 };
