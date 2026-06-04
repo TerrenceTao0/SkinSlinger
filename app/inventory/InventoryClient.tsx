@@ -378,7 +378,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
             </div>
 
             {/* Desktop layout */}
-            <div className="hidden md:flex h-230  w-full">
+            <div className="hidden md:flex h-230 ml-12 w-full">
                 <div className="w-43 shrink-0" />
                 <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { getInventory, checkCanTrade, SteamSticker } from '@/lib/steam'
 import { SteamItem } from "@/lib/steam";
@@ -77,8 +78,8 @@ export default async function Inventory() {
         await Promise.all(floatCandidates.map(async (item) => {
             await prisma.item_float.upsert({
                 where: { assetId: item.assetId },
-                update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers, fetchedAt: new Date() },
-                create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers },
+                update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers ?? Prisma.JsonNull, fetchedAt: new Date() },
+                create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers ?? Prisma.JsonNull },
             });
         }));
     }

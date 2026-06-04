@@ -40,7 +40,7 @@ export default function InventoryItemCard({ item, quantity, selling, setSelling,
                 <Image
                     src={item.icon}
                     alt="Failed To Load"
-                    style={{ width: 'auto' }}
+                    style={{ width: 'auto', maxHeight: '100px' }}
                     width={100}
                     height={100}
                 />
