@@ -11,18 +11,18 @@ const SLIDER_MAX = 5000;
 const FLOAT_MAX = 1;
 
 const gameOptions: { label: string; value: GameFilter; href: string; icon: string }[] = [
-    { label: "CS2",    value: "CS2",   href: "/market/cs2",   icon: "/cs2.png"  },
+    { label: "CS2", value: "CS2", href: "/market/cs2", icon: "/cs2.png" },
     { label: "Dota 2", value: "Dota2", href: "/market/dota2", icon: "/dota.png" },
-    { label: "Rust",   value: "Rust",  href: "/market/rust",  icon: "/rust.png" },
-    { label: "TF2",    value: "TF2",   href: "/market/tf2",   icon: "/tf2.png"  },
+    { label: "Rust", value: "Rust", href: "/market/rust", icon: "/rust.png" },
+    { label: "TF2", value: "TF2", href: "/market/tf2", icon: "/tf2.png" },
 ];
 
 const wearOptions = [
-    { label: "Factory New",    short: "FN" },
-    { label: "Minimal Wear",   short: "MW" },
-    { label: "Field-Tested",   short: "FT" },
-    { label: "Well-Worn",      short: "WW" },
-    { label: "Battle-Scarred", short: "BS"  },
+    { label: "Factory New", short: "FN" },
+    { label: "Minimal Wear", short: "MW" },
+    { label: "Field-Tested", short: "FT" },
+    { label: "Well-Worn", short: "WW" },
+    { label: "Battle-Scarred", short: "BS" },
 ];
 
 const thumbClass = [
@@ -60,13 +60,13 @@ export default function LeftPanel({
 }) {
     const minVal = minPrice !== "" ? Math.min(parseFloat(minPrice) || 0, SLIDER_MAX) : 0;
     const maxVal = maxPrice !== "" ? Math.min(parseFloat(maxPrice) || SLIDER_MAX, SLIDER_MAX) : SLIDER_MAX;
-    const fillLeft  = (minVal / SLIDER_MAX) * 100;
+    const fillLeft = (minVal / SLIDER_MAX) * 100;
     const fillRight = 100 - (maxVal / SLIDER_MAX) * 100;
 
     const showFloat = currentGame === "CS2" || currentGame === "TF2";
     const minFloatVal = minFloat !== "" ? Math.min(parseFloat(minFloat) || 0, FLOAT_MAX) : 0;
     const maxFloatVal = maxFloat !== "" ? Math.min(parseFloat(maxFloat) || FLOAT_MAX, FLOAT_MAX) : FLOAT_MAX;
-    const floatFillLeft  = (minFloatVal / FLOAT_MAX) * 100;
+    const floatFillLeft = (minFloatVal / FLOAT_MAX) * 100;
     const floatFillRight = 100 - (maxFloatVal / FLOAT_MAX) * 100;
 
     return (
@@ -240,7 +240,7 @@ export default function LeftPanel({
 
 
             {/* Mobile filters */}
-            <div className="md:hidden mt-20 flex flex-col gap-2 px-[2.5%] py-2">
+            <div className="md:hidden mt-16 flex flex-col gap-2 px-[2.5%] py-2">
                 {/* Game links */}
                 <div className="flex justify-center bg-secondary rounded-sm px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">
                     {gameOptions.map(({ label, value, href, icon }) => (
@@ -279,23 +279,6 @@ export default function LeftPanel({
                     </div>
                 </div>
 
-                {/* Float */}
-                {showFloat && (
-                    <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
-                        <span className="text-[11px] text-gray-500 shrink-0">Float</span>
-                        <input
-                            type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
-                            onChange={e => setMinFloat(e.target.value)}
-                            className="bg-accent rounded-sm px-2 h-7 w-24 shrink-0 text-xs outline-none"
-                        />
-                        <span className="text-gray-600 text-xs shrink-0">–</span>
-                        <input
-                            type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
-                            onChange={e => setMaxFloat(e.target.value)}
-                            className="bg-accent rounded-sm px-2 h-7 w-24 shrink-0 text-xs outline-none"
-                        />
-                    </div>
-                )}
 
                 {/* Wear */}
                 {(currentGame === "CS2" || currentGame === "TF2") && (
