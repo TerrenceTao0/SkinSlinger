@@ -72,7 +72,7 @@ export default function LeftPanel({
     return (
         <>
             {/* Desktop filters */}
-            <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 bottom-[calc(50vh-28rem)] w-43">
+            <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 w-43 h-[52.75rem]">
                 <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
                     {/* Games */}

@@ -332,7 +332,7 @@ export default function HomeClient(
 
 
             {/* Desktop layout */}
-            <div className="hidden md:flex w-410 ml-58 mt-20 h-screen">
+            <div className="hidden md:flex w-410 ml-58 mt-20 h-full">
                 <div className="flex-1 flex flex-col gap-2">
                     <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm">
                         <input
