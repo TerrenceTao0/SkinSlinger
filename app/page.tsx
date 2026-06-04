@@ -88,6 +88,18 @@ const organizationJsonLd = {
         "height": 512,
     },
     "description": "P2P Steam skin marketplace with 0% sales fee, no KYC, and crypto payments.",
+    "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Cobham House, 9 Warwick Court",
+        "addressLocality": "Midtown",
+        "postalCode": "WC1R 5DJ",
+        "addressCountry": "GB",
+    },
+    "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "support@skinslinger.com",
+        "contactType": "customer support",
+    },
 };
 
 const faq = {
@@ -264,14 +276,32 @@ export default function Home() {
                 </div>
             </div>
 
-            <footer className="border-t border-gray-700/50 mt-4 py-8 px-6 flex flex-col w-full items-center gap-3 text-center">
-                <p className="text-xs text-gray-500">
-                    SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
-                </p>
+            <footer className="border-t border-gray-700/50 mt-4 py-10 px-6 backdrop-blur-xs bg-black/20">
+                <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <Image src="/logo.png" alt="SkinSlinger" width={22} height={22} />
+                        <span className="text-sm font-semibold text-gray-300">SkinSlinger</span>
+                    </div>
 
-                <p className="text-xs text-gray-600">
-                    © {new Date().getFullYear()} SkinSlinger
-                </p>
+                    <div className="flex gap-6">
+                        <Link href="/tos" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Terms of Service</Link>
+                        <Link href="/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Privacy Policy</Link>
+                        <a href="mailto:support@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Support</a>
+                        <a href="mailto:management@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Business Contact</a>
+                    </div>
+
+                    <p className="text-xs text-gray-600 text-center">
+                        Cobham House, 9 Warwick Court, Midtown, WC1R 5DJ
+                    </p>
+
+                    <div className="border-t border-gray-700/40 w-full pt-5 flex flex-col items-center gap-2">
+                        <p className="text-xs text-gray-600 text-center max-w-lg">
+                            SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
+                        </p>
+                        
+                        <p className="text-xs text-gray-700">© {new Date().getFullYear()} SkinSlinger</p>
+                    </div>
+                </div>
             </footer>
         </div>
     )
