@@ -95,7 +95,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
         const map = new Map<string, number | null>();
         for (const item of inventory) {
             if (!map.has(item.market_name)) {
-                map.set(item.market_name, item.price > 0 ? item.price : 0);
+                map.set(item.market_name, item.price > 0 ? item.price : null);
             }
         }
         return map;

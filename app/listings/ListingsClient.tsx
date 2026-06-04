@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import FloatBar from "@/app/components/FloatBar";
 
 //
 
@@ -15,6 +16,8 @@ type Listing = {
     icon: string | null;
     hexColor: string | null;
     commodity: boolean;
+    floatValue: number | null;
+    paintSeed: number | null;
 };
 
 type ListingGroup = {
@@ -24,6 +27,8 @@ type ListingGroup = {
     icon: string | null;
     hexColor: string | null;
     commodity: boolean;
+    floatValue: number | null;
+    paintSeed: number | null;
 };
 
 function groupListings(listings: Listing[]): ListingGroup[] {
@@ -41,6 +46,8 @@ function groupListings(listings: Listing[]): ListingGroup[] {
                 icon: l.icon,
                 hexColor: l.hexColor,
                 commodity: l.commodity,
+                floatValue: l.floatValue,
+                paintSeed: l.paintSeed,
             });
         }
     }
@@ -110,7 +117,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
 
     return (
         <div
-            className="relative h-60 md:h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="relative h-65 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${group.hexColor}44` } as React.CSSProperties}
         >
             {/* Name */}
@@ -126,21 +133,33 @@ function ListingCard({ group }: { group: ListingGroup }) {
 
             {/* Image */}
             <div
-                className="flex-1 relative mx-2 min-h-0"
+                className="relative h-24 shrink-0 mx-2 flex items-center justify-center"
                 style={{ filter: `drop-shadow(0 0 10px #${group.hexColor}99)` }}
             >
                 {group.icon && (
-                    <Image src={group.icon} alt={group.marketName} fill className="object-contain p-1" />
+                    <Image src={group.icon} alt={group.marketName} width={90} height={90} style={{ width: 'auto', maxHeight: '90px' }} />
                 )}
             </div>
 
 
+            {/* Float / Pattern */}
+            <div className={`shrink-0 px-2 pb-1 flex flex-col gap-0.5 text-[10px] text-gray-500 ${group.floatValue === null ? 'invisible' : ''}`}>
+                {group.paintSeed != null
+                    ? <span>Pattern <span className="text-gray-300">#{group.paintSeed}</span></span>
+                    : <span>&nbsp;</span>
+                }
+                <span>Float <span className="text-gray-300 font-mono">{group.floatValue?.toFixed(9).replace(/0+$/, '') ?? ''}</span></span>
+            </div>
+            <div className={`shrink-0 px-2 pb-1 ${group.floatValue === null ? 'invisible' : ''}`}>
+                <FloatBar value={group.floatValue ?? 0} showLabels={false} />
+            </div>
+
             {/* Price + save */}
-            <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1">
+            <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1 mt-auto">
                 <button
                     onClick={savePrice}
                     disabled={saving || !isDirty}
-                    className={`h-8 w-full rounded-sm bg-special button text-sm ${isDirty ? '' : 'invisible'}`}
+                    className={`h-8 w-full rounded-sm bg-special button text-sm ${isDirty ? '' : 'hidden'}`}
                 >
                     {saving ? "..." : "Save price"}
                 </button>
@@ -174,7 +193,6 @@ function ListingCard({ group }: { group: ListingGroup }) {
             <button
                 onClick={() => setConfirming(true)}
                 className="shrink-0 h-10 w-full bg-remove button text-sm"
-                style={group.hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${group.hexColor}` } : {}}
             >
                 DELIST
             </button>

@@ -198,17 +198,17 @@ export default function LeftPanel({
                                 <input
                                     type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
                                     onChange={e => setMinFloat(e.target.value)}
-                                    className="flex-1 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
+                                    className="flex-1 min-w-0 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
                                 />
 
-                                <span className="text-gray-600 text-xs">
+                                <span className="text-gray-600 text-xs shrink-0">
                                     –
                                 </span>
 
                                 <input
                                     type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
                                     onChange={e => setMaxFloat(e.target.value)}
-                                    className="flex-1 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
+                                    className="flex-1 min-w-0 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
                                 />
                             </div>
                         </div>

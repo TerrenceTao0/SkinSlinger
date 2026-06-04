@@ -54,7 +54,7 @@ export default function ListingCard(
 
             {/* Image */}
             <button
-                className="absolute inset-0 flex items-center justify-center z-0"
+                className="absolute inset-0 flex items-center justify-center z-0 cursor-pointer mb-15"
                 onClick={onPreview}
             >
                 <Image

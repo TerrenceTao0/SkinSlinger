@@ -28,9 +28,19 @@ export default async function ListingsPage() {
         orderBy: { createdAt: "desc" },
     });
 
+    const nonCommodityAssetIds = rows.filter(l => !l.commodity).map(l => l.assetId);
+    const floatRows = nonCommodityAssetIds.length > 0
+        ? await prisma.item_float.findMany({
+            where: { assetId: { in: nonCommodityAssetIds } },
+            select: { assetId: true, floatValue: true, paintSeed: true },
+        })
+        : [];
+    const floatMap = new Map(floatRows.map(f => [f.assetId, f]));
+
     const listings = rows
         .map(l => {
             if (lockedAssetIds.has(l.assetId)) return null;
+            const float = floatMap.get(l.assetId);
             return {
                 id: l.id,
                 assetId: l.assetId,
@@ -40,6 +50,8 @@ export default async function ListingsPage() {
                 icon: l.icon,
                 hexColor: l.hexColor,
                 commodity: l.commodity,
+                floatValue: float?.floatValue ?? null,
+                paintSeed: float?.paintSeed ?? null,
             };
         })
         .filter((l): l is NonNullable<typeof l> => l !== null);

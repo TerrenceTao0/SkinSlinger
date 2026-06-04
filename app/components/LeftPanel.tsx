@@ -71,7 +71,7 @@ export default function LeftPanel({
 
     return (
         <>
-            {/* ── Desktop sidebar ── */}
+            {/* Desktop */}
             <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 bottom-[calc(50vh-28rem)] w-43">
                 <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
@@ -214,7 +214,8 @@ export default function LeftPanel({
                 </div>
             </div>
 
-            {/* Mobile top bar*/}
+
+            {/* Mobile */}
             <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-secondary border-t border-b border-gray-700/50">
                 {/* Game links */}
                 <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">

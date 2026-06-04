@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
+import ItemPageClient from "./ItemPageClient";
 
 //
 
@@ -127,66 +130,59 @@ export default async function ItemTypePage({ params }: { params: Promise<{ slug:
         ],
     };
 
+    // Fetch order book data and user info in parallel
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id ?? null;
+
+    const [buyOrders, myBuyOrders, pendingCount] = await Promise.all([
+        prisma.buy_order.findMany({
+            where: { marketName },
+            orderBy: { price: "desc" },
+            select: { price: true, quantity: true },
+        }),
+        userId ? prisma.buy_order.findMany({
+            where: { marketName, userId },
+            orderBy: { createdAt: "desc" },
+            select: { id: true, price: true, quantity: true },
+        }) : Promise.resolve([]),
+        userId ? prisma.purchase.count({ where: { buyerId: userId, status: "pending" } }) : Promise.resolve(0),
+    ]);
+
+    // Aggregate sell orders by price level
+    const sellMap = new Map<number, number>();
+    for (const l of listings) {
+        sellMap.set(l.price, (sellMap.get(l.price) ?? 0) + 1);
+    }
+    const sellOrders = [...sellMap.entries()]
+        .map(([price, quantity]) => ({ price, quantity }))
+        .sort((a, b) => a.price - b.price);
+
+    // Aggregate buy orders by price level
+    const buyMap = new Map<number, number>();
+    for (const o of buyOrders) {
+        buyMap.set(o.price, (buyMap.get(o.price) ?? 0) + o.quantity);
+    }
+    const buyOrderLevels = [...buyMap.entries()]
+        .map(([price, quantity]) => ({ price, quantity }))
+        .sort((a, b) => b.price - a.price);
+
     return (
-        <div className="overflow-y-auto h-full flex justify-center pt-24 pb-12 px-4">
-            <div className="w-full max-w-sm flex flex-col gap-6">
-                <Link href={`/market/${gameSlug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
-                    ← Back to {gameName} market
-                </Link>
-
-                <div
-                    className="bg-secondary rounded-sm p-8 flex flex-col items-center gap-4"
-                    style={{ boxShadow: `0 0 40px #${inv.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
-                >
-                    <div style={{ filter: `drop-shadow(0 0 16px #${inv.hexColor}99)` }}>
-                        <Image src={inv.icon} alt={marketName} width={220} height={220} style={{ width: 'auto' }} priority />
-                    </div>
-
-                    <h1 style={{ color: `#${inv.hexColor}` }} className="text-xl font-semibold text-center">
-                        {marketName}
-                    </h1>
-
-                    <span className="text-xs text-gray-500 bg-accent px-2 py-1 rounded-sm">{gameName}</span>
-
-                    <div className="w-full flex flex-col gap-2.5 text-sm border-t border-gray-700/60 pt-4">
-                        <div className="flex justify-between">
-                            <span className="text-gray-400">Available</span>
-                            <span className="font-semibold">{listings.length} listing{listings.length !== 1 ? 's' : ''}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-400">Starting from</span>
-                            <span className="font-semibold">${lowPrice.toFixed(2)}</span>
-                        </div>
-                        {listings.length > 1 && (
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Up to</span>
-                                <span>${highPrice.toFixed(2)}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="w-full flex flex-col gap-1.5">
-                        {listings.slice(0, 10).map(l => (
-                            <Link
-                                key={l.id}
-                                href={`/item/${slug}/${l.id}`}
-                                className="flex justify-between items-center bg-accent rounded-sm px-3 h-10 hover:bg-gray-600 transition-colors text-sm"
-                            >
-                                <span className="font-medium">${l.price.toFixed(2)}</span>
-                                <span className="text-gray-400 text-xs">Buy →</span>
-                            </Link>
-                        ))}
-                        {listings.length > 10 && (
-                            <p className="text-center text-xs text-gray-500 mt-1">
-                                +{listings.length - 10} more available on the market
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
+        <>
+            <ItemPageClient
+                marketName={marketName}
+                icon={inv.icon}
+                hexColor={inv.hexColor}
+                game={inv.game}
+                gameSlug={gameSlug}
+                initialSellOrders={sellOrders}
+                initialBuyOrders={buyOrderLevels}
+                initialMyBuyOrders={myBuyOrders}
+                currentUserId={userId}
+                hasPendingPurchase={pendingCount > 0}
+                initialUserCash={session?.user?.cash ?? 0}
+            />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-        </div>
+        </>
     );
 }
