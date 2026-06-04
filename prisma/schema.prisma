@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output = "../lib/generated/prisma"
@@ -28,12 +23,12 @@ model user {
   twoFactorCode String?
   twoFactorExpires DateTime?
   lastInventoryRefresh DateTime?
-  inventoryCache       Json?
+  inventoryCache Json?
 
   accounts account[]
   sessions session[]
   listings item_listing[]
-  purchases_as_buyer  purchase[] @relation("buyer_purchases")
+  purchases_as_buyer purchase[] @relation("buyer_purchases")
   purchases_as_seller purchase[] @relation("seller_purchases")
   buy_orders buy_order[]
 }
@@ -51,6 +46,7 @@ model account {
   scope String?
   id_token String? @db.Text
   session_state String?
+
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -77,6 +73,7 @@ model session {
   sessionToken String @unique
   userId String
   expires DateTime
+
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -89,83 +86,84 @@ model verificationToken {
 }
 
 model crypto_deposit {
-  id        String   @id @default(cuid())
-  userId    String
-  address   String   @unique
-  index     Int      @unique
+  id String @id @default(cuid())
+  userId String
+  address String @unique
+  index Int @unique
   amountUsdc Float
-  status    String   @default("pending") // pending | confirmed | swept | expired
-  txHash    String?
+  status String @default("pending")
+  txHash String?
   expiresAt DateTime
   createdAt DateTime @default(now())
 }
 
 model deposit_counter {
-  id        String @id
-  value     Int    @default(0)
+  id String @id
+  value Int @default(0)
   lastBlock BigInt @default(0)
 }
 
 model item {
-  marketName     String   @id
+  marketName String @id
   marketHashName String
-  price          Float
-  game           String
-  updatedAt      DateTime @default(now()) @updatedAt
+  price Float
+  game String
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model item_float {
-  assetId    String   @id
+  assetId String @id
   floatValue Float?
-  paintSeed  Int?
-  stickers   Json?
-  fetchedAt  DateTime @default(now())
+  paintSeed Int?
+  stickers Json?
+  fetchedAt DateTime @default(now())
 }
 
 model item_listing {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   userId String
-  assetId String @unique  // Steam asset ID - unique per item instance
+  assetId String @unique
   marketName String
   price Float
   game String?
   icon String?
   hexColor String?
   commodity Boolean @default(false)
+
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model buy_order {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  userId     String
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId String
   marketName String
-  price      Float
-  quantity   Int
-  game       String?
-  icon       String?
-  hexColor   String?
-  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  price Float
+  quantity Int
+  game String?
+  icon String?
+  hexColor String?
+
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model purchase {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
-  // pending | completed (cancelled = row deleted)
-  status        String   @default("pending")
-  price         Float
-  assetId       String
-  marketName    String
-  game          String?
-  icon          String?
-  hexColor      String?
-  commodity     Boolean  @default(false)
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  status String @default("pending")
+  price Float
+  assetId String
+  marketName String
+  game String?
+  icon String?
+  hexColor String?
+  commodity Boolean @default(false)
   buyerTradeUrl String?
 
-  buyerId  String
+  buyerId String
   sellerId String
-  buyer    user @relation("buyer_purchases",  fields: [buyerId],  references: [id])
-  seller   user @relation("seller_purchases", fields: [sellerId], references: [id])
-}
 
+  buyer user @relation("buyer_purchases", fields: [buyerId], references: [id])
+  seller user @relation("seller_purchases", fields: [sellerId], references: [id])
+}

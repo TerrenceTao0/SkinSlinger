@@ -173,8 +173,13 @@ export default function Home() {
                     className="w-full max-w-sm rounded-sm px-6 py-5 flex flex-col items-center gap-1 bg-green-200"
                     style={{ boxShadow: "0 0 32px rgba(76, 107, 34, 0.6), 0 0 8px rgba(76, 107, 34, 0.3)" }}
                 >
-                    <p className="text-special text-2xl font-bold underline">No KYC</p>
-                    <p className="text-special text-sm text-center font-semibold">No identity verification required. Sign up with just an email and a password.</p>
+                    <p className="text-special text-2xl font-bold underline">
+                        No KYC
+                    </p>
+
+                    <p className="text-special text-sm text-center font-semibold">
+                        No identity verification required. Sign up with just an email and a password.
+                    </p>
                 </div>
 
 

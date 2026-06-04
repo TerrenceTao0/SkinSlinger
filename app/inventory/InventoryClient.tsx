@@ -296,6 +296,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
 
             <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} inventoryToken={inventoryToken} />
 
+
             {/* Mobile layout */}
             <div className="md:hidden flex flex-col h-full pt-[72px] px-[2.5%]">
                 {/* Game filter*/}
@@ -377,8 +378,9 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                 )}
             </div>
 
+
             {/* Desktop layout */}
-            <div className="hidden md:flex h-230 ml-12 w-full">
+            <div className="hidden md:flex h-230 ml-12 w-457">
                 <div className="w-43 shrink-0" />
                 <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (
