@@ -278,23 +278,6 @@ export default function LeftPanel({
                         />
                     </div>
                 </div>
-
-
-                {/* Wear */}
-                {(currentGame === "CS2" || currentGame === "TF2") && (
-                    <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
-                        <span className="text-[11px] text-gray-500 shrink-0">Wear</span>
-                        {wearOptions.map(({ label, short }) => (
-                            <button
-                                key={label}
-                                onClick={() => setWear(wear === label ? null : label)}
-                                className={`shrink-0 px-2.5 h-7 text-xs rounded-sm button transition-colors ${wear === label ? "bg-special font-medium" : "bg-accent"}`}
-                            >
-                                {short}
-                            </button>
-                        ))}
-                    </div>
-                )}
             </div>
         </>
     );

@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
         <html lang="en" className={`${inter.variable} font-sans`}>
-            <body className="h-screen mx-auto flex flex-col  overflow-hidden">
+            <body className="h-dvh mx-auto flex flex-col overflow-hidden">
                 <Providers>
                     <TopNav />
                     {children}

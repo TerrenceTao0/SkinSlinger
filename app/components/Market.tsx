@@ -303,7 +303,7 @@ export default function HomeClient(
 
 
             {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full px-[2.5%]">
+            <div className="md:hidden flex flex-col flex-1 min-h-0 px-[2.5%]">
                 <div className="bg-secondary h-14 flex items-center px-4 shrink-0 rounded-sm">
                     <input
                         type="text"
