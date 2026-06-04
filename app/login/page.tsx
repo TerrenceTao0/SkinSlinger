@@ -79,10 +79,10 @@ export default function Login() {
 
 
     return (
-        <div className="flex flex-col justify-center min-h-screen items-center m-0">
+        <div className="flex flex-col justify-center flex-1 items-center m-0 pt-16">
             <form
                 onSubmit={onSubmit}
-                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-96 pb-8 frame-shadow"
+                className="flex flex-col gap-1 bg-secondary rounded-[5px] text-center w-86 md:w-96 pb-8 frame-shadow"
             >
                 <h1 className="text-4xl mt-4 text-special font-medium">
                     Login
