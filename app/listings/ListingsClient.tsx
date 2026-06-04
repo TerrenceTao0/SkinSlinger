@@ -117,14 +117,15 @@ function ListingCard({ group }: { group: ListingGroup }) {
 
     return (
         <div
-            className="relative h-65 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="relative h-64 md:h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${group.hexColor}44` } as React.CSSProperties}
         >
             {/* Name */}
-            <div className="shrink-0 flex justify-between items-start px-2 pt-2 pb-1">
-                <p style={{ color: `#${group.hexColor}` }} className="text-[11px] leading-tight line-clamp-2 flex-1 pr-1">
+            <div className="shrink-0 h-10 flex justify-between items-start px-2 pt-2 pb-1">
+                <p className="text-[11px] leading-tight font-medium line-clamp-2 flex-1 pr-1">
                     {group.marketName}
                 </p>
+
                 {group.ids.length > 1 && (
                     <p className="text-[11px] opacity-60 shrink-0">[x{group.ids.length}]</p>
                 )}
@@ -133,7 +134,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
 
             {/* Image */}
             <div
-                className="relative h-24 shrink-0 mx-2 flex items-center justify-center"
+                className="relative h-20 md:h-24 shrink-0 mx-2 flex items-center justify-center"
                 style={{ filter: `drop-shadow(0 0 10px #${group.hexColor}99)` }}
             >
                 {group.icon && (
@@ -143,7 +144,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
 
 
             {/* Float / Pattern */}
-            <div className={`shrink-0 px-2 pb-1 flex flex-col gap-0.5 text-[10px] text-gray-500 ${group.floatValue === null ? 'invisible' : ''}`}>
+            <div className={`shrink-0 mt-auto px-2 pb-1 flex flex-col gap-0.5 text-[10px] text-gray-500 ${group.floatValue === null ? 'invisible' : ''}`}>
                 {group.paintSeed != null
                     ? <span>Pattern <span className="text-gray-300">#{group.paintSeed}</span></span>
                     : <span>&nbsp;</span>
@@ -155,7 +156,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
             </div>
 
             {/* Price + save */}
-            <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1 mt-auto">
+            <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1">
                 <button
                     onClick={savePrice}
                     disabled={saving || !isDirty}
@@ -234,19 +235,17 @@ export default function ListingsClient({ listings }: { listings: Listing[] }) {
     const groups = groupListings(listings);
 
     return (
-        <div className="w-full flex justify-center mt-20 px-8">
-            <div className="w-full max-w-7xl flex flex-col gap-4">
-                <p className="text-xl">
-                    My Listings
-                </p>
-                
+        <div className="h-full flex flex-col pt-20 px-4 md:px-8">
+            <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 flex-1 min-h-0">
+                <p className="text-xl shrink-0">My Listings</p>
+
                 {groups.length === 0 ? (
-                    <p className="opacity-40">
-                        You have no active listings.
-                    </p>
+                    <p className="opacity-40">You have no active listings.</p>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                        {groups.map((g) => <ListingCard key={g.ids[0]} group={g} />)}
+                    <div className="overflow-y-auto flex-1 pb-8 pr-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                            {groups.map((g) => <ListingCard key={g.ids[0]} group={g} />)}
+                        </div>
                     </div>
                 )}
             </div>
