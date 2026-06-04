@@ -30,7 +30,7 @@ const getItem = cache(async (slug: string) => {
     // Reverse the slug to find the marketName via PostgreSQL
     const rows = await prisma.$queryRaw<{ marketName: string }[]>`
         SELECT "marketName" FROM item_listing
-        WHERE REGEXP_REPLACE(LOWER("marketName"), '[^a-z0-9]+', '-', 'g') = ${slug}
+        WHERE TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER("marketName"), '[^a-z0-9]+', '-', 'g')) = ${slug}
         LIMIT 1
     `;
     if (!rows.length) return null;
