@@ -122,6 +122,10 @@ const faq = {
             "question": "How long does it take to deposit/withdraw?",
             "answer": "It should only take ~1 minute for your transaction to be detected once it's sent but confirmation might take ~5 minutes.",
         },
+        {
+            "question": "How are 'Market' prices determined?",
+            "answer": "We look at prices from other market places and average them out. If the item does not exist on other market places, we use prices from the Steam marketplace.",
+        },
     ],
 };
 

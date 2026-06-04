@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { verifyInventoryToken } from "@/lib/inventoryToken";
+import { fetchInventoryForGames, SteamItem } from "@/lib/steam";
 
 //
 
@@ -16,6 +17,21 @@ export async function GET(request: Request) {
         const minPrice = searchParams.get("minPrice");
         const maxPrice = searchParams.get("maxPrice");
         const wear = searchParams.get("wear");
+        const minFloat = searchParams.get("minFloat");
+        const maxFloat = searchParams.get("maxFloat");
+
+        // If float range specified, pre-fetch matching assetIds from item_float
+        let floatAssetIds: string[] | null = null;
+        if (minFloat || maxFloat) {
+            const floatMatches = await prisma.item_float.findMany({
+                where: {
+                    ...(minFloat ? { floatValue: { gte: parseFloat(minFloat) } } : {}),
+                    ...(maxFloat ? { floatValue: { lte: parseFloat(maxFloat) } } : {}),
+                },
+                select: { assetId: true },
+            });
+            floatAssetIds = floatMatches.map(f => f.assetId);
+        }
 
         const andFilters: object[] = [];
         if (search) andFilters.push({ marketName: { contains: search, mode: 'insensitive' as const } });
@@ -28,6 +44,7 @@ export async function GET(request: Request) {
                 ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
                 ...(maxPrice ? { lte: parseFloat(maxPrice) } : {}),
             }} : {}),
+            ...(floatAssetIds !== null ? { assetId: { in: floatAssetIds } } : {}),
         };
 
         const rows = await prisma.item_listing.findMany({
@@ -133,12 +150,45 @@ export async function POST(request: Request) {
             }
         }
 
-        await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
+        if (!user.steam_id) {
+            return Response.json({ error: "Steam account not linked" }, { status: 400 });
+        }
 
-        // Invalidate inventory cache so the next page load fetches live data from Steam
+        // Fetch live inventory for only the games being listed
+        const games = [...new Set(toCreate.map(i => i.game))];
+        const liveItems = await fetchInventoryForGames(user.steam_id, games);
+        const liveAssetIds = new Set(liveItems.map(i => i.assetId));
+
+        // Filter out items no longer in Steam inventory
+        const verified = toCreate.filter(i => liveAssetIds.has(i.assetId));
+
+        if (verified.length > 0) {
+            await prisma.item_listing.createMany({ data: verified, skipDuplicates: true });
+        }
+
+        // Upsert float data for verified CS2 non-commodity items
+        const liveFloatMap = new Map(liveItems.map(i => [i.assetId, i]));
+        const floatUpserts = verified
+            .filter(i => i.game === 'CS2' && !i.commodity)
+            .map(i => liveFloatMap.get(i.assetId))
+            .filter((i): i is NonNullable<typeof i> => i != null && i.floatValue !== null);
+        if (floatUpserts.length > 0) {
+            await Promise.all(floatUpserts.map(item =>
+                prisma.item_float.upsert({
+                    where: { assetId: item.assetId },
+                    update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers as any, fetchedAt: new Date() },
+                    create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers as any },
+                })
+            ));
+        }
+
+        // Update cache: replace the fetched games' items with fresh data, keep other games intact
+        const cachedItems = (user.inventoryCache ?? []) as SteamItem[];
+        const otherGames = cachedItems.filter(i => !games.includes(i.game));
+        const newCache = [...otherGames, ...liveItems];
         await prisma.user.update({
             where: { id: user.id },
-            data: { lastInventoryRefresh: null, inventoryCache: null },
+            data: { lastInventoryRefresh: new Date(), inventoryCache: newCache as any },
         });
 
         return Response.json(null, { status: 200 });

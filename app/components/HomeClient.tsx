@@ -339,6 +339,8 @@ export default function HomeClient(
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
     const [wear, setWear] = useState<string | null>(null);
+    const [minFloat, setMinFloat] = useState("");
+    const [maxFloat, setMaxFloat] = useState("");
     const { basket, setBasket } = useBasket();
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
@@ -361,14 +363,18 @@ export default function HomeClient(
     const minPriceRef = useRef(minPrice);
     const maxPriceRef = useRef(maxPrice);
     const wearRef = useRef(wear);
+    const minFloatRef = useRef(minFloat);
+    const maxFloatRef = useRef(maxFloat);
 
     useEffect(() => { searchRef.current = search; }, [search]);
     useEffect(() => { gameFilterRef.current = gameFilter; }, [gameFilter]);
     useEffect(() => { minPriceRef.current = minPrice; }, [minPrice]);
     useEffect(() => { maxPriceRef.current = maxPrice; }, [maxPrice]);
     useEffect(() => { wearRef.current = wear; }, [wear]);
+    useEffect(() => { minFloatRef.current = minFloat; }, [minFloat]);
+    useEffect(() => { maxFloatRef.current = maxFloat; }, [maxFloat]);
 
-    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string, minP: string, maxP: string, wearFilter: string | null) => {
+    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string, minP: string, maxP: string, wearFilter: string | null, minF: string, maxF: string) => {
         if (loadingRef.current) return;
 
         loadingRef.current = true;
@@ -382,6 +388,8 @@ export default function HomeClient(
             if (minP) params.set("minPrice", minP);
             if (maxP) params.set("maxPrice", maxP);
             if (wearFilter) params.set("wear", wearFilter);
+            if (minF) params.set("minFloat", minF);
+            if (maxF) params.set("maxFloat", maxF);
 
             const res = await fetch(`/api/listings?${params}`);
             const data = await res.json();
@@ -408,7 +416,7 @@ export default function HomeClient(
             return;
         }
 
-        load(gameFilter, null, true, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current);
+        load(gameFilter, null, true, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current);
     }, [gameFilter, load]);
 
 
@@ -419,7 +427,7 @@ export default function HomeClient(
             return;
         }
 
-        const id = setTimeout(() => load(gameFilterRef.current, null, true, search, minPriceRef.current, maxPriceRef.current, wearRef.current), 300);
+        const id = setTimeout(() => load(gameFilterRef.current, null, true, search, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current), 300);
         return () => clearTimeout(id);
     }, [search, load]);
 
@@ -430,16 +438,16 @@ export default function HomeClient(
             isFirstFilterRender.current = false;
             return;
         }
-        const id = setTimeout(() => load(gameFilterRef.current, null, true, searchRef.current, minPrice, maxPrice, wear), 400);
+        const id = setTimeout(() => load(gameFilterRef.current, null, true, searchRef.current, minPrice, maxPrice, wear, minFloat, maxFloat), 400);
         return () => clearTimeout(id);
-    }, [minPrice, maxPrice, wear, load]);
+    }, [minPrice, maxPrice, wear, minFloat, maxFloat, load]);
 
 
     // Infinite scroll via IntersectionObserver
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && hasMore) {
-                load(gameFilterRef.current, cursor, false, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current);
+                load(gameFilterRef.current, cursor, false, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current);
             }
         }, { threshold: 0.1 });
 
@@ -574,6 +582,8 @@ export default function HomeClient(
                 minPrice={minPrice} setMinPrice={setMinPrice}
                 maxPrice={maxPrice} setMaxPrice={setMaxPrice}
                 wear={wear} setWear={setWear}
+                minFloat={minFloat} setMinFloat={setMinFloat}
+                maxFloat={maxFloat} setMaxFloat={setMaxFloat}
             />
 
             {pendingNotice && (
@@ -710,31 +720,29 @@ export default function HomeClient(
             </div>
 
             {/* Desktop layout (original) */}
-            <div className="hidden md:flex h-full w-full justify-center items-center">
-                <div className="bg-secondary w-200 h-150 flex justify-center items-center">
-                    <div>
-                        <div className="bg-secondary w-310 h-13 mt-14 absolute flex items-center px-4 rounded-sm">
-                            <input
-                                type="text"
-                                placeholder="Search items..."
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
+            <div className="flex w-410 ml-46 mt-20 h-screen">
+                <div className="flex-1 flex flex-col gap-2">
+                    <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm">
+                        <input
+                            type="text"
+                            placeholder="Search items..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
+                        />
+                    </div>
+
+                    <div className="bg-secondary w-full overflow-y-auto h-196 grid grid-cols-7 justify-start content-start gap-2 p-3 rounded-sm">
+                        {displayListings.map(listing => (
+                            <ListingCard
+                                key={listing.id} {...listing}
+                                currentUserId={currentUserId}
+                                onBuy={() => listing.commodity ? openOrderBook(listing) : handleBuy(listing)}
+                                onPreview={() => listing.commodity ? openOrderBook(listing) : (setPreview(listing), setPreviewQtyStr(""))}
                             />
-                        </div>
+                        ))}
 
-                        <div className="bg-secondary w-310 mr-30 overflow-y-auto h-196 mt-28 grid grid-cols-7 justify-start content-start gap-2 p-3 rounded-sm">
-                            {displayListings.map(listing => (
-                                <ListingCard
-                                    key={listing.id} {...listing}
-                                    currentUserId={currentUserId}
-                                    onBuy={() => listing.commodity ? openOrderBook(listing) : handleBuy(listing)}
-                                    onPreview={() => listing.commodity ? openOrderBook(listing) : (setPreview(listing), setPreviewQtyStr(""))}
-                                />
-                            ))}
-
-                            <div ref={sentinelRef} className="col-span-7 h-1" />
-                        </div>
+                        <div ref={sentinelRef} className="col-span-7 h-1" />
                     </div>
                 </div>
             </div>

@@ -166,7 +166,7 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
                 price: 0,
                 hexColor: item.color ?? item.bordercolor ?? '',
                 game,
-                commodity: game === 'CS2' ? !(item.float?.paintindex) : false,
+                commodity: game === 'CS2' ? !(item.float?.paintindex) : true,
                 inspectLink: item.inspectlink ?? null,
                 floatValue: item.float?.floatvalue ?? null,
                 paintSeed: item.float?.paintseed ?? null,
@@ -175,6 +175,13 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
     } catch {
         return [];
     }
+}
+
+
+// Fetches inventory for a specific subset of games (used for targeted verification).
+export async function fetchInventoryForGames(steam_id: string, games: string[]): Promise<SteamItem[]> {
+    const results = await Promise.all(games.map(game => fetchGameInventory(steam_id, game)));
+    return results.flat();
 }
 
 

@@ -8,6 +8,7 @@ type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
 //
 
 const SLIDER_MAX = 5000;
+const FLOAT_MAX = 1;
 
 const gameOptions: { label: string; value: GameFilter; href: string; icon: string }[] = [
     { label: "CS2",    value: "CS2",   href: "/market/cs2",   icon: "/cs2.png"  },
@@ -42,6 +43,8 @@ export default function LeftPanel({
     minPrice, setMinPrice,
     maxPrice, setMaxPrice,
     wear, setWear,
+    minFloat, setMinFloat,
+    maxFloat, setMaxFloat,
 }: {
     currentGame: GameFilter,
     minPrice: string,
@@ -50,17 +53,27 @@ export default function LeftPanel({
     setMaxPrice: (v: string) => void,
     wear: string | null,
     setWear: (v: string | null) => void,
+    minFloat: string,
+    setMinFloat: (v: string) => void,
+    maxFloat: string,
+    setMaxFloat: (v: string) => void,
 }) {
     const minVal = minPrice !== "" ? Math.min(parseFloat(minPrice) || 0, SLIDER_MAX) : 0;
     const maxVal = maxPrice !== "" ? Math.min(parseFloat(maxPrice) || SLIDER_MAX, SLIDER_MAX) : SLIDER_MAX;
     const fillLeft  = (minVal / SLIDER_MAX) * 100;
     const fillRight = 100 - (maxVal / SLIDER_MAX) * 100;
 
+    const showFloat = currentGame === "CS2" || currentGame === "TF2";
+    const minFloatVal = minFloat !== "" ? Math.min(parseFloat(minFloat) || 0, FLOAT_MAX) : 0;
+    const maxFloatVal = maxFloat !== "" ? Math.min(parseFloat(maxFloat) || FLOAT_MAX, FLOAT_MAX) : FLOAT_MAX;
+    const floatFillLeft  = (minFloatVal / FLOAT_MAX) * 100;
+    const floatFillRight = 100 - (maxFloatVal / FLOAT_MAX) * 100;
+
     return (
         <>
             {/* ── Desktop sidebar ── */}
             <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 bottom-[calc(50vh-28rem)] w-43">
-                <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto">
+                <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
                     {/* Games */}
                     <div className="px-3 pt-3 pb-1">
@@ -134,6 +147,53 @@ export default function LeftPanel({
                         </div>
                     </div>
 
+                    {/* CS2 / TF2 Float Range */}
+                    {showFloat && (
+                        <div className="px-3 py-3 border-t border-gray-700/60">
+                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">Float Range</p>
+
+                            {/* Dual-thumb slider */}
+                            <div className="relative h-4 mx-1 mb-3">
+                                <div className="absolute top-1.5 left-0 right-0 h-1 bg-accent rounded-full" />
+                                <div
+                                    className="absolute top-1.5 h-1 bg-special rounded-full"
+                                    style={{ left: `${floatFillLeft}%`, right: `${floatFillRight}%` }}
+                                />
+                                <input
+                                    type="range" min={0} max={FLOAT_MAX} step={0.001} value={minFloatVal}
+                                    onChange={e => {
+                                        const v = parseFloat(e.target.value);
+                                        setMinFloat(v === 0 ? "" : String(v));
+                                    }}
+                                    className={thumbClass}
+                                />
+                                <input
+                                    type="range" min={0} max={FLOAT_MAX} step={0.001} value={maxFloatVal}
+                                    onChange={e => {
+                                        const v = parseFloat(e.target.value);
+                                        setMaxFloat(v === FLOAT_MAX ? "" : String(v));
+                                    }}
+                                    className={thumbClass}
+                                />
+                            </div>
+
+                            {/* Min / Max inputs */}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
+                                    onChange={e => setMinFloat(e.target.value)}
+                                    className="flex-1 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
+                                />
+                                <span className="text-gray-600 text-xs">–</span>
+                                <input
+                                    type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
+                                    onChange={e => setMaxFloat(e.target.value)}
+                                    className="flex-1 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* CS2 / TF2 Condition */}
                     {(currentGame === "CS2" || currentGame === "TF2") && (
                         <div className="px-3 py-3 border-t border-gray-700/60">
@@ -200,6 +260,22 @@ export default function LeftPanel({
                             {short}
                         </button>
                     ))}
+                    {showFloat && (
+                        <>
+                            <span className="text-gray-600 text-xs shrink-0 ml-1">Float</span>
+                            <input
+                                type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
+                                onChange={e => setMinFloat(e.target.value)}
+                                className="bg-accent rounded-sm px-2 h-7 w-20 shrink-0 text-xs outline-none"
+                            />
+                            <span className="text-gray-600 text-xs shrink-0">–</span>
+                            <input
+                                type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
+                                onChange={e => setMaxFloat(e.target.value)}
+                                className="bg-accent rounded-sm px-2 h-7 w-20 shrink-0 text-xs outline-none"
+                            />
+                        </>
+                    )}
                 </div>
             </div>
         </>

@@ -22,7 +22,7 @@ const url_start = "https://steamcommunity.com/tradeoffer/new/?partner="
 //
 
 function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
-    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void,
+    onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void,
     checkUrl: (event: React.ChangeEvent<HTMLInputElement>) => void,
     error: string,
     waiting: boolean,
@@ -117,7 +117,21 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
             return true;
         });
 
-        if (unpriced.length === 0) return;
+        // Collect unique sticker names from items that have stickers
+        const stickerSeen = new Set<string>();
+        const stickerItems: { market_name: string; market_hash_name: string; game: string }[] = [];
+        for (const item of inventory) {
+            if (!item.stickers) continue;
+            for (const s of item.stickers) {
+                const name = `Sticker | ${s.name}`;
+                if (!stickerSeen.has(name)) {
+                    stickerSeen.add(name);
+                    stickerItems.push({ market_name: name, market_hash_name: name, game: 'CS2' });
+                }
+            }
+        }
+
+        if (unpriced.length === 0 && stickerItems.length === 0) return;
 
         const controller = new AbortController();
 
@@ -126,11 +140,10 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                 const res = await fetch('/api/prices', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: unpriced.map(i => ({
-                        market_name: i.market_name,
-                        market_hash_name: i.market_hash_name,
-                        game: i.game
-                    })) }),
+                    body: JSON.stringify({ items: [
+                        ...unpriced.map(i => ({ market_name: i.market_name, market_hash_name: i.market_hash_name, game: i.game })),
+                        ...stickerItems,
+                    ] }),
                     signal: controller.signal
                 });
 
@@ -221,7 +234,14 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
             const priceState = livePrices.get(item.market_name);
             if (priceState !== null && (priceState ?? 0) < 0.30) continue;
 
-            const price = priceState ?? 0;
+            const basePrice = priceState ?? 0;
+            const stickerValue = item.stickers
+                ? item.stickers.reduce((sum, s) => {
+                    const sp = livePrices.get(`Sticker | ${s.name}`) ?? 0;
+                    return sum + sp * (1 - (s.wear ?? 0)) * 0.15;
+                }, 0)
+                : 0;
+            const price = basePrice + stickerValue;
             const itemWithPrice = { ...item, price };
 
             if (item.commodity) {
@@ -314,7 +334,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
 
                         {/* Grid */}
                         <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
+                            <div className="grid grid-cols-2 gap-2 justify-start content-start">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
                                     const remaining = item.quantity - currentAmount;
@@ -339,53 +359,39 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                 )}
             </div>
 
-            {/* Desktop layout (original) */}
-            <div className="hidden md:flex h-full w-full justify-center items-center">
-                <div className="w-200 h-150 flex justify-center items-center">
+            {/* Desktop layout */}
+            <div className="hidden md:flex h-230 w-full">
+                <div className="w-43 shrink-0" />
+                <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (
-                        <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
+                        <div className="flex items-center justify-center flex-1">
+                            <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
+                        </div>
                     ) : (
-                        <div>
+                        <>
                             {/* Top info bar */}
-                            <div className="bg-secondary w-310 h-18 mt-13 absolute flex items-center px-6 rounded-sm">
+                            <div className="bg-secondary h-18 flex items-center px-6 rounded-sm shrink-0">
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                            Items
-                                        </span>
-
-                                        <span className="text-2xl">
-                                            {stackedInventory.length}
-                                        </span>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Items</span>
+                                        <span className="text-2xl">{stackedInventory.length}</span>
                                     </div>
-
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                            Steam Value
-                                        </span>
-
-                                        <span className="text-2xl">
-                                            ${totalValue.toFixed(2)}
-                                        </span>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Market Value</span>
+                                        <span className="text-2xl">${totalValue.toFixed(2)}</span>
                                     </div>
                                 </div>
-
                                 <div className="flex flex-col items-center ml-auto">
-                                    <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                        Last Updated
-                                    </span>
-
-                                    <span className="text-2xl">
-                                        {lastRefreshDisplay}
-                                    </span>
+                                    <span className="text-[11px] uppercase tracking-widest opacity-50">Last Updated</span>
+                                    <span className="text-2xl">{lastRefreshDisplay}</span>
                                 </div>
                             </div>
 
                             {/* Item display */}
-                            <div className="bg-secondary w-310 mr-30 overflow-y-auto h-190 mt-34 grid grid-cols-6 justify-start content-start gap-2 p-3 rounded-sm">
+                            <div className="bg-secondary overflow-y-auto flex-1 min-h-0 grid grid-cols-5 justify-start content-start gap-2 p-3 rounded-sm">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
-                                    const remaining = item.quantity - currentAmount
+                                    const remaining = item.quantity - currentAmount;
 
                                     if (remaining <= 0) return;
 
@@ -402,7 +408,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                                     )
                                 })}
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

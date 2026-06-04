@@ -23,6 +23,7 @@ export default function ListingCard(
         currentUserId,
         floatValue,
         paintSeed,
+        stickers,
         onBuy,
         onPreview,
     }:
@@ -32,44 +33,40 @@ export default function ListingCard(
 
     return (
         <div
-            className="bg-accent flex flex-col rounded-sm overflow-hidden w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
-            style={{ '--glow': `#${hexColor}44` } as React.CSSProperties}
+            className="bg-accent h-60 overflow-hidden relative w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            style={{ '--glow': `#${hexColor}44`, border: `1px solid #${hexColor}` } as React.CSSProperties}
         >
-            {/* Header: rarity dot + name */}
-            <div className="flex flex-col gap-0.5 px-2 pt-2 pb-1">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `#${hexColor}` }} />
-                <div className="flex items-start justify-between gap-1">
-                    <Link
-                        href={`/item/${toSlug(marketName)}/${id}`}
-                        onClick={e => e.stopPropagation()}
-                        className="text-[11px] font-semibold leading-tight line-clamp-2 hover:underline"
-                        style={{ color: `#${hexColor}` }}
-                    >
-                        {marketName}
-                    </Link>
-                    {quantity > 1 && (
-                        <span className="text-[10px] text-gray-500 shrink-0">[x{quantity}]</span>
-                    )}
-                </div>
+            <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none z-1" style={{ background: `linear-gradient(to bottom, #${hexColor}88, transparent)` }} />
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 px-2 pt-2 z-2 flex items-start justify-between gap-1">
+                <Link
+                    href={`/item/${toSlug(marketName)}/${id}`}
+                    onClick={e => e.stopPropagation()}
+                    className="text-[11px] font-medium leading-tight line-clamp-2 hover:underline"
+                >
+                    {marketName}
+                </Link>
+                {quantity > 1 && (
+                    <span className="text-[10px] leading-tight shrink-0">[x{quantity}]</span>
+                )}
             </div>
 
             {/* Image */}
             <button
-                className="flex items-center justify-center h-24 cursor-pointer"
-                style={{ filter: `drop-shadow(0 0 8px #${hexColor}99)` }}
+                className="absolute inset-0 flex items-center justify-center z-0"
                 onClick={onPreview}
             >
                 <Image
                     src={icon}
                     alt={marketName}
                     width={100}
-                    height={80}
-                    style={{ width: 'auto', maxHeight: '80px' }}
+                    height={100}
+                    style={{ width: 'auto', maxHeight: '100px' }}
                 />
             </button>
 
             {/* Footer */}
-            <div className="flex flex-col gap-1 px-2 pt-1 pb-0">
+            <div className="absolute bottom-0 left-0 right-0 px-2 pb-0 z-2 flex flex-col gap-1">
                 {/* Metadata */}
                 {floatValue !== null && (
                     <div className="flex flex-col gap-0.5 text-[10px] text-gray-400">
@@ -82,6 +79,15 @@ export default function ListingCard(
 
                 {/* Float bar */}
                 {floatValue !== null && <FloatBar value={floatValue} showLabels={false} />}
+
+                {/* Stickers */}
+                {stickers && stickers.length > 0 && (
+                    <div className="flex gap-1">
+                        {stickers.slice(0, 4).map((s, i) => (
+                            <Image key={i} src={s.image} alt={s.name} title={s.name} width={24} height={24} style={{ width: 'auto', height: 20, opacity: s.wear != null ? 1 - s.wear * 0.8 : 1 }} />
+                        ))}
+                    </div>
+                )}
 
                 {/* Price + Buy */}
                 <div className="flex items-center justify-between h-10 border-t border-gray-700/40">
