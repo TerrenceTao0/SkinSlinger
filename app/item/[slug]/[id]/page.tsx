@@ -117,9 +117,14 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
     return (
         <div className="overflow-y-auto h-full flex justify-center pt-24 pb-12 px-4">
             <div className="w-full max-w-sm flex flex-col gap-6">
-                <Link href={`/item/${slug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
-                    ← All {listing.marketName} listings
-                </Link>
+                <div className="flex flex-col gap-1">
+                    <Link href={`/market/${gameSlug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                        ← Back to {gameName} market
+                    </Link>
+                    <Link href={`/item/${slug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                        ← All {listing.marketName} listings
+                    </Link>
+                </div>
 
                 <div
                     className="bg-secondary rounded-sm p-8 flex flex-col items-center gap-4"
