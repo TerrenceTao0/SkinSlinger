@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import HomeClient from "../../components/HomeClient";
+import HomeClient from "../../components/Market";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { notFound } from "next/navigation";

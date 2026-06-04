@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { DisplayCard } from "./HomeClient";
+import { DisplayCard } from "./Market";
 import FloatBar from "./FloatBar";
 
 function toSlug(name: string): string {
@@ -37,7 +37,7 @@ export default function ListingCard(
             style={{ '--glow': `#${hexColor}44`, border: `1px solid #${hexColor}` } as React.CSSProperties}
         >
             <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none z-1" style={{ background: `linear-gradient(to bottom, #${hexColor}88, transparent)` }} />
-            {/* Header */}
+  
             <div className="absolute top-0 left-0 right-0 px-2 pt-2 z-2 flex items-start justify-between gap-1">
                 <Link
                     href={`/item/${toSlug(marketName)}/${id}`}
@@ -50,6 +50,7 @@ export default function ListingCard(
                     <span className="text-[10px] leading-tight shrink-0">[x{quantity}]</span>
                 )}
             </div>
+
 
             {/* Image */}
             <button
@@ -65,6 +66,7 @@ export default function ListingCard(
                 />
             </button>
 
+
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 px-2 pb-0 z-2 flex flex-col gap-1">
                 {/* Metadata */}
@@ -77,8 +79,10 @@ export default function ListingCard(
                     </div>
                 )}
 
+
                 {/* Float bar */}
                 {floatValue !== null && <FloatBar value={floatValue} showLabels={false} />}
+
 
                 {/* Stickers */}
                 {stickers && stickers.length > 0 && (
@@ -88,6 +92,7 @@ export default function ListingCard(
                         ))}
                     </div>
                 )}
+
 
                 {/* Price + Buy */}
                 <div className="flex items-center justify-between h-10 border-t border-gray-700/40">

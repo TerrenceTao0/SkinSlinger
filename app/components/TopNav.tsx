@@ -8,7 +8,7 @@ import { useBasket } from './BasketProvider';
 //
 
 export default function TopNav() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { basket } = useBasket();
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -42,7 +42,7 @@ export default function TopNav() {
                     </div>
 
                     <div className="flex h-full items-center gap-3">
-                        {session ? (
+                        {status !== "loading" && (session ? (
                             <>
                                 <Link href="/finance" className="h-full flex items-center">
                                     <button className="h-[80%] flex items-center justify-center w-20 bg-special button rounded-sm">
@@ -69,14 +69,14 @@ export default function TopNav() {
                                 <Link href="/login" className="right-nav-link button">Login</Link>
                                 <Link href="/sign-up" className="right-nav-link button">Sign Up</Link>
                             </>
-                        )}
+                        ))}
                     </div>
                 </div>
 
 
                 {/* Mobile nav */}
                 <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3 w-[20%]">
-                    {session && (
+                    {status !== "loading" && session && (
                         <Link href="/finance">
                             <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
                                 ${session.user.cash?.toFixed(2)}
@@ -99,33 +99,33 @@ export default function TopNav() {
 
             {/* Mobile dropdown */}
             {menuOpen && (
-                <div className="md:hidden fixed top-16 right-[2.5%] w-[50%] z-49 bg-secondary rounded-sm">
-                    {session ? (
+                <nav className="md:hidden fixed top-18 right-[2.5%] w-[30%] z-49 bg-secondary rounded-sm flex flex-col divide-y divide-gray-700 frame-shadow">
+                    {status !== "loading" && (session ? (
                         <>
-                            <Link href="/market" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                            <Link href="/market" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Market
                             </Link>
 
                             {basketCount > 0 && (
-                                <Link href="/basket" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                                <Link href="/basket" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                     Basket ({basketCount})
                                 </Link>
                             )}
 
-                            <Link href="/listings" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                            <Link href="/listings" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Listings
                             </Link>
 
-                            <Link href="/orders" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                            <Link href="/orders" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Orders
                             </Link>
 
-                            <Link href="/inventory" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                            <Link href="/inventory" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Inventory
                             </Link>
 
                             <button
-                                className="flex items-center px-4 h-12 w-full text-left button"
+                                className="mobile_menu_button button w-full"
                                 onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false); }}
                             >
                                 Log out
@@ -145,8 +145,8 @@ export default function TopNav() {
                                 Sign Up
                             </Link>
                         </>
-                    )}
-                </div>
+                    ))}
+                </nav>
             )}
         </>
     )

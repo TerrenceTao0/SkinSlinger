@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
-import LeftPanel from "./LeftPanel";
+import LeftPanel from "./LeftMarketPanel";
 import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
 import { useBasket } from "./BasketProvider";
@@ -592,12 +592,21 @@ export default function HomeClient(
                     onClick={() => setPendingNotice(false)}
                 >
                     <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <p className="text-lg font-medium">Pending order</p>
-                        <p className="opacity-60 text-sm">You have an active purchase in progress. You cannot add items to your basket until it is completed or cancelled.</p>
-                        <button onClick={() => setPendingNotice(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">Dismiss</button>
+                        <p className="text-lg font-medium">
+                            Pending order
+                        </p>
+
+                        <p className="opacity-60 text-sm">
+                            You have an active purchase in progress. You cannot add items to your basket until it is completed or cancelled.
+                        </p>
+
+                        <button onClick={() => setPendingNotice(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">
+                            Dismiss
+                        </button>
                     </div>
                 </div>
             )}
+
 
             {/* Non-commodity preview modal */}
             {preview && (
@@ -625,35 +634,57 @@ export default function HomeClient(
                         </h2>
 
                         <div className="flex justify-between w-full text-sm">
-                            <span className="opacity-60">Listing Price</span>
-                            <span>${(preview.price * previewQty).toFixed(2)}</span>
+                            <span className="opacity-60">
+                                Listing Price
+                            </span>
+
+                            <span>
+                                ${(preview.price * previewQty).toFixed(2)}
+                            </span>
                         </div>
 
                         {preview.floatValue !== null && (
                             <div className="flex flex-col gap-1.5 w-full">
                                 <div className="flex justify-between text-sm">
-                                    <span className="opacity-60">Float</span>
-                                    <span className="font-mono">{wearLabel(preview.floatValue)} · {preview.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                                    <span className="opacity-60">
+                                        Float
+                                    </span>
+
+                                    <span className="font-mono">
+                                        {wearLabel(preview.floatValue)} · {preview.floatValue.toFixed(10).replace(/0+$/, '')}
+                                    </span>
                                 </div>
+
                                 <FloatBar value={preview.floatValue} />
                             </div>
                         )}
 
                         {preview.paintSeed !== null && (
                             <div className="flex justify-between w-full text-sm">
-                                <span className="opacity-60">Pattern</span>
-                                <span>#{preview.paintSeed}</span>
+                                <span className="opacity-60">
+                                    Pattern
+                                </span>
+
+                                <span>
+                                    #{preview.paintSeed}
+                                </span>
                             </div>
                         )}
 
                         {preview.stickers && preview.stickers.length > 0 && (
                             <div className="flex flex-col gap-1 w-full">
-                                <span className="opacity-60 text-sm">Stickers</span>
+                                <span className="opacity-60 text-sm">
+                                    Stickers
+                                </span>
+
                                 <div className="flex gap-2 flex-wrap">
                                     {preview.stickers.map((s, i) => (
                                         <div key={i} className="flex flex-col items-center gap-0.5" title={s.name}>
                                             <Image src={s.image} alt={s.name} width={40} height={40} style={{ width: 'auto', height: 40 }} />
-                                            <span className="text-[10px] opacity-40 text-center max-w-10 truncate">{s.name}</span>
+
+                                            <span className="text-[10px] opacity-40 text-center max-w-10 truncate">
+                                                {s.name}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -672,6 +703,7 @@ export default function HomeClient(
                 </div>
             )}
 
+
             {/* Commodity order book modal */}
             {orderBookCard && (
                 <OrderBookModal
@@ -687,8 +719,9 @@ export default function HomeClient(
                 />
             )}
 
+
             {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full pt-[108px] w-[95%] mx-auto">
+            <div className="md:hidden flex flex-col h-full mt-4 px-[2.5%]">
                 <div className="bg-secondary h-14 flex items-center px-4 shrink-0 rounded-sm">
                     <input
                         type="text"
@@ -698,10 +731,6 @@ export default function HomeClient(
                         className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
                     />
                 </div>
-
-                {gameBlurb && (
-                    <p className="text-xs text-gray-500 px-1 pt-2 shrink-0">{gameBlurb}</p>
-                )}
 
                 <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
@@ -719,8 +748,9 @@ export default function HomeClient(
                 </div>
             </div>
 
+
             {/* Desktop layout (original) */}
-            <div className="flex w-410 ml-58 mt-20 h-screen">
+            <div className="hidden md:flex w-410 ml-50 mt-20 h-screen">
                 <div className="flex-1 flex flex-col gap-2">
                     <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm">
                         <input

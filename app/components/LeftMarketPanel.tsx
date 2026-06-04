@@ -71,7 +71,7 @@ export default function LeftPanel({
 
     return (
         <>
-            {/* ── Desktop sidebar ── */}
+            {/* Desktop filters */}
             <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 bottom-[calc(50vh-28rem)] w-43">
                 <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
@@ -98,7 +98,10 @@ export default function LeftPanel({
 
                     {/* Price Range */}
                     <div className="px-3 py-3 mt-1 border-t border-gray-700/60">
-                        <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">Price Range</p>
+                        <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">
+                            Price Range
+                        </p>
+
 
                         {/* Dual-thumb slider */}
                         <div className="relative h-4 mx-1 mb-3">
@@ -125,21 +128,29 @@ export default function LeftPanel({
                             />
                         </div>
 
+
                         {/* Min / Max inputs */}
                         <div className="flex items-center gap-2">
                             <div className="flex-1 flex items-center bg-accent rounded-sm px-2 h-7 gap-1">
-                                <span className="text-[11px] text-gray-500">$</span>
+                                <span className="text-[11px] text-gray-500">
+                                    $
+                                </span>
+
                                 <input
                                     type="number" min={0} step={0.01} placeholder="0.00" value={minPrice}
                                     onChange={e => setMinPrice(e.target.value)}
                                     className="bg-transparent text-xs w-full outline-none"
                                 />
                             </div>
-                            <span className="text-gray-600 text-xs">–</span>
+
+                            <span className="text-gray-600 text-xs">
+                                –
+                            </span>
+
                             <div className="flex-1 flex items-center bg-accent rounded-sm px-2 h-7 gap-1">
                                 <span className="text-[11px] text-gray-500">$</span>
                                 <input
-                                    type="number" min={0} step={0.01} placeholder="∞" value={maxPrice}
+                                    type="number" min={0} step={0.01} placeholder="All" value={maxPrice}
                                     onChange={e => setMaxPrice(e.target.value)}
                                     className="bg-transparent text-xs w-full outline-none"
                                 />
@@ -147,10 +158,14 @@ export default function LeftPanel({
                         </div>
                     </div>
 
+
                     {/* CS2 / TF2 Float Range */}
                     {showFloat && (
                         <div className="px-3 py-3 border-t border-gray-700/60">
-                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">Float Range</p>
+                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">
+                                Float Range
+                            </p>
+
 
                             {/* Dual-thumb slider */}
                             <div className="relative h-4 mx-1 mb-3">
@@ -177,6 +192,7 @@ export default function LeftPanel({
                                 />
                             </div>
 
+
                             {/* Min / Max inputs */}
                             <div className="flex items-center gap-2">
                                 <input
@@ -184,7 +200,11 @@ export default function LeftPanel({
                                     onChange={e => setMinFloat(e.target.value)}
                                     className="flex-1 bg-accent rounded-sm px-2 h-7 text-xs outline-none"
                                 />
-                                <span className="text-gray-600 text-xs">–</span>
+
+                                <span className="text-gray-600 text-xs">
+                                    –
+                                </span>
+
                                 <input
                                     type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
                                     onChange={e => setMaxFloat(e.target.value)}
@@ -194,10 +214,14 @@ export default function LeftPanel({
                         </div>
                     )}
 
+
                     {/* CS2 / TF2 Condition */}
                     {(currentGame === "CS2" || currentGame === "TF2") && (
                         <div className="px-3 py-3 border-t border-gray-700/60">
-                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">Condition</p>
+                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">
+                                Condition
+                            </p>
+
                             <div className="flex flex-col gap-1">
                                 {wearOptions.map(({ label }) => (
                                     <button
@@ -214,10 +238,11 @@ export default function LeftPanel({
                 </div>
             </div>
 
-            {/* Mobile top bar*/}
-            <div className="md:hidden fixed top-16 left-0 right-0 z-40 bg-secondary border-t border-b border-gray-700/50">
+
+            {/* Mobile filters */}
+            <div className="md:hidden mt-20 flex flex-col gap-2 px-[2.5%] py-2">
                 {/* Game links */}
-                <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">
+                <div className="flex justify-center bg-secondary rounded-sm px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">
                     {gameOptions.map(({ label, value, href, icon }) => (
                         <Link
                             key={value}
@@ -232,71 +257,61 @@ export default function LeftPanel({
                     ))}
                 </div>
 
-
-                {/* Price + wear */}
-                <div className="flex items-center gap-2 px-3 pb-2 overflow-x-auto no-scrollbar">
+                {/* Price */}
+                <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
+                    <span className="text-[11px] text-gray-500 shrink-0">Price</span>
                     <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">
-                            $
-                        </span>
-
+                        <span className="text-[11px] text-gray-500">$</span>
                         <input
                             type="number" min={0} step={0.01} placeholder="Min" value={minPrice}
                             onChange={e => setMinPrice(e.target.value)}
                             className="bg-transparent text-xs w-full outline-none"
                         />
                     </div>
-
-                    <span className="text-gray-600 text-xs shrink-0">
-                        –
-                    </span>
-
+                    <span className="text-gray-600 text-xs shrink-0">–</span>
                     <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">
-                            $
-                        </span>
-
+                        <span className="text-[11px] text-gray-500">$</span>
                         <input
                             type="number" min={0} step={0.01} placeholder="∞" value={maxPrice}
                             onChange={e => setMaxPrice(e.target.value)}
                             className="bg-transparent text-xs w-full outline-none"
                         />
                     </div>
-
-                    {(currentGame === "CS2" || currentGame === "TF2") && wearOptions.map(({ label, short }) => (
-                        <button
-                            key={label}
-                            onClick={() => setWear(wear === label ? null : label)}
-                            className={`shrink-0 px-2.5 h-7 text-xs rounded-sm button transition-colors ${wear === label ? "bg-special font-medium" : "bg-accent"}`}
-                        >
-                            {short}
-                        </button>
-                    ))}
-
-                    {showFloat && (
-                        <>
-                            <span className="text-gray-600 text-xs shrink-0 ml-1">
-                                Float
-                            </span>
-
-                            <input
-                                type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
-                                onChange={e => setMinFloat(e.target.value)}
-                                className="bg-accent rounded-sm px-2 h-7 w-20 shrink-0 text-xs outline-none"
-                            />
-
-                            <span className="text-gray-600 text-xs shrink-0">
-                                –
-                            </span>
-
-                            <input
-                                type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
-                                onChange={e => setMaxFloat(e.target.value)}
-                                className="bg-accent rounded-sm px-2 h-7 w-20 shrink-0 text-xs outline-none"
-                            />
-                        </>
-                    )}
                 </div>
+
+                {/* Float */}
+                {showFloat && (
+                    <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
+                        <span className="text-[11px] text-gray-500 shrink-0">Float</span>
+                        <input
+                            type="number" min={0} max={1} step={0.001} placeholder="0.000" value={minFloat}
+                            onChange={e => setMinFloat(e.target.value)}
+                            className="bg-accent rounded-sm px-2 h-7 w-24 shrink-0 text-xs outline-none"
+                        />
+                        <span className="text-gray-600 text-xs shrink-0">–</span>
+                        <input
+                            type="number" min={0} max={1} step={0.001} placeholder="1.000" value={maxFloat}
+                            onChange={e => setMaxFloat(e.target.value)}
+                            className="bg-accent rounded-sm px-2 h-7 w-24 shrink-0 text-xs outline-none"
+                        />
+                    </div>
+                )}
+
+                {/* Wear */}
+                {(currentGame === "CS2" || currentGame === "TF2") && (
+                    <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
+                        <span className="text-[11px] text-gray-500 shrink-0">Wear</span>
+                        {wearOptions.map(({ label, short }) => (
+                            <button
+                                key={label}
+                                onClick={() => setWear(wear === label ? null : label)}
+                                className={`shrink-0 px-2.5 h-7 text-xs rounded-sm button transition-colors ${wear === label ? "bg-special font-medium" : "bg-accent"}`}
+                            >
+                                {short}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         </>
     );

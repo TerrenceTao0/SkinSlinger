@@ -292,34 +292,34 @@ export default function OrdersClient({ purchases, currentUserId }: { purchases: 
     const mySales = groupPurchases(purchases.filter(p => p.sellerId === currentUserId));
 
     return (
-        <div className="w-full flex justify-center mt-20 px-8">
-            <div className="w-310 flex flex-col gap-6">
+        <div className="w-full flex justify-center mt-20 px-4 md:px-8">
+            <div className="w-full max-w-5xl flex flex-col gap-6">
                 <NextCheckTimer />
-            <div className="flex gap-8">
+                <div className="flex flex-col md:flex-row gap-8">
 
-                <div className="flex-1 flex flex-col gap-3 min-h-0">
-                    <p className="text-xl">Purchases</p>
-                    <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] pr-1">
-                        {myPurchases.length === 0 ? (
-                            <p className="opacity-40">No purchases yet.</p>
-                        ) : (
-                            myPurchases.map((g, i) => <PurchaseRow key={i} group={g} />)
-                        )}
+                    <div className="flex-1 flex flex-col gap-3 min-h-0">
+                        <p className="text-xl">Purchases</p>
+                        <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] pr-1">
+                            {myPurchases.length === 0 ? (
+                                <p className="opacity-40">No purchases yet.</p>
+                            ) : (
+                                myPurchases.map((g, i) => <PurchaseRow key={i} group={g} />)
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className="flex-1 flex flex-col gap-3 min-h-0">
-                    <p className="text-xl">Sales</p>
-                    <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] pr-1">
-                        {mySales.length === 0 ? (
-                            <p className="opacity-40">No sales yet.</p>
-                        ) : (
-                            mySales.map((g, i) => <SaleRow key={i} group={g} />)
-                        )}
+                    <div className="flex-1 flex flex-col gap-3 min-h-0">
+                        <p className="text-xl">Sales</p>
+                        <div className="flex flex-col gap-3 overflow-y-auto max-h-[70vh] pr-1">
+                            {mySales.length === 0 ? (
+                                <p className="opacity-40">No sales yet.</p>
+                            ) : (
+                                mySales.map((g, i) => <SaleRow key={i} group={g} />)
+                            )}
+                        </div>
                     </div>
-                </div>
 
-            </div>
+                </div>
             </div>
         </div>
     );

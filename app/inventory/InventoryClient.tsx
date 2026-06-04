@@ -297,9 +297,9 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
             <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} inventoryToken={inventoryToken} />
 
             {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full pt-[72px]">
-                {/* Mobile game filter */}
-                <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar bg-secondary border-b border-gray-700/50">
+            <div className="md:hidden flex flex-col h-full pt-[72px] px-[2.5%]">
+                {/* Game filter*/}
+                <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar justify-center">
                     {(["CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
                         <button
                             key={g}
@@ -310,6 +310,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                         </button>
                     ))}
                 </div>
+
                 {!isSteamLinked ? (
                     <div className="flex items-center justify-center flex-1">
                         <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
@@ -319,16 +320,33 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                         {/* Info bar */}
                         <div className="bg-secondary flex items-center px-4 py-3 rounded-sm shrink-0 gap-6">
                             <div className="flex flex-col items-center">
-                                <span className="text-[11px] uppercase tracking-widest opacity-50">Items</span>
-                                <span className="text-xl">{stackedInventory.length}</span>
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                    Items
+                                </span>
+
+                                <span className="text-xl">
+                                    {stackedInventory.length}
+                                </span>
                             </div>
+
                             <div className="flex flex-col items-center">
-                                <span className="text-[11px] uppercase tracking-widest opacity-50">Steam Value</span>
-                                <span className="text-xl">${totalValue.toFixed(2)}</span>
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                    Market Value
+                                </span>
+
+                                <span className="text-xl">
+                                    ${totalValue.toFixed(2)}
+                                </span>
                             </div>
+                            
                             <div className="flex flex-col items-center ml-auto">
-                                <span className="text-[11px] uppercase tracking-widest opacity-50">Last Updated</span>
-                                <span className="text-xl">{lastRefreshDisplay}</span>
+                                <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                    Last Updated
+                                </span>
+
+                                <span className="text-xl">
+                                    {lastRefreshDisplay}
+                                </span>
                             </div>
                         </div>
 
@@ -360,7 +378,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
             </div>
 
             {/* Desktop layout */}
-            <div className="hidden md:flex h-230 w-full">
+            <div className="hidden md:flex h-230  w-full">
                 <div className="w-43 shrink-0" />
                 <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (
@@ -373,19 +391,37 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                             <div className="bg-secondary h-18 flex items-center px-6 rounded-sm shrink-0">
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Items</span>
-                                        <span className="text-2xl">{stackedInventory.length}</span>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                            Items
+                                        </span>
+
+                                        <span className="text-2xl">
+                                            {stackedInventory.length}
+                                        </span>
                                     </div>
+
                                     <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">Market Value</span>
-                                        <span className="text-2xl">${totalValue.toFixed(2)}</span>
+                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                            Market Value
+                                        </span>
+
+                                        <span className="text-2xl">
+                                            ${totalValue.toFixed(2)}
+                                        </span>
                                     </div>
                                 </div>
+                                
                                 <div className="flex flex-col items-center ml-auto">
-                                    <span className="text-[11px] uppercase tracking-widest opacity-50">Last Updated</span>
-                                    <span className="text-2xl">{lastRefreshDisplay}</span>
+                                    <span className="text-[11px] uppercase tracking-widest opacity-50">
+                                        Last Updated
+                                    </span>
+
+                                    <span className="text-2xl">
+                                        {lastRefreshDisplay}
+                                    </span>
                                 </div>
                             </div>
+
 
                             {/* Item display */}
                             <div className="bg-secondary overflow-y-auto flex-1 min-h-0 grid grid-cols-5 justify-start content-start gap-2 p-3 rounded-sm">

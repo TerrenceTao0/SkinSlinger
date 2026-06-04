@@ -64,16 +64,21 @@ function ListingCard({ group }: { group: ListingGroup }) {
     async function savePrice() {
         setSaving(true);
         setError("");
+
         for (const id of group.ids) {
             const res = await fetch(`/api/listings/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ price: parsedPrice }),
             });
+
+
             if (!res.ok) {
                 const data = await res.json();
+
                 setError(data.error ?? "Failed to update price");
                 setSaving(false);
+
                 return;
             }
         }
@@ -84,23 +89,28 @@ function ListingCard({ group }: { group: ListingGroup }) {
     async function delist() {
         setDelisting(true);
         setError("");
+
         for (const id of group.ids) {
             const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
+
             if (!res.ok) {
                 const data = await res.json();
                 setError(data.error ?? "Something went wrong");
                 setDelisting(false);
                 setConfirming(false);
+
                 return;
             }
         }
+
+
         router.refresh();
         setConfirming(false);
     }
 
     return (
         <div
-            className="relative h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="relative h-60 md:h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${group.hexColor}44` } as React.CSSProperties}
         >
             {/* Name */}
@@ -113,6 +123,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 )}
             </div>
 
+
             {/* Image */}
             <div
                 className="flex-1 relative mx-2 min-h-0"
@@ -122,6 +133,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
                     <Image src={group.icon} alt={group.marketName} fill className="object-contain p-1" />
                 )}
             </div>
+
 
             {/* Price + save */}
             <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1">
@@ -134,7 +146,10 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 </button>
 
                 <div className="flex items-center bg-primary rounded-sm px-2 h-8">
-                    <span className="text-xs opacity-50 mr-1">$</span>
+                    <span className="text-xs opacity-50 mr-1">
+                        $
+                    </span>
+
                     <input
                         type="number"
                         min={0.01}
@@ -143,15 +158,19 @@ function ListingCard({ group }: { group: ListingGroup }) {
                         onChange={e => setPriceStr(e.target.value)}
                         className="flex-1 bg-transparent outline-none text-sm w-0"
                     />
+
                     {group.ids.length > 1 && (
-                        <span className="text-xs opacity-40 shrink-0 ml-1">= ${totalPrice.toFixed(2)}</span>
+                        <span className="text-xs opacity-40 shrink-0 ml-1">
+                            = ${totalPrice.toFixed(2)}
+                        </span>
                     )}
                 </div>
 
-                {error && <p className="text-red-400 text-xs">{error}</p>}
+                {error && <p className="text-red-400 text-xs">
+                    {error}
+                </p>}
             </div>
 
-            {/* Delist */}
             <button
                 onClick={() => setConfirming(true)}
                 className="shrink-0 h-10 w-full bg-remove button text-sm"
@@ -159,11 +178,15 @@ function ListingCard({ group }: { group: ListingGroup }) {
             >
                 DELIST
             </button>
+            
 
-            {/* Inline confirmation overlay */}
+            {/* Confirmation overlay */}
             {confirming && (
                 <div className="absolute inset-0 bg-accent/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-4">
-                    <p className="text-sm font-medium">Remove listing?</p>
+                    <p className="text-sm font-medium">
+                        Remove listing?
+                    </p>
+
                     <div className="flex gap-2 w-full">
                         <button
                             onClick={delist}
@@ -172,6 +195,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
                         >
                             {delisting ? "..." : "Yes"}
                         </button>
+
                         <button
                             onClick={() => setConfirming(false)}
                             disabled={delisting}
@@ -194,9 +218,14 @@ export default function ListingsClient({ listings }: { listings: Listing[] }) {
     return (
         <div className="w-full flex justify-center mt-20 px-8">
             <div className="w-full max-w-7xl flex flex-col gap-4">
-                <p className="text-xl">My Listings</p>
+                <p className="text-xl">
+                    My Listings
+                </p>
+                
                 {groups.length === 0 ? (
-                    <p className="opacity-40">You have no active listings.</p>
+                    <p className="opacity-40">
+                        You have no active listings.
+                    </p>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                         {groups.map((g) => <ListingCard key={g.ids[0]} group={g} />)}

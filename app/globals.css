@@ -87,6 +87,10 @@ body {
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 }
 
+.mobile_menu_button {
+    @apply flex items-center justify-center px-4 h-12
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;

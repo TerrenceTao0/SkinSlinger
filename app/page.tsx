@@ -96,7 +96,7 @@ const faq = {
     "mainEntity": [
         {
             "question": "How are the fees so low?",
-            "answer": "As we use crypto, we do not have to worry about using a payment processor like Stripe. We can use our own custom-made payment processor to cut out the middleman.",
+            "answer": "As we only use crypto, we do not have to worry about using a payment processor. We can use our own custom-made payment processor to cut out the middleman.",
         },
         {
             "question": "Is KYC required on withdrawals?",
@@ -120,7 +120,7 @@ const faq = {
         },
         {
             "question": "How long does it take to deposit/withdraw?",
-            "answer": "It should only take ~1 minute for your transaction to be detected once it's sent but confirmation might take ~5 minutes.",
+            "answer": "Deposits and withdrawals are automatic and should take less than 5 minutes to detect and confirm.",
         },
         {
             "question": "How are 'Market' prices determined?",
@@ -152,7 +152,7 @@ export default function Home() {
                     </h1>
                     
                     <p className="text-gray-400 text-lg max-w-md">
-                        No bots, no middleman, no hidden fees, no BS.
+                        No bots, no hidden fees, no BS.
                         <br />
                         Trade directly with other players straight away.
                     </p>
@@ -258,6 +258,16 @@ export default function Home() {
                     ))}
                 </div>
             </div>
+
+            <footer className="border-t border-gray-700/50 mt-4 py-8 px-6 flex flex-col items-center gap-3 text-center">
+                <p className="text-xs text-gray-500 w-200">
+                    SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
+                </p>
+
+                <p className="text-xs text-gray-600">
+                    © {new Date().getFullYear()} SkinSlinger
+                </p>
+            </footer>
         </div>
     )
 }

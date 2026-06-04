@@ -169,11 +169,58 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
 
             {/* Mobile: full-screen queue modal */}
             {mobileQueueOpen && (
-                <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-secondary px-4 pt-4 pb-4">
-                    <div className="flex justify-between items-center mb-4 shrink-0">
-                        <p className="text-xl">{totalItems} Items: ${totalValue.toFixed(2)}</p>
-                        <button onClick={() => setMobileQueueOpen(false)} className="text-2xl px-2">✕</button>
+                <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-black/50 backdrop-blur-md px-4 pt-4 pb-4">
+                    <div className="flex justify-between items-center shrink-0 flex-col">
+                        <p className="text-xl">
+                            {totalItems} Items: ${totalValue.toFixed(2)}
+                        </p>
+
+                        <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 w-80">
+                            <p className="text-xs opacity-40">
+                                Global discount modifiers
+                            </p>
+
+                            <div className="flex gap-1">
+                                {discounts.map(d => (
+                                    <button
+                                        key={d}
+                                        onClick={() => {
+                                            const next: Record<string, string> = {};
+
+                                            for (const item of stackedQueue) {
+                                                const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
+                                                next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
+                                            }
+
+                                            
+                                            setPriceMap(next);
+                                        }}
+                                        className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
+                                    >
+                                        {d === 0 ? '0%' : `-${d}%`}
+                                    </button>
+                                ))}
+                                
+                                {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
+                                    const allMatch = stackedQueue.every(item => {
+                                        const bid = bidMap[item.market_name];
+                                        return bid && priceMap[item.market_name] === bid.toFixed(2);
+                                    });
+
+
+                                    return (
+                                        <button
+                                            onClick={applyInstantSell}
+                                            className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                                        >
+                                            Instant
+                                        </button>
+                                    );
+                                })()}
+                            </div>
+                        </div>
                     </div>
+
                     <div className="overflow-y-auto flex-1 space-y-3">
                         {stackedQueue.map((item) => (
                             <SellItemCard
@@ -190,24 +237,36 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                             />
                         ))}
                     </div>
-                    <button
-                        className="bg-special h-12 w-full mt-4 rounded-sm button shrink-0"
-                        onClick={() => { setMobileQueueOpen(false); setShowPrompt(true); }}
-                    >
-                        SELL ITEMS
-                    </button>
+
+                    <div className="flex gap-2 mt-3">
+                        <button onClick={() => setMobileQueueOpen(false)} className="bg-remove button rounded-sm w-12 h-12 shrink-0 flex items-center justify-center text-lg">
+                            ✕
+                        </button>
+
+                        <button
+                            className="bg-special h-12 flex-1 rounded-sm button font-medium"
+                            onClick={() => { setMobileQueueOpen(false); setShowPrompt(true); }}
+                        >
+                            SELL ITEMS
+                        </button>
+                    </div>
                 </div>
             )}
 
-            {/* Mobile: bottom bar shown when items queued */}
+            {/* Mobile bottom bar shown when items queued */}
             {selling.length > 0 && (
-                <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-secondary border-t border-gray-700 flex items-center px-4 h-16 gap-3">
-                    <p className="flex-1 text-sm">{totalItems} item{totalItems !== 1 ? 's' : ''} · ${totalValue.toFixed(2)}</p>
-                    <button onClick={() => setMobileQueueOpen(true)} className="bg-accent px-4 h-9 rounded-sm button text-sm">
-                        View Queue
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-secondary border-t border-gray-700 flex items-center px-4 py-3 gap-3">
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-xs text-gray-400">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
+                        <span className="text-base font-semibold">${totalValue.toFixed(2)}</span>
+                    </div>
+
+                    <button onClick={() => setMobileQueueOpen(true)} className="bg-accent px-4 h-10 rounded-sm button text-sm shrink-0">
+                        Adjust
                     </button>
-                    <button onClick={() => setShowPrompt(true)} className="bg-special px-4 h-9 rounded-sm button text-sm">
-                        List
+
+                    <button onClick={() => setShowPrompt(true)} className="bg-special px-4 h-10 rounded-sm button text-sm font-medium shrink-0">
+                        Sell Items
                     </button>
                 </div>
             )}
@@ -217,47 +276,54 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                 <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute rounded-sm">
                     {stackedQueue.length > 0 && (
                         <>
-                        <div className="w-full flex ml-2 mt-2">
-                            <p className="text-3xl">
-                                {totalItems} Items: ${totalValue.toFixed(2)}
-                            </p>
-                        </div>
-
-                        <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
-                            <p className="text-xs opacity-40">Global discount modifiers</p>
-                            <div className="flex gap-1">
-                                {discounts.map(d => (
-                                    <button
-                                        key={d}
-                                        onClick={() => {
-                                            const next: Record<string, string> = {};
-                                            for (const item of stackedQueue) {
-                                                const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
-                                                next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
-                                            }
-                                            setPriceMap(next);
-                                        }}
-                                        className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
-                                    >
-                                        {d === 0 ? '0%' : `-${d}%`}
-                                    </button>
-                                ))}
-                                {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
-                                    const allMatch = stackedQueue.every(item => {
-                                        const bid = bidMap[item.market_name];
-                                        return bid && priceMap[item.market_name] === bid.toFixed(2);
-                                    });
-                                    return (
-                                        <button
-                                            onClick={applyInstantSell}
-                                            className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
-                                        >
-                                            Instant
-                                        </button>
-                                    );
-                                })()}
+                            <div className="w-full flex ml-2 mt-2">
+                                <p className="text-3xl">
+                                    {totalItems} Items: ${totalValue.toFixed(2)}
+                                </p>
                             </div>
-                        </div>
+
+                            <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
+                                <p className="text-xs opacity-40">Global discount modifiers</p>
+
+                                <div className="flex gap-1">
+                                    {discounts.map(d => (
+                                        <button
+                                            key={d}
+                                            onClick={() => {
+                                                const next: Record<string, string> = {};
+
+                                                for (const item of stackedQueue) {
+                                                    const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
+                                                    next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
+                                                }
+
+
+                                                setPriceMap(next);
+                                            }}
+                                            className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
+                                        >
+                                            {d === 0 ? '0%' : `-${d}%`}
+                                        </button>
+                                    ))}
+
+                                    {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
+                                        const allMatch = stackedQueue.every(item => {
+                                            const bid = bidMap[item.market_name];
+                                            return bid && priceMap[item.market_name] === bid.toFixed(2);
+                                        });
+
+
+                                        return (
+                                            <button
+                                                onClick={applyInstantSell}
+                                                className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                                            >
+                                                Instant
+                                            </button>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
                         </>
                     )}
 
