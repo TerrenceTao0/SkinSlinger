@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import LeftPanel from "./LeftMarketPanel";
 import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
-import { useBasket } from "./BasketProvider";
+import { useBasket } from "@/app/components/BasketProvider";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

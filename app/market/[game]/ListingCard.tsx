@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DisplayCard } from "./Market";
-import FloatBar from "./FloatBar";
+import FloatBar from "@/app/components/FloatBar";
 
 function toSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
