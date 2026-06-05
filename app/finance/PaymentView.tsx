@@ -18,6 +18,7 @@ export default function PaymentView({
     onRetry: () => void
 }) {
     const isTerminal = paymentStatus === "failed" || paymentStatus === "expired"
+    const isDetected = paymentStatus === "confirming" || paymentStatus === "confirmed"
 
     return (
         <div className="h-full w-full flex justify-center items-center">
@@ -48,13 +49,14 @@ export default function PaymentView({
                     {STATUS_LABELS[paymentStatus]}
                 </p>
 
-                {!isTerminal && (
+                {!isTerminal && !isDetected && (
                     <>
                         <p className={`text-center text-sm font-mono ${secondsLeft < 60 ? "text-red-400" : "text-gray-500"}`}>
                             Expires in {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
                         </p>
+
                         <p className="text-xs text-gray-600 text-center">
-                            20 minutes is more than enough time for transactions to confirm on Polygon. If you send the payment after the timer expires and it does not verify in time, you will not be refunded.
+                            20 Minutes is more than enough time for payments to be detected and confirmed. If you send the payment after the timer expires, contact support.
                         </p>
                     </>
                 )}

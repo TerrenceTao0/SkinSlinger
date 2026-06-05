@@ -11,7 +11,7 @@ export default function DepositAmountView({
     onAmountChange: (v: string) => void
     error: string
     loading: boolean
-    onSubmit: (e: React.FormEvent) => void
+    onSubmit: (e: React.SubmitEvent) => void
 }) {
     return (
         <div className="h-full w-full flex justify-center items-center">
