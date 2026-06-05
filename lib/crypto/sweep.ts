@@ -5,7 +5,9 @@ import { getDepositAccount, getPublicClient } from './account'
 // 
 
 export async function sweepUSDC(index: number, amountUsdc: bigint): Promise<`0x${string}`> {
+    console.log('[sweep] mnemonic words:', process.env.DEPOSIT_MNEMONIC?.split(' ').length)
     const account = getDepositAccount(index)
+    console.log('[sweep] account address:', account.address)
 
     const walletClient = createWalletClient({
         account,

@@ -72,62 +72,80 @@ export async function processDeposits(
 
         const fromBlock = counter.lastBlock > BigInt(0) ? counter.lastBlock + BigInt(1) : currentBlock - BigInt(100)
 
-        const pending = await prisma.crypto_deposit.findMany({
-            where: { status: 'pending', expiresAt: { gt: new Date() } },
-        })
-
-
-        if (pending.length === 0) {
-            await prisma.deposit_counter.update({ where: { id: 'global' }, data: { lastBlock: currentBlock } })
-
-            return { processed: 0 }
-        }
-
-
-        const pendingAddresses = pending.map(d => d.address as `0x${string}`)
-
-        const logs = await client.getLogs({
-            address: USDC_ADDRESS,
-            event: TRANSFER_EVENT,
-            args: { to: pendingAddresses },
-            fromBlock,
-            toBlock: currentBlock,
-        })
-
-
         let processed = 0
 
-        for (const log of logs) {
-            const deposit = pending.find(d => d.address.toLowerCase() === log.args.to?.toLowerCase())
+        // Retry any deposits that were confirmed but failed to sweep previously
+        const confirmedDeposits = await prisma.crypto_deposit.findMany({
+            where: { status: 'confirmed' },
+        })
 
-            if (!deposit) continue
-
-            const received = log.args.value ?? BigInt(0)
-            const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
-
-            // Accept if received amount is within 1% of expected 
-            if (received < expected * BigInt(99) / BigInt(100)) continue
-
-            await prisma.crypto_deposit.update({
-                where: { id: deposit.id },
-                data: { status: 'confirmed', txHash: log.transactionHash },
-            })
-
-
+        for (const deposit of confirmedDeposits) {
             try {
-                const sweepTx = await sweepUSDC(deposit.index, received)
+                const balance = await getPublicClient().readContract({
+                    address: USDC_ADDRESS,
+                    abi: [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256' }] }],
+                    functionName: 'balanceOf',
+                    args: [deposit.address as `0x${string}`],
+                })
+
+                const sweepTx = await sweepUSDC(deposit.index, balance as bigint)
 
                 await prisma.crypto_deposit.update({
                     where: { id: deposit.id },
                     data: { status: 'swept', txHash: sweepTx },
                 })
 
-
                 await onCredit(deposit.userId, deposit.amountUsdc)
                 processed++
-            } 
-            catch (err) {
-                console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
+            } catch (err) {
+                console.error(`[deposits] retry sweep failed for deposit ${deposit.id}:`, err)
+            }
+        }
+
+        // Scan blockchain for new payments to pending deposit addresses
+        const pending = await prisma.crypto_deposit.findMany({
+            where: { status: 'pending', expiresAt: { gt: new Date() } },
+        })
+
+        if (pending.length > 0) {
+            const pendingAddresses = pending.map(d => d.address as `0x${string}`)
+
+            const logs = await client.getLogs({
+                address: USDC_ADDRESS,
+                event: TRANSFER_EVENT,
+                args: { to: pendingAddresses },
+                fromBlock,
+                toBlock: currentBlock,
+            })
+
+            for (const log of logs) {
+                const deposit = pending.find(d => d.address.toLowerCase() === log.args.to?.toLowerCase())
+                if (!deposit) continue
+
+                const received = log.args.value ?? BigInt(0)
+                const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
+
+                // Accept if received amount is within 1% of expected
+                if (received < expected * BigInt(99) / BigInt(100)) continue
+
+                await prisma.crypto_deposit.update({
+                    where: { id: deposit.id },
+                    data: { status: 'confirmed', txHash: log.transactionHash },
+                })
+
+                try {
+                    const sweepTx = await sweepUSDC(deposit.index, received)
+
+                    await prisma.crypto_deposit.update({
+                        where: { id: deposit.id },
+                        data: { status: 'swept', txHash: sweepTx },
+                    })
+
+                    await onCredit(deposit.userId, deposit.amountUsdc)
+                    processed++
+                } catch (err) {
+                    console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
+                }
             }
         }
 
