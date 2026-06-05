@@ -1,6 +1,6 @@
 import { prisma } from '../db'
 import { getDepositAddress, getPublicClient } from './account'
-import { sweepUsdc } from './sweep'
+import { sweepUSDC } from './sweep'
 import { parseAbiItem, parseUnits } from 'viem'
 
 //
@@ -11,15 +11,14 @@ const EXPIRY_MINUTES = 20
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
 
 const STATUS_MAP: Record<string, string> = {
-    pending:   'waiting',
+    pending: 'waiting',
     confirmed: 'confirming',
-    swept:     'finished',
-    expired:   'expired',
+    swept: 'finished',
+    expired: 'expired',
 }
 
 //
 
-// Creates a deposit intent for a user. Returns the deposit address and expiry.
 export async function createDeposit(userId: string, amount: number) {
     if (!amount || amount < 1) throw new Error('Minimum deposit is $1.00')
 
@@ -29,6 +28,7 @@ export async function createDeposit(userId: string, amount: number) {
         create: { id: 'global', value: 1, lastBlock: BigInt(0) },
     })
 
+
     const index = counter.value
     const address = await getDepositAddress(index)
     const expiresAt = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000)
@@ -37,11 +37,11 @@ export async function createDeposit(userId: string, amount: number) {
         data: { userId, address, index, amountUsdc: amount, expiresAt },
     })
 
+
     return { address, amount, expiresAt }
 }
 
-// Returns the frontend-facing status string for a deposit, or null if not found / not owned by userId.
-// Marks the deposit expired in-place if the expiry has passed.
+
 export async function getDepositStatus(address: string, userId: string): Promise<string | null> {
     const deposit = await prisma.crypto_deposit.findUnique({ where: { address } })
 
@@ -55,86 +55,92 @@ export async function getDepositStatus(address: string, userId: string): Promise
     return STATUS_MAP[deposit.status] ?? deposit.status
 }
 
-// Scans the blockchain for USDC transfers to pending deposit addresses,
-// sweeps confirmed payments to the main wallet, then calls onCredit for each.
-//
-// onCredit(userId, amountUsdc) — credit the user's balance in your app's DB.
-// Called only after a successful on-chain sweep; safe to treat as authoritative.
+
 export async function processDeposits(
-    onCredit: (userId: string, amountUsdc: number) => Promise<void>,
-): Promise<{ processed: number }> {
-    const client = getPublicClient()
-    const currentBlock = await client.getBlockNumber()
-
-    const counter = await prisma.deposit_counter.upsert({
-        where: { id: 'global' },
-        update: {},
-        create: { id: 'global', value: 0, lastBlock: currentBlock as bigint },
-    })
-
-    const fromBlock = counter.lastBlock > BigInt(0)
-        ? counter.lastBlock + BigInt(1)
-        : currentBlock - BigInt(100)
-
-    const pending = await prisma.crypto_deposit.findMany({
-        where: { status: 'pending', expiresAt: { gt: new Date() } },
-    })
-
-    if (pending.length === 0) {
-        await prisma.deposit_counter.update({ where: { id: 'global' }, data: { lastBlock: currentBlock } })
-        return { processed: 0 }
-    }
-
-    const pendingAddresses = pending.map(d => d.address as `0x${string}`)
-
-    const logs = await client.getLogs({
-        address: USDC_ADDRESS,
-        event: TRANSFER_EVENT,
-        args: { to: pendingAddresses },
-        fromBlock,
-        toBlock: currentBlock,
-    })
-
-    let processed = 0
-
-    for (const log of logs) {
-        const deposit = pending.find(d => d.address.toLowerCase() === log.args.to?.toLowerCase())
-        if (!deposit) continue
-
-        const received = log.args.value ?? BigInt(0)
-        const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
-
-        // Accept if received amount is within 1% of expected (handles rounding)
-        if (received < expected * BigInt(99) / BigInt(100)) continue
-
-        await prisma.crypto_deposit.update({
-            where: { id: deposit.id },
-            data: { status: 'confirmed', txHash: log.transactionHash },
+    onCredit: (userId: string, amountUsdc: number) => Promise<void>,)
+    : 
+    Promise<{ processed: number }> {
+        const client = getPublicClient()
+        const currentBlock = await client.getBlockNumber()
+            
+        const counter = await prisma.deposit_counter.upsert({
+            where: { id: 'global' },
+            update: {},
+            create: { id: 'global', value: 0, lastBlock: currentBlock as bigint },
         })
 
-        try {
-            const sweepTx = await sweepUsdc(deposit.index, received)
+
+        const fromBlock = counter.lastBlock > BigInt(0) ? counter.lastBlock + BigInt(1) : currentBlock - BigInt(100)
+
+        const pending = await prisma.crypto_deposit.findMany({
+            where: { status: 'pending', expiresAt: { gt: new Date() } },
+        })
+
+
+        if (pending.length === 0) {
+            await prisma.deposit_counter.update({ where: { id: 'global' }, data: { lastBlock: currentBlock } })
+
+            return { processed: 0 }
+        }
+
+
+        const pendingAddresses = pending.map(d => d.address as `0x${string}`)
+
+        const logs = await client.getLogs({
+            address: USDC_ADDRESS,
+            event: TRANSFER_EVENT,
+            args: { to: pendingAddresses },
+            fromBlock,
+            toBlock: currentBlock,
+        })
+
+
+        let processed = 0
+
+        for (const log of logs) {
+            const deposit = pending.find(d => d.address.toLowerCase() === log.args.to?.toLowerCase())
+
+            if (!deposit) continue
+
+            const received = log.args.value ?? BigInt(0)
+            const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
+
+            // Accept if received amount is within 1% of expected 
+            if (received < expected * BigInt(99) / BigInt(100)) continue
 
             await prisma.crypto_deposit.update({
                 where: { id: deposit.id },
-                data: { status: 'swept', txHash: sweepTx },
+                data: { status: 'confirmed', txHash: log.transactionHash },
             })
 
-            await onCredit(deposit.userId, deposit.amountUsdc)
-            processed++
-        } catch (err) {
-            console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
-            // Leave as 'confirmed' — will retry on next cron run
+
+            try {
+                const sweepTx = await sweepUSDC(deposit.index, received)
+
+                await prisma.crypto_deposit.update({
+                    where: { id: deposit.id },
+                    data: { status: 'swept', txHash: sweepTx },
+                })
+
+
+                await onCredit(deposit.userId, deposit.amountUsdc)
+                processed++
+            } 
+            catch (err) {
+                console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
+            }
         }
-    }
 
-    // Expire overdue deposits
-    await prisma.crypto_deposit.updateMany({
-        where: { status: 'pending', expiresAt: { lt: new Date() } },
-        data: { status: 'expired' },
-    })
 
-    await prisma.deposit_counter.update({ where: { id: 'global' }, data: { lastBlock: currentBlock } })
+        // Mark as expired but don't delete for edge case recovery
+        await prisma.crypto_deposit.updateMany({
+            where: { status: 'pending', expiresAt: { lt: new Date() } },
+            data: { status: 'expired' },
+        })
 
-    return { processed }
+
+        await prisma.deposit_counter.update({ where: { id: 'global' }, data: { lastBlock: currentBlock } })
+
+        return { processed }
 }
+

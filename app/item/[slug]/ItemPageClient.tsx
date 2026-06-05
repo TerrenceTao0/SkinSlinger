@@ -160,6 +160,7 @@ export default function ItemPageClient({
                     ← Back to {gameName} market
                 </Link>
 
+                {/* Top row: item card + buy actions */}
                 <div className="flex flex-col md:flex-row gap-4 items-start">
 
                     {/* Item card */}
@@ -195,77 +196,8 @@ export default function ItemPageClient({
                         )}
                     </div>
 
-                    {/* Order book */}
+                    {/* Buy actions */}
                     <div className="flex-1 flex flex-col gap-4 w-full min-w-0">
-
-                        {/* Sell Orders */}
-                        <div className="bg-secondary rounded-sm p-4 flex flex-col gap-2">
-                            <h2 className="text-sm font-semibold text-gray-200">Sell Orders</h2>
-                            {sellOrders.length === 0 ? (
-                                <p className="text-sm text-gray-500">No listings available.</p>
-                            ) : (
-                                <>
-                                    <ColHeader label="Asks" />
-                                    <div className="flex flex-col max-h-48 overflow-y-auto">
-                                        {sellOrders.map(level => (
-                                            <button
-                                                key={level.price}
-                                                onClick={() => { setSelectedSellPrice(level.price); setSellQtyStr("1") }}
-                                                className={`grid grid-cols-3 px-2 py-2 text-sm transition-colors cursor-pointer rounded-sm ${
-                                                    selectedSellPrice === level.price
-                                                        ? "bg-red-950/70 border border-red-800/60"
-                                                        : "bg-red-950/30 hover:bg-red-950/50"
-                                                }`}
-                                            >
-                                                <span className="text-left">${level.price.toFixed(2)}</span>
-                                                <span className="text-center text-gray-400">{level.quantity}</span>
-                                                <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Buy Orders */}
-                        <div className="bg-secondary rounded-sm p-4 flex flex-col gap-2">
-                            <h2 className="text-sm font-semibold text-gray-200">Buy Orders</h2>
-                            {buyOrders.length === 0 ? (
-                                <p className="text-sm text-gray-500">No buy orders yet.</p>
-                            ) : (
-                                <>
-                                    <ColHeader label="Bids" />
-                                    <div className="flex flex-col max-h-40 overflow-y-auto">
-                                        {buyOrders.map(level => (
-                                            <div key={level.price} className="grid grid-cols-3 px-2 py-2 text-sm rounded-sm bg-green-950/30 border border-green-800/60">
-                                                <span className="text-left">${level.price.toFixed(2)}</span>
-                                                <span className="text-center text-gray-400">{level.quantity}</span>
-                                                <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                            {currentUserId && myBuyOrders.length > 0 && (
-                                <div className="flex flex-col gap-1 mt-1">
-                                    <p className="text-xs text-gray-500 uppercase tracking-wider">Your orders</p>
-                                    {myBuyOrders.map(order => (
-                                        <div key={order.id} className="flex items-center gap-2 px-2 py-2 bg-accent rounded-sm text-sm">
-                                            <span className="text-green-400 font-medium">${order.price.toFixed(2)}</span>
-                                            <span className="text-gray-400">×{order.quantity}</span>
-                                            <span className="text-gray-500 flex-1">${(order.price * order.quantity).toFixed(2)} held</span>
-                                            <button
-                                                onClick={() => cancelBid(order.id)}
-                                                disabled={cancellingId === order.id}
-                                                className="text-xs text-red-400 hover:text-red-300 cursor-pointer transition-colors"
-                                            >
-                                                {cancellingId === order.id ? "..." : "Cancel"}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
 
                         {/* Buy Instantly */}
                         {sellOrders.length > 0 && (
@@ -299,7 +231,7 @@ export default function ItemPageClient({
                                             disabled={hasPendingPurchase || !selectedSellLevel}
                                             className={`h-9 rounded-sm text-sm font-medium w-full ${hasPendingPurchase || !selectedSellLevel ? "bg-accent text-gray-500 cursor-not-allowed" : "bg-special button"}`}
                                         >
-                                            {selectedSellLevel ? `Add to Basket — $${sellTotal.toFixed(2)}` : "Select a price above"}
+                                            {selectedSellLevel ? `Add to Basket — $${sellTotal.toFixed(2)}` : "Select a price below"}
                                         </button>
                                     </>
                                 ) : (
@@ -358,6 +290,79 @@ export default function ItemPageClient({
                                 >
                                     {placingBid ? "Placing..." : "Place Buy Order"}
                                 </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Bottom row: sell orders + buy orders side by side */}
+                <div className="flex flex-col md:flex-row gap-4">
+
+                    {/* Sell Orders */}
+                    <div className="flex-1 bg-secondary rounded-sm p-4 flex flex-col gap-2 min-w-0">
+                        <h2 className="text-sm font-semibold text-gray-200">Sell Orders</h2>
+                        {sellOrders.length === 0 ? (
+                            <p className="text-sm text-gray-500">No listings available.</p>
+                        ) : (
+                            <>
+                                <ColHeader label="Asks" />
+                                <div className="flex flex-col max-h-48 overflow-y-auto">
+                                    {sellOrders.map(level => (
+                                        <button
+                                            key={level.price}
+                                            onClick={() => { setSelectedSellPrice(level.price); setSellQtyStr("1") }}
+                                            className={`grid grid-cols-3 px-2 py-2 text-sm transition-colors cursor-pointer rounded-sm ${
+                                                selectedSellPrice === level.price
+                                                    ? "bg-red-950/70 border border-red-800/60"
+                                                    : "bg-red-950/30 hover:bg-red-950/50"
+                                            }`}
+                                        >
+                                            <span className="text-left">${level.price.toFixed(2)}</span>
+                                            <span className="text-center text-gray-400">{level.quantity}</span>
+                                            <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Buy Orders */}
+                    <div className="flex-1 bg-secondary rounded-sm p-4 flex flex-col gap-2 min-w-0">
+                        <h2 className="text-sm font-semibold text-gray-200">Buy Orders</h2>
+                        {buyOrders.length === 0 ? (
+                            <p className="text-sm text-gray-500">No buy orders yet.</p>
+                        ) : (
+                            <>
+                                <ColHeader label="Bids" />
+                                <div className="flex flex-col max-h-40 overflow-y-auto">
+                                    {buyOrders.map(level => (
+                                        <div key={level.price} className="grid grid-cols-3 px-2 py-2 text-sm rounded-sm bg-green-950/30 border border-green-800/60">
+                                            <span className="text-left">${level.price.toFixed(2)}</span>
+                                            <span className="text-center text-gray-400">{level.quantity}</span>
+                                            <span className="text-right text-gray-400">${(level.price * level.quantity).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                        {currentUserId && myBuyOrders.length > 0 && (
+                            <div className="flex flex-col gap-1 mt-1">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider">Your orders</p>
+                                {myBuyOrders.map(order => (
+                                    <div key={order.id} className="flex items-center gap-2 px-2 py-2 bg-accent rounded-sm text-sm">
+                                        <span className="text-green-400 font-medium">${order.price.toFixed(2)}</span>
+                                        <span className="text-gray-400">×{order.quantity}</span>
+                                        <span className="text-gray-500 flex-1">${(order.price * order.quantity).toFixed(2)} held</span>
+                                        <button
+                                            onClick={() => cancelBid(order.id)}
+                                            disabled={cancellingId === order.id}
+                                            className="text-xs text-red-400 hover:text-red-300 cursor-pointer transition-colors"
+                                        >
+                                            {cancellingId === order.id ? "..." : "Cancel"}
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>

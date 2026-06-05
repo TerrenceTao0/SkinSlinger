@@ -42,6 +42,8 @@ export function getStacked(inventory: SteamItem[]) {
 const tradeCache = new Map<string, { allowed: boolean; reason: string | null; at: number }>();
 const TRADE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+const TRADE_URL_PATTERN = /^https:\/\/steamcommunity\.com\/tradeoffer\/new\/\?partner=(\d+)&token=[a-zA-Z0-9_-]+$/;
+
 // Checks whether a Steam account can trade. Returns { allowed, reason }.
 // Fails open (allows trade) if external APIs are unavailable.
 export async function checkCanTrade(
@@ -60,6 +62,10 @@ export async function checkCanTrade(
 
     if (!tradeUrl) return store({ allowed: true, reason: null });
 
+    if (!TRADE_URL_PATTERN.test(tradeUrl)) {
+        return store({ allowed: false, reason: "corrupt_url" });
+    }
+
     try {
         const url = new URL(`${base_url}/steam/api/profile/trade-eligibility`);
         url.searchParams.set("key", api_key);
@@ -71,7 +77,7 @@ export async function checkCanTrade(
         const data = await res.json();
 
         if (!data.tradeurlvalid) {
-            return store({ allowed: false, reason: "Your Steam trade URL is invalid or your account cannot trade." });
+            return store({ allowed: false, reason: "Your Steam account cannot trade at this time." });
         }
 
         if (data.isescrow && data.escrowdays > 0) {

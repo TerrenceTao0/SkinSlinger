@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 }
 
 import InventoryClient from "./InventoryClient";
+import TradeRestrictedClient from "./TradeRestrictedClient";
 
 //
 
@@ -33,12 +34,7 @@ export default async function Inventory() {
     if (user.steam_id) {
         const { allowed, reason } = await checkCanTrade(user.steam_id, user.steam_trade_url);
         if (!allowed) {
-            return (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-4">
-                    <p className="text-xl font-medium">Trade restricted</p>
-                    <p className="text-gray-400 text-sm max-w-sm">{reason ?? "Your Steam account cannot trade at this time."}</p>
-                </div>
-            );
+            return <TradeRestrictedClient reason={reason} />;
         }
     }
 
