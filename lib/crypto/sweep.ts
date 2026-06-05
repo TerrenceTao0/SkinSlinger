@@ -5,8 +5,8 @@ import { getDepositAccount, getPublicClient } from './account'
 
 //
 
-const GAS_THRESHOLD = parseEther('0.004')
-const GAS_FUND_AMOUNT = parseEther('0.005')
+const GAS_THRESHOLD = parseEther('0.04')
+const GAS_FUND_AMOUNT = parseEther('0.05')
 
 export async function sweepUSDC(index: number, amountUsdc: bigint): Promise<`0x${string}`> {
     const account = getDepositAccount(index)
