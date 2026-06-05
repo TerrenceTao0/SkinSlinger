@@ -17,7 +17,8 @@ export async function sweepUSDC(index: number, amountUsdc: bigint): Promise<`0x$
     if (maticBalance < GAS_THRESHOLD) {
         const mainAccount = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
         const funder = createWalletClient({ account: mainAccount, chain: polygon, transport: http(rpc) })
-        await funder.sendTransaction({ to: account.address, value: GAS_FUND_AMOUNT })
+        const fundTx = await funder.sendTransaction({ to: account.address, value: GAS_FUND_AMOUNT })
+        await getPublicClient().waitForTransactionReceipt({ hash: fundTx })
     }
 
     const walletClient = createWalletClient({
