@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "./db"
 import { compare } from "bcryptjs";
 import { Resend } from "resend";
-import { TwoFactorEmail } from "@/app/components/TwoFactorEmail";
+import { TwoFactorEmail } from "./TwoFactorEmail";
 
 //
 

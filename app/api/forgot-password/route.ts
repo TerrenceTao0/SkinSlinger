@@ -1,4 +1,4 @@
-import { ForgotPasswordEmail } from "@/app/components/ForgotPasswordEmail";
+import { ForgotPasswordEmail } from "./ForgotPasswordEmail";
 import { Resend } from "resend"
 import { prisma  } from "@/lib/db";
 

@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SteamItem } from '@/lib/steam';
-import InventoryItemCard from '../components/InventoryItemCard';
-import RightPanel from '../components/RightInventoryPanel';
-import LeftInventoryPanel from '../components/LeftInventoryPanel';
+import InventoryItemCard from './InventoryItemCard';
+import RightPanel from './RightInventoryPanel';
+import LeftInventoryPanel from './LeftInventoryPanel';
 
 //
 

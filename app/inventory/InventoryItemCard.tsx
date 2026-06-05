@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { SteamItem } from '@/lib/steam'
-import FloatBar from './FloatBar'
+import FloatBar from '@/app/components/FloatBar'
 
 //
 

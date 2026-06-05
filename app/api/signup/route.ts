@@ -1,4 +1,4 @@
-import { VerifyEmail } from "@/app/components/VerifyEmail";
+import { VerifyEmail } from "./VerifyEmail";
 import { Resend } from "resend"
 import { prisma  } from "@/lib/db";
 import bcrypt from "bcryptjs";
