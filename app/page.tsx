@@ -107,36 +107,44 @@ const faq = {
     "@type": "FAQPage",
     "mainEntity": [
         {
-            "question": "How are the fees so low?",
-            "answer": "As we only use crypto, we do not have to worry about using a payment processor. We can use our own custom-made payment processor to cut out the middleman.",
+            "@type": "Question",
+            "name": "How are the fees so low?",
+            "acceptedAnswer": { "@type": "Answer", "text": "As we only use crypto, we do not have to worry about using a payment processor. We can use our own custom-made payment processor to cut out the middleman." },
         },
         {
-            "question": "Is KYC required on withdrawals?",
-            "answer": "No. SkinSlinger requires no identity verification (KYC) at all.",
+            "@type": "Question",
+            "name": "Is KYC required on withdrawals?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger requires no identity verification (KYC) at all." },
         },
         {
-            "question": "How do I pay on SkinSlinger?",
-            "answer": "SkinSlinger accepts USDC on the Polygon network. Deposit crypto and use your balance to buy skins instantly.",
+            "@type": "Question",
+            "name": "How do I pay on SkinSlinger?",
+            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger accepts USDC on the Polygon network. Deposit crypto and use your balance to buy skins instantly." },
         },
         {
-            "question": "Is there a trade hold on SkinSlinger?",
-            "answer": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades.",
+            "@type": "Question",
+            "name": "Is there a trade hold on SkinSlinger?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades." },
         },
         {
-            "question": "What games does SkinSlinger support?",
-            "answer": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2.",
+            "@type": "Question",
+            "name": "What games does SkinSlinger support?",
+            "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2." },
         },
         {
-            "question": "Are my skins safe?",
-            "answer": "Yes. We only ask for your Steam trade URL to check your inventory and trade eligibility. We have no direct access to your inventory or skins. The marketplace is P2P so you trade your skins directly with other players rather than giving it to a bot.",
+            "@type": "Question",
+            "name": "Are my skins safe?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We only ask for your Steam trade URL to check your inventory and trade eligibility. We have no direct access to your inventory or skins. The marketplace is P2P so you trade your skins directly with other players rather than giving it to a bot." },
         },
         {
-            "question": "How long does it take to deposit/withdraw?",
-            "answer": "Deposits and withdrawals are automatic and should take less than 5 minutes to detect and confirm.",
+            "@type": "Question",
+            "name": "How long does it take to deposit/withdraw?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Deposits and withdrawals are automatic and should take less than 5 minutes to detect and confirm." },
         },
         {
-            "question": "How are 'Market' prices determined?",
-            "answer": "We look at prices from other market places and average them out. If the item does not exist on other market places, we use prices from the Steam marketplace.",
+            "@type": "Question",
+            "name": "How are 'Market' prices determined?",
+            "acceptedAnswer": { "@type": "Answer", "text": "We look at prices from other market places and average them out. If the item does not exist on other market places, we use prices from the Steam marketplace." },
         },
     ],
 };
@@ -269,8 +277,8 @@ export default function Home() {
                 <div className="flex flex-col gap-3">
                     {faq.mainEntity.map((q, i) => (
                         <div key={i} className="info-card">
-                            <p className="font-semibold text-sm">{q.question}</p>
-                            <p className="text-gray-400 text-sm mt-1">{q.answer}</p>
+                            <p className="font-semibold text-sm">{q.name}</p>
+                            <p className="text-gray-400 text-sm mt-1">{q.acceptedAnswer.text}</p>
                         </div>
                     ))}
                 </div>

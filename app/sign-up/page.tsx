@@ -122,14 +122,20 @@ export default function SignUp() {
 
                         <br />
                         
-                        <label htmlFor="username" className="floating-label">Username</label>
+                        <label htmlFor="username" className="floating-label">
+                            Username
+                        </label>
 
                         {error === "Username too short" && (
-                            <p className="error">Username must be at least 3 characters long.</p>
+                            <p className="error">
+                                Username must be at least 3 characters long.
+                            </p>
                         )}
 
                         {error === "Username contains special characters" && (
-                            <p className="error">Username cannot contain special characters.</p>
+                            <p className="error">
+                                Username cannot contain special characters.
+                            </p>
                         )}
                     </div>
 
@@ -143,10 +149,14 @@ export default function SignUp() {
                             onChange={checkPassword}
                         />
 
-                        <label htmlFor="password" className="floating-label">Password</label>
+                        <label htmlFor="password" className="floating-label">
+                            Password
+                        </label>
 
                         {error === "Password too short" && (
-                            <p className="error">Password must be at least 5 characters long.</p>
+                            <p className="error">
+                                Password must be at least 5 characters long.
+                            </p>
                         )}
                     </div>
 
@@ -160,10 +170,14 @@ export default function SignUp() {
                             onChange={checkEmail}
                         />
                         
-                        <label htmlFor="email" className="floating-label">Email</label>
+                        <label htmlFor="email" className="floating-label">
+                            Email
+                        </label>
 
                         {error === "Invalid email" && (
-                            <p className="error">Invalid email.</p>
+                            <p className="error">
+                                Invalid email.
+                            </p>
                         )}
                     </div>
 
@@ -185,7 +199,11 @@ export default function SignUp() {
 
                     <div className="flex items-center gap-2 mx-8">
                         <hr className="flex-1 border-gray-500" />
-                        <span className="text-gray-500 text-sm">Or</span>
+
+                        <span className="text-gray-500 text-sm">
+                            Or
+                        </span>
+                        
                         <hr className="flex-1 border-gray-500" />
                     </div>
 

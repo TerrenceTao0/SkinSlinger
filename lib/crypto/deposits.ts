@@ -79,6 +79,7 @@ export async function processDeposits(
             where: { status: 'confirmed' },
         })
 
+
         for (const deposit of confirmedDeposits) {
             try {
                 const balance = await getPublicClient().readContract({
@@ -86,9 +87,18 @@ export async function processDeposits(
                     abi: [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256' }] }],
                     functionName: 'balanceOf',
                     args: [deposit.address as `0x${string}`],
-                })
+                }) as bigint
 
-                const sweepTx = await sweepUSDC(deposit.index, balance as bigint)
+
+                // Already swept
+                if (balance === 0n) {
+                    await prisma.crypto_deposit.delete({ where: { id: deposit.id } })
+
+                    continue
+                }
+
+
+                const sweepTx = await sweepUSDC(deposit.index, balance)
 
                 await prisma.crypto_deposit.update({
                     where: { id: deposit.id },
@@ -96,17 +106,21 @@ export async function processDeposits(
                 })
 
                 await onCredit(deposit.userId, deposit.amountUsdc)
+
                 processed++
-            } catch (err) {
+            }
+             catch (err) {
                 console.error(`[deposits] retry sweep failed for deposit ${deposit.id}:`, err)
             }
         }
+
 
         // Scan blockchain for new payments to pending deposit addresses
         const pending = await prisma.crypto_deposit.findMany({
             where: { status: 'pending', expiresAt: { gt: new Date() } },
         })
 
+        
         if (pending.length > 0) {
             const pendingAddresses = pending.map(d => d.address as `0x${string}`)
 

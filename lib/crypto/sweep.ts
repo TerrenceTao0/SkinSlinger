@@ -5,27 +5,28 @@ import { getDepositAccount, getPublicClient } from './account'
 
 //
 
-const GAS_THRESHOLD = parseEther('0.04')
 const GAS_FUND_AMOUNT = parseEther('0.05')
 
 export async function sweepUSDC(index: number, amountUsdc: bigint): Promise<`0x${string}`> {
     const account = getDepositAccount(index)
     const rpc = process.env.ALCHEMY_POLYGON_RPC!
 
-    const maticBalance = await getPublicClient().getBalance({ address: account.address })
+    const polBalance = await getPublicClient().getBalance({ address: account.address })
 
-    if (maticBalance < GAS_THRESHOLD) {
+    if (polBalance < GAS_FUND_AMOUNT) {
         const mainAccount = privateKeyToAccount(process.env.WALLET_PRIVATE_KEY as `0x${string}`)
         const funder = createWalletClient({ account: mainAccount, chain: polygon, transport: http(rpc) })
         const fundTx = await funder.sendTransaction({ to: account.address, value: GAS_FUND_AMOUNT })
         await getPublicClient().waitForTransactionReceipt({ hash: fundTx })
     }
 
+
     const walletClient = createWalletClient({
         account,
         chain: polygon,
         transport: http(rpc),
     })
+
 
     return walletClient.writeContract({
         address: process.env.USDC_ADDRESS as `0x${string}`,
