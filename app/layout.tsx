@@ -30,10 +30,10 @@ export const metadata: Metadata = {
         default: 'SkinSlinger — Buy & Sell Steam Skins with Crypto',
         template: '%s | SkinSlinger',
     },
-    description: 'SkinSlinger is the P2P Steam skin marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks.',
+    description: 'SkinSlinger is the P2P skins marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks.',
     keywords: [
         'CS2 skins', 'buy CS2 skins', 'sell CS2 skins', 'CS2 skin marketplace',
-        'Dota 2 items', 'Rust skins', 'TF2 items', 'Steam marketplace',
+        'Dota 2 items', 'Rust skins', 'TF2 items', 'skins marketplace',
         'buy skins with crypto', 'no KYC skin marketplace', '0% fee skin marketplace',
         'P2P skin trading', 'crypto skin marketplace', 'no trade hold',
     ],

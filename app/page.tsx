@@ -23,7 +23,7 @@ const fees = [
             { rate: "2.0%", threshold: "Default" },
             { rate: "1.5%", threshold: "$1,000+ in sales/purchases" },
             { rate: "1.0%", threshold: "$5,000+ in sales/purchases" },
-            { rate: "0.5%", threshold: "$100,000+ in sales/purchases" },
+            { rate: "0.5%", threshold: "$25,000+ in sales/purchases" },
         ],
     },
 ]
@@ -52,7 +52,7 @@ const steps = [
 ]
 
 const paymentMethods = ["USDC (Polygon Network)"]
-const description = 'SkinSlinger is the P2P Steam skin marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks, instant trades.'
+const description = 'SkinSlinger is the P2P skins marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks, instant trades.'
 
 export const metadata: Metadata = {
     title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC',
@@ -97,7 +97,7 @@ const organizationJsonLd = {
         "width": 512,
         "height": 512,
     },
-    "description": "P2P Steam skin marketplace with 0% sales fee, no KYC, and crypto payments.",
+    "description": "P2P skins marketplace with 0% sales fee, no KYC, and crypto payments.",
     "address": {
         "@type": "PostalAddress",
         "streetAddress": "Cobham House, 9 Warwick Court",
