@@ -12,10 +12,20 @@ const games = [
 ]
 
 const fees = [
-    { label: "Sales Fee", value: "0%", icon: "/percentage.svg" },
-    { label: "Deposit Fee", value: "0%", icon: "/deposit.svg" },
-    { label: "FX Fee (Crypto)", value: "0%", icon: "/percentage.svg" },
-    { label: "Withdrawal Fee", value: "Just 2%", icon: "/withdraw.svg" },
+    { label: "Sales Fee", value: "0%", icon: "/percentage.svg", tiers: null },
+    { label: "Deposit Fee", value: "0%", icon: "/deposit.svg", tiers: null },
+    { label: "FX Fee (Crypto)", value: "0%", icon: "/percentage.svg", tiers: null },
+    {
+        label: "Withdrawal Fee",
+        value: "2% → 0.5%",
+        icon: "/withdraw.svg",
+        tiers: [
+            { rate: "2.0%", threshold: "Default" },
+            { rate: "1.5%", threshold: "$1,000+ in sales" },
+            { rate: "1.0%", threshold: "$5,000+ in sales" },
+            { rate: "0.5%", threshold: "$100,000+ in sales" },
+        ],
+    },
 ]
 
 const steps = [
@@ -172,9 +182,7 @@ export default function Home() {
                     </h1>
                     
                     <p className="text-gray-400 text-lg max-w-md">
-                        No bots, no hidden fees, no BS.
-                        <br />
-                        Trade directly with other players straight away.
+                        Trade directly with other players, instantly.
                     </p>
                 </div>
 
@@ -209,14 +217,25 @@ export default function Home() {
 
                 
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
-                    {fees.map(({ label, value, icon }, i) => (
-                        <div key={label} className={`flex items-center justify-between px-5 py-3 ${i < fees.length - 1 ? 'border-b border-gray-700' : ''}`}>
-                            <div className="flex items-center gap-3">
-                                <Image src={icon} alt="" width={18} height={18} className="opacity-60 invert" />
-                                <span className="text-sm text-gray-400">{label}</span>
+                    {fees.map(({ label, value, icon, tiers }, i) => (
+                        <div key={label} className={`px-5 py-3 ${i < fees.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Image src={icon} alt="" width={18} height={18} className="opacity-60 invert" />
+                                    <span className="text-sm text-gray-400">{label}</span>
+                                </div>
+                                <span className="font-semibold text-special">{value}</span>
                             </div>
-
-                            <span className="font-semibold text-special">{value}</span>
+                            {tiers && (
+                                <div className="mt-2 ml-[30px] flex flex-col gap-1">
+                                    {tiers.map(({ rate, threshold }) => (
+                                        <div key={threshold} className="flex items-center justify-between">
+                                            <span className="text-xs text-gray-500">{threshold}</span>
+                                            <span className="text-xs font-medium text-gray-300">{rate}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
