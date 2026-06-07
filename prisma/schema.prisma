@@ -20,6 +20,8 @@ model user {
   steam_id String?
   steamApiKey String?
   cash Float @default(0)
+  sales Float @default(0)
+  purchases Float @default(0)
   twoFactorCode String?
   twoFactorExpires DateTime?
   lastInventoryRefresh DateTime?

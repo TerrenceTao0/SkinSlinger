@@ -21,9 +21,9 @@ const fees = [
         icon: "/withdraw.svg",
         tiers: [
             { rate: "2.0%", threshold: "Default" },
-            { rate: "1.5%", threshold: "$1,000+ in sales" },
-            { rate: "1.0%", threshold: "$5,000+ in sales" },
-            { rate: "0.5%", threshold: "$100,000+ in sales" },
+            { rate: "1.5%", threshold: "$1,000+ in sales/purchases" },
+            { rate: "1.0%", threshold: "$5,000+ in sales/purchases" },
+            { rate: "0.5%", threshold: "$100,000+ in sales/purchases" },
         ],
     },
 ]
