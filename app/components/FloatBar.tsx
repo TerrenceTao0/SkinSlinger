@@ -36,17 +36,9 @@ export default function FloatBar({ value, showLabels = true }: { value: number; 
                 />
             </div>
             {showLabels && (
-                <div className="relative h-3.5">
-                    {SEGMENTS.map(seg => (
-                        <span
-                            key={seg.label}
-                            className="absolute text-[9px] text-gray-500 -translate-x-1/2"
-                            style={{ left: `${(seg.from + seg.to) / 2 * 100}%` }}
-                        >
-                            {seg.label}
-                        </span>
-                    ))}
-                </div>
+                <p className="text-[10px] text-gray-500 font-mono">
+                    {value.toFixed(10).replace(/0+$/, '')}
+                </p>
             )}
         </div>
     );

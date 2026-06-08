@@ -191,7 +191,7 @@ export default function Home() {
                     </p>
 
                     <p className="text-gray-400 text-lg max-w-md">
-                        Trade CS2, Dota 2, Rust and TF2 skins directly with other players — no identity checks, no middleman, instant trades.
+                        Trade CS2, Dota 2, Rust and TF2 skins directly with other players.
                     </p>
                 </div>
 
@@ -213,13 +213,15 @@ export default function Home() {
                     </p>
 
                     <p className="text-special text-sm text-center font-semibold">
-                        No identity verification required. Sign up with just an email and a password.
+                        No identity verification required. Login via Steam and trade instantly.
                     </p>
                 </div>
 
                 <div className="flex flex-col items-center text-center gap-1">
                     <p className="text-green-200 font-semibold text-lg">
-                        The lowest fees in the market.
+                        The lowest fees in the market
+                        <br />
+                        Fully transparent
                     </p>
                 </div>
                 
@@ -256,34 +258,32 @@ export default function Home() {
 
                 <div className="w-full max-w-2xl">
                     <p className="text-center text-green-200 font-semibold text-lg mb-4">How we compare</p>
-                    <div className="overflow-x-auto">
-                        <div className="bg-secondary rounded-sm text-sm min-w-[560px]">
-                            <div className="grid grid-cols-5 px-4 py-2 border-b border-gray-700 text-xs text-gray-500 uppercase tracking-widest">
-                                <span>Platform</span>
-                                <span className="text-center">Sales</span>
-                                <span className="text-center">Deposit</span>
-                                <span className="text-center">Withdrawal</span>
-                                <span className="text-right">Total</span>
-                            </div>
-                            {[
-                                { name: "SkinSlinger", sales: "0%",   deposit: "0%",  withdrawal: "2%",   total: "2%",    highlight: true },
-                                { name: "CSFloat",     sales: "2%",   deposit: "2.8%", withdrawal: "0.5%", total: "~5.3%"                  },
-                                { name: "Skinport",    sales: "8%",   deposit: "0%",  withdrawal: "0%",   total: "8%"                     },
-                                { name: "DMarket",     sales: "7%",   deposit: "0%",  withdrawal: "2.5%", total: "~9.5%"                  },
-                                { name: "CS.Money",    sales: "7%",   deposit: "0%",  withdrawal: "0%",   total: "7%"                     },
-                                { name: "Steam Market",sales: "15%",  deposit: "0%",  withdrawal: "N/A",  total: "15%+"                   },
-                            ].map(({ name, sales, deposit, withdrawal, total, highlight }, i, arr) => (
-                                <div key={name} className={`grid grid-cols-5 px-4 py-3 items-center ${i < arr.length - 1 ? 'border-b border-gray-700' : ''} ${highlight ? 'bg-special/10' : ''}`}>
-                                    <span className={highlight ? 'text-special font-semibold' : 'text-gray-300'}>{name}</span>
-                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{sales}</span>
-                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{deposit}</span>
-                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{withdrawal}</span>
-                                    <span className={`text-right font-semibold ${highlight ? 'text-special' : total.includes('15') || total.includes('13') ? 'text-red-400' : 'text-gray-300'}`}>{total}</span>
-                                </div>
-                            ))}
+                    <div className="bg-secondary rounded-sm text-xs w-full">
+                        <div className="grid grid-cols-5 px-3 py-2 border-b border-gray-700 text-[10px] text-gray-500 uppercase tracking-widest">
+                            <span>Platform</span>
+                            <span className="text-center">Sales</span>
+                            <span className="text-center"><span className="hidden sm:inline">Deposit</span><span className="sm:hidden">Dep.</span></span>
+                            <span className="text-center"><span className="hidden sm:inline">Withdrawal</span><span className="sm:hidden">W/D</span></span>
+                            <span className="text-right">Total</span>
                         </div>
+                        {[
+                            { name: "SkinSlinger", sales: "0%",   deposit: "0%",   withdrawal: "2%",   total: "2%",    highlight: true },
+                            { name: "CSFloat",     sales: "2%",   deposit: "2.8%", withdrawal: "0.5%", total: "~5.3%"                  },
+                            { name: "CS.Money",    sales: "7%",   deposit: "0%",   withdrawal: "0%",   total: "7%"                     },
+                            { name: "Skinport",    sales: "8%",   deposit: "0%",   withdrawal: "0%",   total: "8%"                     },
+                            { name: "DMarket",     sales: "7%",   deposit: "0%",   withdrawal: "2.5%", total: "~9.5%"                  },
+                            { name: "Steam Market",sales: "15%",  deposit: "0%",   withdrawal: "N/A",  total: "15%+"                   },
+                        ].map(({ name, sales, deposit, withdrawal, total, highlight }, i, arr) => (
+                            <div key={name} className={`grid grid-cols-5 px-3 py-2.5 items-center ${i < arr.length - 1 ? 'border-b border-gray-700' : ''} ${highlight ? 'bg-special/10' : ''}`}>
+                                <span className={`text-[11px] ${highlight ? 'text-special font-semibold' : 'text-gray-300'}`}>{name}</span>
+                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{sales}</span>
+                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{deposit}</span>
+                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{withdrawal}</span>
+                                <span className={`text-right font-semibold ${highlight ? 'text-special' : total.includes('15') ? 'text-red-400' : 'text-gray-300'}`}>{total}</span>
+                            </div>
+                        ))}
                     </div>
-                    <p className="text-xs text-gray-500 text-center mt-2">Fees have been taken from pricempire.com.</p>
+                    <p className="text-xs text-gray-500 text-center mt-2">Fees have been taken from pricempire.com</p>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
@@ -307,7 +307,7 @@ export default function Home() {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
 
-            <div className="w-full max-w-lg mx-auto px-4 pb-12">
+            <div className="w-full max-w-lg mx-auto px-4 pb-8">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
 
                 <div className="flex flex-col gap-3">
@@ -322,7 +322,7 @@ export default function Home() {
 
             <PointDown />
 
-            <div className="w-full max-w-lg mx-auto px-4 pb-20">
+            <div className="w-full max-w-lg mx-auto px-4 pb-10">
                 <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
 
                 <div className="flex flex-col gap-3">
@@ -335,7 +335,7 @@ export default function Home() {
                 </div>
             </div>
 
-            <footer className="border-t border-gray-700/50 mt-4 py-10 px-6 backdrop-blur-xs bg-black/20">
+            <footer className="border-t border-gray-700/50 py-10 px-6 backdrop-blur-xs bg-black/20">
                 <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
                     <div className="flex items-center gap-2">
                         <Image src="/logo.png" alt="SkinSlinger" width={22} height={22} />

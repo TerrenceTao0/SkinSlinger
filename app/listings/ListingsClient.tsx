@@ -120,7 +120,6 @@ function ListingCard({ group }: { group: ListingGroup }) {
             className="relative h-64 md:h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${group.hexColor}44` } as React.CSSProperties}
         >
-            {/* Name */}
             <div className="shrink-0 h-10 flex justify-between items-start px-2 pt-2 pb-1">
                 <p className="text-[11px] leading-tight font-medium line-clamp-2 flex-1 pr-1">
                     {group.marketName}
@@ -131,8 +130,6 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 )}
             </div>
 
-
-            {/* Image */}
             <div
                 className="relative h-20 md:h-24 shrink-0 mx-2 flex items-center justify-center"
                 style={{ filter: `drop-shadow(0 0 10px #${group.hexColor}99)` }}
@@ -142,8 +139,6 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 )}
             </div>
 
-
-            {/* Float / Pattern */}
             <div className={`shrink-0 mt-auto px-2 pb-1 flex flex-col gap-0.5 text-[10px] text-gray-500 ${group.floatValue === null ? 'invisible' : ''}`}>
                 {group.paintSeed != null
                     ? <span>Pattern <span className="text-gray-300">#{group.paintSeed}</span></span>
@@ -151,11 +146,11 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 }
                 <span>Float <span className="text-gray-300 font-mono">{group.floatValue?.toFixed(9).replace(/0+$/, '') ?? ''}</span></span>
             </div>
+
             <div className={`shrink-0 px-2 pb-1 ${group.floatValue === null ? 'invisible' : ''}`}>
                 <FloatBar value={group.floatValue ?? 0} showLabels={false} />
             </div>
 
-            {/* Price + save */}
             <div className="shrink-0 px-2 pt-2 pb-1 flex flex-col gap-1">
                 <button
                     onClick={savePrice}

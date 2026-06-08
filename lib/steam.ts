@@ -1,3 +1,5 @@
+import { PassThrough } from "stream";
+
 const base_url = "https://www.steamwebapi.com";
 const api_key = process.env.STEAM_WEB_KEY!;
 
@@ -93,28 +95,69 @@ export async function checkCanTrade(
 }
 
 
-// Fetches the lowest price for an item across all markets from steamwebapi.
-// Returns null if the item is not found or the request fails.
-export async function fetchItemPrice(market_hash_name: string, _game: string, _name: string): Promise<number | null> {
+const STEAM_APP_IDS: Record<string, number> = {
+    CS2: 730,
+    Dota2: 570,
+    Rust: 252490,
+    TF2: 440,
+};
+
+// Fetches the average price for an item across all markets from steamwebapi.
+// Falls back to the Steam Community Market price if no third-party market has it.
+export async function fetchItemPrice(market_hash_name: string, game: string, _name: string): Promise<number | null> {
     try {
         const url = new URL(`${base_url}/markets/prices`);
         url.searchParams.set("key", api_key);
         url.searchParams.set("market_hash_name", market_hash_name);
 
         const response = await fetch(url.toString());
-        if (!response.ok) return null;
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const prices = Object.values(data[0].prices as Record<string, { price: number }>)
+                    .map(m => m.price)
+                    .filter((p): p is number => typeof p === 'number' && p > 0);
 
-        const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) return null;
+                if (prices.length > 0) {
+                    return prices.reduce((sum, p) => sum + p, 0) / prices.length;
+                }
+            }
+        }
+    } 
+    catch {
+ 
+    }
 
-        const prices = Object.values(data[0].prices as Record<string, { price: number }>)
-            .map(m => m.price)
-            .filter((p): p is number => typeof p === 'number' && p > 0);
 
-        if (prices.length === 0) return null;
+    // Fallback: Steam Community Market
+    try {
+        const appId = STEAM_APP_IDS[game];
+        if (!appId) return null;
 
-        return Math.min(...prices);
-    } catch {
+        const steamUrl = new URL("https://steamcommunity.com/market/priceoverview/");
+        steamUrl.searchParams.set("appid", String(appId));
+        steamUrl.searchParams.set("currency", "1");
+        steamUrl.searchParams.set("market_hash_name", market_hash_name);
+
+        const res = await fetch(steamUrl.toString());
+
+        if (!res.ok) return null;
+
+        const data = await res.json();
+
+        if (!data.success) return null;
+
+        let price = data.median_price ?? data.lowest_price;
+
+        if (!price) return null;
+
+        // Minimum 20% discount
+        price *= .8
+
+        return parseFloat(price.replace(/[^0-9.]/g, ""));
+
+    } 
+    catch {
         return null;
     }
 }

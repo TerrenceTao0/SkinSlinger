@@ -241,6 +241,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
 
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
+
             if (priceState != null && priceState < 0.30) continue;
 
             const basePrice = priceState ?? 0;

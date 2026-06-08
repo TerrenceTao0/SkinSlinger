@@ -29,8 +29,11 @@ export async function POST(req: Request) {
                 })
             },
         )
+
+        
         return NextResponse.json(result)
-    } catch (err) {
+    } 
+    catch (err) {
         const message = err instanceof Error ? err.message : 'Withdrawal failed'
         const status = message === 'Insufficient balance' || message.startsWith('Minimum') ? 400 : 500
         return NextResponse.json({ error: message }, { status })

@@ -37,8 +37,14 @@ const getListing = cache(async (id: string) => {
     const listing = await prisma.item_listing.findUnique({ where: { id } });
     if (!listing || !listing.icon || !listing.hexColor || !listing.game) return null;
 
-    const float = await prisma.item_float.findUnique({ where: { assetId: listing.assetId } });
-    return { listing, float };
+    const [float, commodityCount] = await Promise.all([
+        prisma.item_float.findUnique({ where: { assetId: listing.assetId } }),
+        listing.commodity
+            ? prisma.item_listing.count({ where: { marketName: listing.marketName, commodity: true } })
+            : Promise.resolve(1),
+    ]);
+
+    return { listing, float, commodityCount };
 });
 
 //
@@ -74,14 +80,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 //
 
-export default async function ItemPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+export default async function ItemPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ from?: string }> }) {
     const { slug, id } = await params;
+    const { from } = await searchParams;
     const data = await getListing(id);
     if (!data) notFound();
 
-    const { listing, float } = data;
+    const { listing, float, commodityCount } = data;
     const gameName = GAME_NAMES[listing.game!] ?? listing.game!;
     const gameSlug = GAME_SLUGS[listing.game!] ?? "cs2";
+
+    const sellerSteamId = from === "profile"
+        ? (await prisma.user.findUnique({ where: { id: listing.userId }, select: { steam_id: true, name: true } }))
+        : null;
     const stickers = float?.stickers as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null;
 
     const base = process.env.NEXTAUTH_URL ?? '';
@@ -115,15 +126,23 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
     };
 
     return (
-        <div className="overflow-y-auto h-full flex justify-center pt-24 pb-12 px-4">
+        <div className="overflow-y-auto h-full flex justify-center items-center py-12 px-4">
             <div className="w-full max-w-sm flex flex-col gap-6">
                 <div className="flex flex-col gap-1">
-                    <Link href={`/market/${gameSlug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
-                        ← Back to {gameName} market
-                    </Link>
-                    <Link href={`/item/${slug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
-                        ← All {listing.marketName} listings
-                    </Link>
+                    {sellerSteamId?.steam_id ? (
+                        <Link href={`/user/${sellerSteamId.steam_id}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                            ← Back to {sellerSteamId.name ?? "seller"}'s profile
+                        </Link>
+                    ) : (
+                        <>
+                            <Link href={`/market/${gameSlug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                                ← Back to {gameName} market
+                            </Link>
+                            <Link href={`/item/${slug}`} className="text-sm text-gray-400 hover:text-white transition-colors">
+                                ← All {listing.marketName} listings
+                            </Link>
+                        </>
+                    )}
                 </div>
 
                 <div
@@ -150,7 +169,7 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-400">Float</span>
-                                    <span className="font-mono text-xs">{wearLabel(float.floatValue)} · {float.floatValue.toFixed(10).replace(/0+$/, '')}</span>
+                                    <span className="text-xs text-gray-400">{wearLabel(float.floatValue)}</span>
                                 </div>
                                 <FloatBar value={float.floatValue} />
                             </div>
@@ -185,6 +204,7 @@ export default async function ItemPage({ params }: { params: Promise<{ slug: str
                         icon={listing.icon!}
                         hexColor={listing.hexColor!}
                         commodity={listing.commodity}
+                        maxQuantity={commodityCount}
                     />
                 </div>
             </div>

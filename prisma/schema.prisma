@@ -15,12 +15,9 @@ model user {
   createdAt DateTime @default(now())
   steam_trade_url String?
   steam_id String?
-  steamApiKey String?
   cash Float @default(0)
   sales Float @default(0)
   purchases Float @default(0)
-  twoFactorCode String?
-  twoFactorExpires DateTime?
   lastInventoryRefresh DateTime?
   inventoryCache Json?
 

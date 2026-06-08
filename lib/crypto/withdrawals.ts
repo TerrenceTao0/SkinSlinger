@@ -4,8 +4,8 @@ import { privateKeyToAccount } from 'viem/accounts'
 
 //
 
-const FEE_RATE = 0.02
-const MIN_WITHDRAWAL = 1
+const feeRate = 0.02
+const minWithdrawal = 1
 const USDC_DECIMALS = 6
 
 //
@@ -18,7 +18,7 @@ export async function processWithdrawal(
     )
     :
     Promise<{ transactionHash: `0x${string}`; usdcAmount: number }> {
-        if (!amount || amount < MIN_WITHDRAWAL) throw new Error(`Minimum withdrawal is $${MIN_WITHDRAWAL}.00`)
+        if (!amount || amount < minWithdrawal) throw new Error(`Minimum withdrawal is $${minWithdrawal}.00`)
             
         if (!toAddress?.trim()) throw new Error('Wallet address required')
 
@@ -26,7 +26,8 @@ export async function processWithdrawal(
 
         if (!ok) throw new Error('Insufficient balance')
 
-        const feeAmount = amount * FEE_RATE
+        const adjustedFeeRate = feeRate
+        const feeAmount = amount * adjustedFeeRate
         const netAmount = amount - feeAmount
         const usdcAmount = parseUnits(netAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
         const usdcFee = parseUnits(feeAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)

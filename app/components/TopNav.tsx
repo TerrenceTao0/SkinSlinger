@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useBasket } from './BasketProvider';
 import { signIn } from 'next-auth/react';
 
@@ -44,7 +44,7 @@ export default function TopNav() {
                     </div>
 
                     <div className="flex h-full items-center gap-3">
-                        {(session ? (
+                        {status !== "loading" && (session ? (
                             <>
                                 <Link href="/finance" className="h-full flex items-center">
                                     <button className="h-[80%] flex items-center justify-center w-20 bg-special button rounded-sm">
@@ -62,11 +62,9 @@ export default function TopNav() {
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
                                 <Link href="/inventory" className="right-nav-link button">Inventory</Link>
 
-                                <button className="right-nav-link button" onClick={() => signOut({ callbackUrl: '/' })}>
-                                    Log out
-                                </button>
-
-                                <Image src={session.user.image!} alt="Profile" width={40} height={40} />
+                                <Link href="/profile" className="cursor-pointer">
+                                    <Image src={session.user.image!} alt="Profile" width={40} height={40} />
+                                </Link>
                             </>
                         ) : (
                             <button
@@ -84,11 +82,17 @@ export default function TopNav() {
                 {/* Mobile nav */}
                 <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3 w-[20%]">
                     {status !== "loading" && session && (
-                        <Link href="/finance">
-                            <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
-                                ${(session.user.cash ?? 0).toFixed(2)}
-                            </button>
-                        </Link>
+                        <>
+                            <Link href="/finance">
+                                <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
+                                    ${(session.user.cash ?? 0).toFixed(2)}
+                                </button>
+                            </Link>
+
+                            <Link href="/profile" className="cursor-pointer">
+                                <Image src={session.user.image!} alt="Profile" width={40} height={40} />
+                            </Link>
+                        </>
                     )}
 
                     <button
@@ -130,13 +134,6 @@ export default function TopNav() {
                             <Link href="/inventory" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Inventory
                             </Link>
-
-                            <button
-                                className="mobile_menu_button button w-full"
-                                onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false); }}
-                            >
-                                Log out
-                            </button>
                         </>
                     ) : (
                         <>
