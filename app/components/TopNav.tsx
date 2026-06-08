@@ -62,6 +62,8 @@ export default function TopNav() {
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
                                 <Link href="/inventory" className="right-nav-link button">Inventory</Link>
 
+                                <Image src={session.user.image!} alt="Profile" width={20} height={20} />
+
                                 <button className="right-nav-link button" onClick={() => signOut({ callbackUrl: '/' })}>
                                     Log out
                                 </button>

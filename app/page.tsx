@@ -186,7 +186,6 @@ export default function Home() {
                     </p>
                 </div>
 
-
                 <div className="flex gap-3 text-sm flex-wrap justify-center">
                     {games.map(({ label, icon }) => (
                         <span key={label} className="bg-accent px-3 py-1.5 rounded-sm flex items-center gap-1.5 opacity-80">
@@ -195,7 +194,6 @@ export default function Home() {
                         </span>
                     ))}
                 </div>
-
 
                 <div
                     className="w-full max-w-sm rounded-sm px-6 py-5 flex flex-col items-center gap-1 bg-green-200"
@@ -210,13 +208,11 @@ export default function Home() {
                     </p>
                 </div>
 
-
                 <div className="flex flex-col items-center text-center gap-1">
                     <p className="text-green-200 font-semibold text-lg">
                         The lowest fees in the market.
                     </p>
                 </div>
-
                 
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
                     {fees.map(({ label, value, icon, tiers }, i) => (
@@ -249,7 +245,6 @@ export default function Home() {
                     ))}
                 </div>
 
-
                 <div className="flex flex-col items-center gap-2">
                     <p className="text-xs text-gray-500 tracking-widest">
                         CURRENTLY SUPPORTED PAYMENT METHODS
@@ -264,15 +259,12 @@ export default function Home() {
                     </div>
                 </div>
 
-
                 <PointDown />
             </div>
-
 
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
-
 
             <div className="w-full max-w-lg mx-auto px-4 pb-12">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
@@ -287,9 +279,7 @@ export default function Home() {
                 </div>
             </div>
 
-
             <PointDown />
-
 
             <div className="w-full max-w-lg mx-auto px-4 pb-20">
                 <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
@@ -304,19 +294,32 @@ export default function Home() {
                 </div>
             </div>
 
-
             <footer className="border-t border-gray-700/50 mt-4 py-10 px-6 backdrop-blur-xs bg-black/20">
                 <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
                     <div className="flex items-center gap-2">
                         <Image src="/logo.png" alt="SkinSlinger" width={22} height={22} />
-                        <span className="text-sm font-semibold text-gray-300">SkinSlinger</span>
+
+                        <span className="text-sm font-semibold text-gray-300">
+                            SkinSlinger
+                        </span>
                     </div>
 
                     <div className="flex gap-6">
-                        <Link href="/tos" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Terms of Service</Link>
-                        <Link href="/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Privacy Policy</Link>
-                        <a href="mailto:support@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Support</a>
-                        <a href="mailto:management@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Business Contact</a>
+                        <Link href="/tos" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                            Terms of Service
+                        </Link>
+
+                        <Link href="/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                            Privacy Policy
+                        </Link>
+
+                        <a href="mailto:support@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                            Support
+                        </a>
+
+                        <a href="mailto:management@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                            Business Contact
+                        </a>
                     </div>
 
                     <p className="text-xs text-gray-600 text-center">
@@ -328,10 +331,13 @@ export default function Home() {
                             SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
                         </p>
                         
-                        <p className="text-xs text-gray-700">© {new Date().getFullYear()} SkinSlinger</p>
+                        <p className="text-xs text-gray-700">
+                            © {new Date().getFullYear()} SkinSlinger
+                        </p>
                     </div>
                 </div>
             </footer>
         </div>
     )
 }
+
