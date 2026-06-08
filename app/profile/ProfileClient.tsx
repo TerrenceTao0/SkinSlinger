@@ -22,12 +22,16 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
     }
+
+
     const total_volume = sales + purchases
     const memberSince = new Date(createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    
     const [accountAge] = useState(() => {
         const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24))
         return days >= 365 ? `${Math.floor(days / 365)}y ${Math.floor((days % 365) / 30)}m` : days >= 30 ? `${Math.floor(days / 30)} months` : `${days} days`
     })
+
 
     let tier = "I"
 
@@ -41,6 +45,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
         tier = "II"
     }
 
+
     const tierColor = tier === "IV" ? "text-cyan-400" : tier === "III" ? "text-yellow-400" : tier === "II" ? "text-amber-600" : "text-white"
     const currentTierVolume = tier === "I" ? 0 : tier === "II" ? 1000 : tier === "III" ? 5000 : 25000
     const nextTierVolume = tier === "I" ? 1000 : tier === "II" ? 5000 : 25000
@@ -51,7 +56,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
     const [displayProgress, setDisplayProgress] = useState(0)
 
     useEffect(() => {
-        const timer = setTimeout(() => setDisplayProgress(progress), 100)
+        const timer = setTimeout(() => setDisplayProgress(progress), 200)
         return () => clearTimeout(timer)
     }, [progress])
 
@@ -59,8 +64,8 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
     const nextWithdrawFee = tier === "I" ? "1.5%" : tier === "II" ? "1.0%" : tier === "III" ? "0.5%" : null
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row justify-center md:items-center overflow-y-auto py-8 gap-4 px-3">
-            <div className="flex flex-col items-center gap-6 w-full max-w-sm bg-gradient-to-b from-transparent to-secondary rounded-sm py-10 px-3 shrink-0">
+        <div className="w-full h-full overflow-x-hidden overflow-y-auto flex flex-col items-center md:flex-row md:justify-center md:items-center py-8 gap-4 px-3">
+            <div className="flex flex-col items-center gap-6 w-full max-w-sm bg-gradient-to-b from-transparent to-secondary rounded-sm py-6 px-3 mt-20 md:mt-0">
                 <div className="flex flex-col items-center gap-3">
                     {image && (
                         <div className="rounded-full ring-2 ring-special/50 p-0.5">
@@ -195,12 +200,12 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
 
             {/* User's current listings */}
             {listings.length > 0 && (
-                <div className="flex flex-col gap-2 w-100">
+                <div className="flex flex-col gap-2 w-full md:w-100">
                     <p className="text-xs text-gray-500 uppercase tracking-widest">
                         Active Listings ({listings.length})
                     </p>
 
-                    <div className="bg-secondary rounded-sm divide-y divide-gray-700 overflow-y-auto max-h-[600px]">
+                    <div className="bg-secondary rounded-sm divide-y divide-gray-700 md:overflow-y-auto md:max-h-[600px]">
                         {(() => {
                             type Row = { listing: Listing; quantity: number; href: string }
                             const commodityMap = new Map<string, Row>()
@@ -266,7 +271,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                                                     <div className="flex gap-1">
                                                         {stickers.map((s, i) => (
                                                             <div key={i} title={s.name}>
-                                                                <Image src={s.image} alt={s.name} width={24} height={24} style={{ width: 'auto', height: 24 }} />
+                                                                <Image src={s.image} alt={s.name} width={24} height={24} className="h-6 w-auto" />
                                                             </div>
                                                         ))}
                                                     </div>

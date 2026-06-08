@@ -40,8 +40,8 @@ export async function POST(request: Request) {
             await Promise.all(items.map(async (item: { market_name: string, market_hash_name: string, game: string }) => {
                 const hit = cacheMap.get(item.market_name);
 
-                // Return cached price if it was updated today
-                if (hit && hit.updatedAt >= weekAgoUtc) {
+                // Return cached price if it was updated today (skip if cached as 0 — stale/broken)
+                if (hit && hit.price > 0 && hit.updatedAt >= weekAgoUtc) {
                     controller.enqueue(encoder.encode(
                         JSON.stringify({ market_name: item.market_name, price: hit.price }) + '\n'
                     ));
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
                 const price = await fetchItemPrice(item.market_hash_name, item.game, item.market_name) ?? 0;
    
-                if (price >= 0.30) {
+                if (price > 0) {
                     await prisma.item.upsert({
                         where: { marketName: item.market_name },
                         update: { price },

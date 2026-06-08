@@ -25,7 +25,7 @@ export default async function ListingsPage() {
 
     const rows = await prisma.item_listing.findMany({
         where: { userId: session.user.id },
-        orderBy: { createdAt: "desc" },
+        orderBy: { price: "desc" },
     });
 
     const nonCommodityAssetIds = rows.filter(l => !l.commodity).map(l => l.assetId);

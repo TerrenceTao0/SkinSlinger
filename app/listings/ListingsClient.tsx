@@ -56,20 +56,20 @@ function groupListings(listings: Listing[]): ListingGroup[] {
 
 //
 
-function ListingCard({ group }: { group: ListingGroup }) {
+function ListingCard({ group, onDelist }: { group: ListingGroup; onDelist: () => void }) {
     const router = useRouter();
     const [priceStr, setPriceStr] = useState(group.price.toFixed(2));
-    const [confirming, setConfirming] = useState(false);
+    const [basePrice, setBasePrice] = useState(group.price);
     const [saving, setSaving] = useState(false);
-    const [delisting, setDelisting] = useState(false);
     const [error, setError] = useState("");
 
     const parsedPrice = parseFloat(priceStr);
-    const isDirty = !isNaN(parsedPrice) && parsedPrice > 0 && parsedPrice !== group.price;
+    const isDirty = !isNaN(parsedPrice) && parsedPrice > 0 && parsedPrice !== basePrice;
     const totalPrice = (isNaN(parsedPrice) ? group.price : parsedPrice) * group.ids.length;
 
     async function savePrice() {
         setSaving(true);
+        setBasePrice(parsedPrice);
         setError("");
 
         for (const id of group.ids) {
@@ -93,31 +93,16 @@ function ListingCard({ group }: { group: ListingGroup }) {
         setSaving(false);
     }
 
-    async function delist() {
-        setDelisting(true);
-        setError("");
-
+    function delist() {
+        onDelist();
         for (const id of group.ids) {
-            const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
-
-            if (!res.ok) {
-                const data = await res.json();
-                setError(data.error ?? "Something went wrong");
-                setDelisting(false);
-                setConfirming(false);
-
-                return;
-            }
+            fetch(`/api/listings/${id}`, { method: "DELETE" });
         }
-
-
-        router.refresh();
-        setConfirming(false);
     }
 
     return (
         <div
-            className="relative h-64 md:h-72 bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="relative bg-accent rounded-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.03] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${group.hexColor}44` } as React.CSSProperties}
         >
             <div className="shrink-0 h-10 flex justify-between items-start px-2 pt-2 pb-1">
@@ -135,7 +120,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 style={{ filter: `drop-shadow(0 0 10px #${group.hexColor}99)` }}
             >
                 {group.icon && (
-                    <Image src={group.icon} alt={group.marketName} width={90} height={90} style={{ width: 'auto', maxHeight: '90px' }} />
+                    <Image src={group.icon} alt={group.marketName} width={90} height={90} style={{ width: 'auto', height: 'auto', maxHeight: '90px' }} />
                 )}
             </div>
 
@@ -155,7 +140,7 @@ function ListingCard({ group }: { group: ListingGroup }) {
                 <button
                     onClick={savePrice}
                     disabled={saving || !isDirty}
-                    className={`h-8 w-full rounded-sm bg-special button text-sm ${isDirty ? '' : 'hidden'}`}
+                    className={`h-8 w-full rounded-sm bg-special button text-sm ${isDirty ? '' : 'invisible pointer-events-none'}`}
                 >
                     {saving ? "..." : "Save price"}
                 </button>
@@ -187,39 +172,11 @@ function ListingCard({ group }: { group: ListingGroup }) {
             </div>
 
             <button
-                onClick={() => setConfirming(true)}
+                onClick={delist}
                 className="shrink-0 h-10 w-full bg-remove button text-sm"
             >
                 DELIST
             </button>
-            
-
-            {/* Confirmation overlay */}
-            {confirming && (
-                <div className="absolute inset-0 bg-accent/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-4">
-                    <p className="text-sm font-medium">
-                        Remove listing?
-                    </p>
-
-                    <div className="flex gap-2 w-full">
-                        <button
-                            onClick={delist}
-                            disabled={delisting}
-                            className="flex-1 h-9 rounded-sm bg-remove button text-sm"
-                        >
-                            {delisting ? "..." : "Yes"}
-                        </button>
-
-                        <button
-                            onClick={() => setConfirming(false)}
-                            disabled={delisting}
-                            className="flex-1 h-9 rounded-sm bg-primary button text-sm"
-                        >
-                            No
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -227,19 +184,55 @@ function ListingCard({ group }: { group: ListingGroup }) {
 //
 
 export default function ListingsClient({ listings }: { listings: Listing[] }) {
-    const groups = groupListings(listings);
+    const [groups, setGroups] = useState(() => groupListings(listings));
+    const [confirmDelistAll, setConfirmDelistAll] = useState(false);
+
+    function removeGroup(id: string) {
+        setGroups(prev => prev.filter(g => g.ids[0] !== id));
+    }
+
+    function delistAll() {
+        const allIds = groups.flatMap(g => g.ids);
+        setGroups([]);
+        setConfirmDelistAll(false);
+        fetch("/api/listings", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: allIds }),
+        });
+    }
 
     return (
         <div className="h-full flex flex-col pt-20 px-4 md:px-8">
+            {confirmDelistAll && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 px-4">
+                    <div className="bg-secondary rounded-sm flex flex-col gap-4 p-8 max-w-sm w-full frame-shadow">
+                        <p className="font-medium">Delist all {listings.length} listings?</p>
+                        <p className="text-sm text-gray-400">This cannot be undone.</p>
+                        <div className="flex gap-2">
+                            <button onClick={delistAll} className="flex-1 h-10 rounded-sm bg-remove button text-sm">Delist all</button>
+                            <button onClick={() => setConfirmDelistAll(false)} className="flex-1 h-10 rounded-sm bg-accent button text-sm">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 flex-1 min-h-0">
-                <p className="text-xl shrink-0">My Listings</p>
+                <div className="flex items-center justify-between shrink-0">
+                    <p className="text-xl">My Listings</p>
+                    {groups.length > 0 && (
+                        <button onClick={() => setConfirmDelistAll(true)} className="w-50 h-10 bg-accent button rounded-sm">
+                            Delist all
+                        </button>
+                    )}
+                </div>
 
                 {groups.length === 0 ? (
                     <p className="opacity-40">You have no active listings.</p>
                 ) : (
                     <div className="overflow-y-auto flex-1 pb-8 pr-2">
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                            {groups.map((g) => <ListingCard key={g.ids[0]} group={g} />)}
+                            {groups.map((g) => <ListingCard key={g.ids[0]} group={g} onDelist={() => removeGroup(g.ids[0])} />)}
                         </div>
                     </div>
                 )}

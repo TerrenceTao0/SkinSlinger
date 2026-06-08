@@ -150,7 +150,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                     style={{ boxShadow: `0 0 40px #${listing.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
                 >
                     <div style={{ filter: `drop-shadow(0 0 16px #${listing.hexColor}99)` }}>
-                        <Image src={listing.icon!} alt={listing.marketName} width={220} height={220} style={{ width: 'auto' }} />
+                        <Image src={listing.icon!} alt={listing.marketName} width={220} height={220} style={{ width: 'auto', height: 'auto' }} />
                     </div>
 
                     <h1 style={{ color: `#${listing.hexColor}` }} className="text-xl font-semibold text-center">
@@ -189,7 +189,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                             <div className="flex gap-2 flex-wrap">
                                 {stickers.map((s, i) => (
                                     <div key={i} className="flex flex-col items-center gap-0.5" title={s.name}>
-                                        <Image src={s.image} alt={s.name} width={40} height={40} style={{ width: 'auto', height: 40 }} />
+                                        <Image src={s.image} alt={s.name} width={40} height={40} className="h-10 w-auto" />
                                         <span className="text-[10px] text-gray-500 max-w-10 truncate">{s.name}</span>
                                     </div>
                                 ))}

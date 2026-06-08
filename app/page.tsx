@@ -187,7 +187,7 @@ export default function Home() {
                     </h1>
 
                     <p className="text-special font-medium text-sm uppercase tracking-widest">
-                        The No KYC Skins Marketplace
+                        The Best Skins Marketplace
                     </p>
 
                     <p className="text-gray-400 text-lg max-w-md">

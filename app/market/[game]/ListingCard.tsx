@@ -62,7 +62,7 @@ export default function ListingCard(
                     alt={marketName}
                     width={100}
                     height={100}
-                    style={{ width: 'auto', maxHeight: '100px' }}
+                    style={{ width: 'auto', height: 'auto', maxHeight: '100px' }}
                 />
             </button>
 
@@ -88,7 +88,7 @@ export default function ListingCard(
                 {stickers && stickers.length > 0 && (
                     <div className="flex gap-1">
                         {stickers.slice(0, 4).map((s, i) => (
-                            <Image key={i} src={s.image} alt={s.name} title={s.name} width={24} height={24} style={{ width: 'auto', height: 20, opacity: s.wear != null ? 1 - s.wear * 0.8 : 1 }} />
+                            <Image key={i} src={s.image} alt={s.name} title={s.name} width={24} height={24} className="h-5 w-auto" style={{ opacity: s.wear != null ? 1 - s.wear * 0.8 : 1 }} />
                         ))}
                     </div>
                 )}

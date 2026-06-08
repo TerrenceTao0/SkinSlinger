@@ -54,7 +54,7 @@ function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
 export default function RightPanel({ selling, setSelling, onListed, livePrices, inventoryToken }: {
     selling: SteamItem[],
     setSelling: React.Dispatch<React.SetStateAction<SteamItem[]>>,
-    onListed: () => void,
+    onListed: (assetIds: string[]) => void,
     livePrices: Map<string, number | null>,
     inventoryToken: string,
 }) {
@@ -73,7 +73,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
         setPriceMap(next);
     }
 
-    async function listItems() {
+    function listItems() {
         const items = stackedQueue.map(item => ({
             assetId: item.assetId,
             marketName: item.market_name,
@@ -85,17 +85,16 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
             hexColor: item.hexColor,
         }));
 
-        const response = await fetch("/api/listings", {
+        const ids = selling.map(i => i.assetId);
+        setSelling([]);
+        setShowPrompt(false);
+        onListed(ids);
+
+        fetch("/api/listings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items, inventoryToken }),
         });
-
-        if (response.ok) {
-            setSelling([]);
-            setShowPrompt(false);
-            onListed();
-        }
     }
 
     function remove(market_name: string) {

@@ -62,7 +62,7 @@ export default function TopNav() {
                                 <Link href="/orders" className="right-nav-link button">Orders</Link>
                                 <Link href="/inventory" className="right-nav-link button">Inventory</Link>
 
-                                <Link href="/profile" className="cursor-pointer">
+                                <Link href="/profile" className="cursor-pointer ring-2 ring-special p-0.5">
                                     <Image src={session.user.image!} alt="Profile" width={40} height={40} />
                                 </Link>
                             </>
@@ -89,7 +89,7 @@ export default function TopNav() {
                                 </button>
                             </Link>
 
-                            <Link href="/profile" className="cursor-pointer">
+                            <Link href="/profile" className="cursor-pointer ring-2 ring-special p-0.5">
                                 <Image src={session.user.image!} alt="Profile" width={40} height={40} />
                             </Link>
                         </>

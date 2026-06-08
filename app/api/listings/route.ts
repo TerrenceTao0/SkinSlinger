@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { verifyInventoryToken } from "@/lib/inventoryToken";
-import { fetchInventoryForGames, SteamItem } from "@/lib/steam";
 
 //
 
@@ -85,6 +84,51 @@ export async function GET(request: Request) {
     }
 }
 
+export async function DELETE(request: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+        const { ids } = await request.json();
+        if (!Array.isArray(ids) || ids.length === 0) return Response.json({ error: "No ids provided" }, { status: 400 });
+
+        const listings = await prisma.item_listing.findMany({
+            where: { id: { in: ids }, userId: session.user.id },
+            select: { id: true, marketName: true },
+        });
+
+        if (listings.length === 0) return Response.json(null, { status: 200 });
+
+        const idsToDelete = listings.map(l => l.id);
+        const marketNames = [...new Set(listings.map(l => l.marketName))];
+
+        await prisma.item_listing.deleteMany({ where: { id: { in: idsToDelete } } });
+
+        // Refund buy orders for market names that now have no listings
+        const remaining = await prisma.item_listing.groupBy({
+            by: ["marketName"],
+            where: { marketName: { in: marketNames } },
+        });
+        const stillListed = new Set(remaining.map(r => r.marketName));
+        const emptied = marketNames.filter(n => !stillListed.has(n));
+
+        if (emptied.length > 0) {
+            const orders = await prisma.buy_order.findMany({ where: { marketName: { in: emptied } } });
+            if (orders.length > 0) {
+                await prisma.$transaction([
+                    prisma.buy_order.deleteMany({ where: { marketName: { in: emptied } } }),
+                    ...orders.map(o => prisma.user.update({ where: { id: o.userId }, data: { cash: { increment: o.price * o.quantity } } })),
+                ]);
+            }
+        }
+
+        return Response.json(null, { status: 200 });
+    } catch (error) {
+        console.error(error);
+        return Response.json({ error: "Server error" }, { status: 500 });
+    }
+}
+
 export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -150,46 +194,9 @@ export async function POST(request: Request) {
             }
         }
 
-        if (!user.steam_id) {
-            return Response.json({ error: "Steam account not linked" }, { status: 400 });
+        if (toCreate.length > 0) {
+            await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
         }
-
-        // Fetch live inventory for only the games being listed
-        const games = [...new Set(toCreate.map(i => i.game))];
-        const liveItems = await fetchInventoryForGames(user.steam_id, games);
-        const liveAssetIds = new Set(liveItems.map(i => i.assetId));
-
-        // Filter out items no longer in Steam inventory
-        const verified = toCreate.filter(i => liveAssetIds.has(i.assetId));
-
-        if (verified.length > 0) {
-            await prisma.item_listing.createMany({ data: verified, skipDuplicates: true });
-        }
-
-        // Upsert float data for verified CS2 non-commodity items
-        const liveFloatMap = new Map(liveItems.map(i => [i.assetId, i]));
-        const floatUpserts = verified
-            .filter(i => i.game === 'CS2' && !i.commodity)
-            .map(i => liveFloatMap.get(i.assetId))
-            .filter((i): i is NonNullable<typeof i> => i != null && i.floatValue !== null);
-        if (floatUpserts.length > 0) {
-            await Promise.all(floatUpserts.map(item =>
-                prisma.item_float.upsert({
-                    where: { assetId: item.assetId },
-                    update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers as any, fetchedAt: new Date() },
-                    create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers as any },
-                })
-            ));
-        }
-
-        // Update cache: replace the fetched games' items with fresh data, keep other games intact
-        const cachedItems = (user.inventoryCache ?? []) as SteamItem[];
-        const otherGames = cachedItems.filter(i => !games.includes(i.game));
-        const newCache = [...otherGames, ...liveItems];
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastInventoryRefresh: new Date(), inventoryCache: newCache as any },
-        });
 
         return Response.json(null, { status: 200 });
     }

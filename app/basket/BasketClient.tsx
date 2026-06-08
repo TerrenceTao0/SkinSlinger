@@ -100,7 +100,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                         basket.map(item => (
                             <div key={item.id} className="bg-accent flex items-center gap-4 p-3 rounded-sm">
                                 <div style={{ filter: `drop-shadow(0 0 6px #${item.hexColor}99)` }}>
-                                    <Image src={item.icon} alt="" width={60} height={60} style={{ width: 'auto' }} />
+                                    <Image src={item.icon} alt="" width={60} height={60} style={{ width: 'auto', height: 'auto' }} />
                                 </div>
 
                                 <div className="flex-1">

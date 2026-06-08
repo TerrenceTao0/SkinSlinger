@@ -5,7 +5,7 @@ const api_key = process.env.STEAM_WEB_KEY!;
 
 const game_slugs: Record<string, string> = {
     "CS2": "cs2",
-    "Dota2": "dota2",
+    "Dota2": "dota",
     "Rust": "rust",
     "TF2": "tf2",
 };
@@ -147,14 +147,13 @@ export async function fetchItemPrice(market_hash_name: string, game: string, _na
 
         if (!data.success) return null;
 
-        let price = data.median_price ?? data.lowest_price;
+        const raw = data.median_price ?? data.lowest_price;
+        if (!raw) return null;
 
-        if (!price) return null;
+        const numeric = parseFloat(raw.replace(/[^0-9.]/g, ""));
+        if (isNaN(numeric)) return null;
 
-        // Minimum 20% discount
-        price *= .8
-
-        return parseFloat(price.replace(/[^0-9.]/g, ""));
+        return numeric < 0.05 ? numeric : numeric * 0.8;
 
     } 
     catch {

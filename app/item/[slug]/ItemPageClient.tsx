@@ -169,7 +169,7 @@ export default function ItemPageClient({
                         style={{ boxShadow: `0 0 40px #${hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
                     >
                         <div style={{ filter: `drop-shadow(0 0 16px #${hexColor}99)` }}>
-                            <Image src={icon} alt={marketName} width={180} height={180} style={{ width: 'auto', maxHeight: 180 }} priority />
+                            <Image src={icon} alt={marketName} width={180} height={180} style={{ width: 'auto', height: 'auto', maxHeight: 180 }} priority />
                         </div>
 
                         <h1 style={{ color: `#${hexColor}` }} className="text-lg font-semibold text-center">

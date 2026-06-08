@@ -86,6 +86,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
     const [url, setUrl] = useState("");
     const [waiting, setWaiting] = useState(false);
     const [selling, setSelling] = useState<SteamItem[]>([])
+    const [listedAssetIds, setListedAssetIds] = useState(new Set<string>())
     const [gameFilter, setGameFilter] = useState<"CS2" | "Dota2" | "Rust" | "TF2">("CS2")
     const [lastRefreshDisplay, setLastRefreshDisplay] = useState(() => timeAgo(lastRefresh));
 
@@ -233,7 +234,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
     }
 
 
-    const filtered = inventory.filter(i => i.game === gameFilter);
+    const filtered = inventory.filter(i => i.game === gameFilter && !listedAssetIds.has(i.assetId));
 
     const stackedInventory = (() => {
         const result: (SteamItem & { quantity: number })[] = [];
@@ -242,9 +243,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
 
-            if (priceState != null && priceState < 0.30) continue;
-
-            const basePrice = priceState ?? 0;
+const basePrice = priceState ?? 0;
             const stickerValue = item.stickers
                 ? item.stickers.reduce((sum, s) => {
                     const sp = livePrices.get(`Sticker | ${s.name}`) ?? 0;
@@ -288,7 +287,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
         <>
             <LeftInventoryPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
 
-            <RightPanel selling={selling} setSelling={setSelling} onListed={() => router.refresh()} livePrices={livePrices} inventoryToken={inventoryToken} />
+            <RightPanel selling={selling} setSelling={setSelling} onListed={(ids) => { setListedAssetIds(prev => new Set([...prev, ...ids])); router.refresh(); }} livePrices={livePrices} inventoryToken={inventoryToken} />
 
 
             {/* Mobile layout */}
