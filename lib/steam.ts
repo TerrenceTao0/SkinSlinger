@@ -93,22 +93,27 @@ export async function checkCanTrade(
 }
 
 
-// Fetches today's price for an item from steamwebapi using the market hash name.
+// Fetches the lowest price for an item across all markets from steamwebapi.
 // Returns null if the item is not found or the request fails.
 export async function fetchItemPrice(market_hash_name: string, _game: string, _name: string): Promise<number | null> {
     try {
-        const url = new URL(`${base_url}/steam/api/item`);
+        const url = new URL(`${base_url}/markets/prices`);
         url.searchParams.set("key", api_key);
         url.searchParams.set("market_hash_name", market_hash_name);
-        url.searchParams.set("markets", "skinport");
 
         const response = await fetch(url.toString());
         if (!response.ok) return null;
 
         const data = await response.json();
-        const price = data.pricereal || data.pricelatest || 0;
+        if (!Array.isArray(data) || data.length === 0) return null;
 
-        return price || null;
+        const prices = Object.values(data[0].prices as Record<string, { price: number }>)
+            .map(m => m.price)
+            .filter((p): p is number => typeof p === 'number' && p > 0);
+
+        if (prices.length === 0) return null;
+
+        return Math.min(...prices);
     } catch {
         return null;
     }

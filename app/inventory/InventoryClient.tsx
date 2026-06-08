@@ -32,51 +32,49 @@ function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
     return (
         <>
             {/* Blur background */}
-            <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5"
-            ></div>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" />
 
-
-            {/* Ask for Trade Url */}
-            <form
-                className="flex flex-col gap-1 rounded-[5px] text-center w-96 h-80 mt-5 z-6 bg-secondary rounded-sm frame-shadow"
-                onSubmit={onSubmit}
-            >
-                <p className="mt-10 text-2xl">Enter your Steam Trade Url</p>
-
-                <a href="http://steamcommunity.com/my/tradeoffers/privacy" target="_blank">
-                    <button
-                        type="button"
-                        className="cursor-pointer"
-                    >
-                        <i className="text-special">Click to get your Trade Url</i>
-                    </button>
-                </a>
-
-                <div className="input-box relative">
-                    <input
-                        id="url"
-                        className="sign-up-input peer"
-                        placeholder=""
-                        required
-                        onChange={checkUrl}
-                    />
-
-                    <label htmlFor="url" className="floating-label">Trade Url</label>
-
-                    {error === "Invalid url" && (
-                        <p className="error">Invalid Trade Url.</p>
-                    )}
-                </div>
-
-                <button
-                    disabled={waiting}
-                    type="submit"
-                    className={`rounded-md mt-5 button bg-accent self-center ${error === "" && url.includes(url_start) ? 'w-50 h-9 text-[15px]' : 'w-40 h-9 text-[15px]'}`}
+            {/* Modal */}
+            <div className="fixed inset-0 z-6 flex items-center justify-center">
+                <form
+                    className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4"
+                    onSubmit={onSubmit}
                 >
-                    Enter
-                </button>
-            </form>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-xl font-semibold">Steam Trade URL required</p>
+                        <p className="text-sm text-gray-400">We need your trade URL so buyers can send you items directly.</p>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <input
+                            id="url"
+                            className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
+                            placeholder="https://steamcommunity.com/tradeoffer/new/?partner=..."
+                            required
+                            onChange={checkUrl}
+                        />
+                        {error === "Invalid url" && (
+                            <p className="text-red-500 text-xs">Invalid trade URL.</p>
+                        )}
+                    </div>
+
+                    <a
+                        href="https://steamcommunity.com/my/tradeoffers/privacy"
+                        target="_blank"
+                        className="text-special text-sm hover:underline"
+                    >
+                        Where do I find my trade URL? →
+                    </a>
+
+                    <button
+                        disabled={waiting}
+                        type="submit"
+                        className="rounded-sm button bg-special h-10 text-sm font-medium"
+                    >
+                        {waiting ? "Saving..." : "Save Trade URL"}
+                    </button>
+                </form>
+            </div>
         </>
     )
 }
@@ -104,11 +102,21 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
 
     useEffect(() => {
         setLastRefreshDisplay(timeAgo(lastRefresh));
-
         const id = setInterval(() => setLastRefreshDisplay(timeAgo(lastRefresh)), 10000);
-
         return () => clearInterval(id);
     }, [lastRefresh]);
+
+    useEffect(() => {
+        setLivePrices(prev => {
+            const next = new Map(prev);
+            for (const item of inventory) {
+                if (!next.has(item.market_name)) {
+                    next.set(item.market_name, item.price > 0 ? item.price : null);
+                }
+            }
+            return next;
+        });
+    }, [inventory]);
 
     useEffect(() => {
         const seen = new Set<string>();
@@ -233,7 +241,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
 
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
-            if (priceState !== null && (priceState ?? 0) < 0.30) continue;
+            if (priceState != null && priceState < 0.30) continue;
 
             const basePrice = priceState ?? 0;
             const stickerValue = item.stickers

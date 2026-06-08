@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function ListingsPage() {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) redirect("/login");
+    if (!session?.user?.id) redirect("/");
 
     const activePurchases = await prisma.purchase.findMany({
         where: { sellerId: session.user.id, status: "pending" },

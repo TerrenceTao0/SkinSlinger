@@ -52,21 +52,21 @@ const steps = [
 ]
 
 const paymentMethods = ["USDC (Polygon Network)"]
-const description = 'SkinSlinger is the P2P skins marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks, instant trades.'
+const description = 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto — 0% sales fee, no identity verification, no trade hold, instant P2P trades.'
 
 export const metadata: Metadata = {
-    title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC',
+    title: 'No KYC Skins Marketplace - Buy & Sell Steam Skins with Crypto | SkinSlinger',
     description,
     alternates: { canonical: '/' },
     openGraph: {
-        title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
+        title: 'No KYC Skins Marketplace - Buy & Sell Steam Skins with Crypto | SkinSlinger',
         description,
         url: '/',
         images: [{ url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger' }],
     },
     twitter: {
         card: 'summary',
-        title: 'Buy & Sell Steam Skins with Crypto - 0% Fee, No KYC | SkinSlinger',
+        title: 'No KYC Skins Marketplace - Buy & Sell Steam Skins with Crypto | SkinSlinger',
         description,
         images: ['/logo.png'],
     },
@@ -123,8 +123,13 @@ const faq = {
         },
         {
             "@type": "Question",
+            "name": "What is a no KYC skins marketplace?",
+            "acceptedAnswer": { "@type": "Answer", "text": "A no KYC skins marketplace lets you buy and sell Steam skins without providing any identity documents or personal verification. SkinSlinger is a no KYC skins marketplace — you sign up with just a Steam account, no passport, no ID, no selfies required." },
+        },
+        {
+            "@type": "Question",
             "name": "Is KYC required on withdrawals?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger requires no identity verification (KYC) at all." },
+            "acceptedAnswer": { "@type": "Answer", "text": "No. SkinSlinger requires no identity verification (KYC) at all — not for sign-up, not for trading, and not for withdrawals." },
         },
         {
             "@type": "Question",
@@ -175,14 +180,18 @@ export default function Home() {
         <div className="overflow-y-auto h-full w-full no-scrollbar">
             <div className="flex flex-col justify-center items-center gap-6 px-4 pt-20">
                 <div className="flex flex-col items-center text-center gap-3">
-                    <Image src="/logo.png" alt="" width={60} height={60} />
-                    
+                    <Image src="/logo.png" alt="SkinSlinger logo" width={60} height={60} />
+
                     <h1 className="text-4xl font-bold">
                         SkinSlinger
                     </h1>
-                    
+
+                    <p className="text-special font-medium text-sm uppercase tracking-widest">
+                        The No KYC Skins Marketplace
+                    </p>
+
                     <p className="text-gray-400 text-lg max-w-md">
-                        Trade directly with other players, instantly.
+                        Trade CS2, Dota 2, Rust and TF2 skins directly with other players — no identity checks, no middleman, instant trades.
                     </p>
                 </div>
 
@@ -243,6 +252,38 @@ export default function Home() {
                             )}
                         </div>
                     ))}
+                </div>
+
+                <div className="w-full max-w-2xl">
+                    <p className="text-center text-green-200 font-semibold text-lg mb-4">How we compare</p>
+                    <div className="overflow-x-auto">
+                        <div className="bg-secondary rounded-sm text-sm min-w-[560px]">
+                            <div className="grid grid-cols-5 px-4 py-2 border-b border-gray-700 text-xs text-gray-500 uppercase tracking-widest">
+                                <span>Platform</span>
+                                <span className="text-center">Sales</span>
+                                <span className="text-center">Deposit</span>
+                                <span className="text-center">Withdrawal</span>
+                                <span className="text-right">Total</span>
+                            </div>
+                            {[
+                                { name: "SkinSlinger", sales: "0%",   deposit: "0%",  withdrawal: "2%",   total: "2%",    highlight: true },
+                                { name: "CSFloat",     sales: "2%",   deposit: "1%",  withdrawal: "0.57%", total: "~3.57%"                 },
+                                { name: "Skinport",    sales: "12%",  deposit: "0%",  withdrawal: "~1%",  total: "~13%"                   },
+                                { name: "DMarket",     sales: "5%",   deposit: "0%",  withdrawal: "~2%",  total: "~7%"                    },
+                                { name: "Waxpeer",     sales: "5%",   deposit: "0%",  withdrawal: "~1%",  total: "~6%"                    },
+                                { name: "Steam Market",sales: "15%",  deposit: "0%",  withdrawal: "N/A",  total: "15%+"                   },
+                            ].map(({ name, sales, deposit, withdrawal, total, highlight }, i, arr) => (
+                                <div key={name} className={`grid grid-cols-5 px-4 py-3 items-center ${i < arr.length - 1 ? 'border-b border-gray-700' : ''} ${highlight ? 'bg-special/10' : ''}`}>
+                                    <span className={highlight ? 'text-special font-semibold' : 'text-gray-300'}>{name}</span>
+                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{sales}</span>
+                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{deposit}</span>
+                                    <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{withdrawal}</span>
+                                    <span className={`text-right font-semibold ${highlight ? 'text-special' : total.includes('15') || total.includes('13') ? 'text-red-400' : 'text-gray-300'}`}>{total}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <p className="text-xs text-gray-500 text-center mt-2">Based on crypto payments only.</p>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">

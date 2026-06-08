@@ -19,6 +19,21 @@ export const authOptions: NextAuthOptions = {
                 token.steam_id = user.steam_id
             }
 
+            // Fallback: if token.id was never set, look up by email
+            if (!token.id && token.email) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { email: token.email },
+                    select: { id: true, cash: true, steam_trade_url: true, steam_id: true },
+                });
+                if (dbUser) {
+                    token.id = dbUser.id;
+                    token.cash = dbUser.cash;
+                    token.steam_id = dbUser.steam_id ?? undefined;
+                    token.steam_trade_url = dbUser.steam_trade_url ?? undefined;
+                }
+                return token;
+            }
+
             if (token.id) {
                 const dbUser = await prisma.user.findUnique({
                     where: { id: token.id as string },

@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
     const { game } = await params;
     const config = GAMES[game];
     if (!config) return {};
-    const title = `Buy & Sell ${config.displayName} Skins with Crypto - 0% Fee, No KYC`;
+    const title = `${config.displayName} No KYC Skins Marketplace - Buy & Sell with Crypto`;
     return {
         title,
         description: config.description,

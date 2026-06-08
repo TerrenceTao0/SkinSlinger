@@ -27,15 +27,17 @@ const OG_IMAGE = { url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger'
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
     title: {
-        default: 'SkinSlinger — Buy & Sell Steam Skins with Crypto',
+        default: 'No KYC Skins Marketplace — SkinSlinger',
         template: '%s | SkinSlinger',
     },
-    description: 'SkinSlinger is the P2P skins marketplace with 0% sales fee, no KYC, and no trade hold. Buy and sell CS2, Dota 2, Rust, and TF2 skins with crypto — no middleman, no identity checks.',
+    description: 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto — 0% sales fee, no identity verification, no trade hold.',
     keywords: [
+        'no kyc skins marketplace', 'no kyc skin marketplace', 'no kyc steam skins',
         'CS2 skins', 'buy CS2 skins', 'sell CS2 skins', 'CS2 skin marketplace',
         'Dota 2 items', 'Rust skins', 'TF2 items', 'skins marketplace',
-        'buy skins with crypto', 'no KYC skin marketplace', '0% fee skin marketplace',
+        'buy skins with crypto', '0% fee skin marketplace',
         'P2P skin trading', 'crypto skin marketplace', 'no trade hold',
+        'no kyc crypto marketplace', 'anonymous skin marketplace',
     ],
     openGraph: {
         siteName: 'SkinSlinger',
