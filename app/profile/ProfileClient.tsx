@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import FloatBar from "@/app/components/FloatBar";
@@ -119,7 +120,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         <div className="flex items-center gap-3">
                             {nextWithdrawFee && (
                                 <span className="text-xs text-gray-500">
-                                    → {nextWithdrawFee} at Tier {nextTierLabel}
+                                    {nextWithdrawFee} at Tier {nextTierLabel}
                                 </span>
                             )}
 
@@ -189,12 +190,21 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
 
                 </div>
 
-                <button
-                    onClick={copyProfileLink}
-                    className="text-xs button w-80 bg-accent h-10 rounded-sm"
-                >
-                    {copied ? "Copied!" : "Copy profile link"}
-                </button>
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={copyProfileLink}
+                        className="text-xs button w-80 bg-accent h-10 rounded-sm"
+                    >
+                        {copied ? "Copied!" : "Copy profile link"}
+                    </button>
+
+                    <button
+                        onClick={() => signOut()}
+                        className="hidden md:block text-xs button w-80 bg-negative h-10 rounded-sm"
+                    >
+                        Log out
+                    </button>
+                </div>
             </div>
 
 

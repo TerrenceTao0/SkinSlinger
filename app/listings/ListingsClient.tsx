@@ -173,7 +173,7 @@ function ListingCard({ group, onDelist }: { group: ListingGroup; onDelist: () =>
 
             <button
                 onClick={delist}
-                className="shrink-0 h-10 w-full bg-remove button text-sm"
+                className="shrink-0 h-10 w-full bg-negative button text-sm"
             >
                 DELIST
             </button>
@@ -210,7 +210,7 @@ export default function ListingsClient({ listings }: { listings: Listing[] }) {
                         <p className="font-medium">Delist all {listings.length} listings?</p>
                         <p className="text-sm text-gray-400">This cannot be undone.</p>
                         <div className="flex gap-2">
-                            <button onClick={delistAll} className="flex-1 h-10 rounded-sm bg-remove button text-sm">Delist all</button>
+                            <button onClick={delistAll} className="flex-1 h-10 rounded-sm bg-negative button text-sm">Delist all</button>
                             <button onClick={() => setConfirmDelistAll(false)} className="flex-1 h-10 rounded-sm bg-accent button text-sm">Cancel</button>
                         </div>
                     </div>

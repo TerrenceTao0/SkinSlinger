@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useBasket } from './BasketProvider';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 
 //
 
@@ -134,6 +134,10 @@ export default function TopNav() {
                             <Link href="/inventory" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Inventory
                             </Link>
+
+                            <button className="mobile_menu_button button text-negative" onClick={() => signOut({"callbackUrl": "/"})}>
+                                Log out 
+                            </button>
                         </>
                     ) : (
                         <>

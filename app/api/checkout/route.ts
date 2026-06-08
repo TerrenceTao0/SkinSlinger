@@ -179,7 +179,7 @@ export async function POST(request: Request) {
                 subject: `New sale — send your item${sellerItems.length > 1 ? "s" : ""}`,
                 react: PurchaseNotificationEmail({
                     buyerTradeUrl: buyer.steam_trade_url ?? "",
-                    buyerName: buyer.username ?? buyer.email ?? "Buyer",
+                    buyerName: buyer.name ?? buyer.email ?? "Buyer",
                     items: sellerItems.map(p => ({ marketName: p.marketName, price: p.price })),
                 }),
             });

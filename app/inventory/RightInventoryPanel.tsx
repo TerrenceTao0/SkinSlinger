@@ -238,7 +238,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                     </div>
 
                     <div className="flex gap-2 mt-3">
-                        <button onClick={() => setMobileQueueOpen(false)} className="bg-remove button rounded-sm w-12 h-12 shrink-0 flex items-center justify-center text-lg">
+                        <button onClick={() => setMobileQueueOpen(false)} className="bg-negative button rounded-sm w-12 h-12 shrink-0 flex items-center justify-center text-lg">
                             ✕
                         </button>
 

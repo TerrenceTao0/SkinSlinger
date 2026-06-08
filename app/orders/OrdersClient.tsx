@@ -80,7 +80,7 @@ function CancelModal({ refundMessage, onConfirm, onClose, loading }: {
                 <p className="text-sm opacity-60">{refundMessage}</p>
                 <p className="text-sm opacity-60">If the trade has already gone through, it will be detected and marked complete instead - use this to complete trades faster.</p>
                 <div className="flex gap-3">
-                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-remove button flex-1">
+                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-negative button flex-1">
                         {loading ? "..." : "Yes, cancel"}
                     </button>
                     <button onClick={onClose} disabled={loading} className="h-9 px-4 rounded-sm bg-accent button flex-1">
@@ -154,7 +154,7 @@ function PurchaseRow({ group }: { group: PurchaseGroup }) {
             {isActive && (
                 <div className="flex flex-col gap-2 text-sm">
                     <p className="opacity-60">Seller taking too long to send the trade offer?</p>
-                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-remove button w-fit">
+                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-negative button w-fit">
                         Cancel
                     </button>
                     {error && <p className="text-red-400">{error}</p>}
@@ -238,7 +238,7 @@ function SaleRow({ group }: { group: PurchaseGroup }) {
                         )}
                     </div>
                     <p className="opacity-60">Buyer taking too long to accept the trade offer?</p>
-                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-remove button w-fit">
+                    <button onClick={() => setConfirming(true)} className="h-9 px-4 rounded-sm bg-negative button w-fit">
                         Cancel
                     </button>
                     {error && <p className="text-red-400">{error}</p>}

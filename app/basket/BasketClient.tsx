@@ -123,7 +123,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                                     ${(item.price * item.quantity).toFixed(2)}
                                 </p>
 
-                                <button onClick={() => remove(item.id)} className="bg-remove button w-20 h-12 text-sm rounded-sm">
+                                <button onClick={() => remove(item.id)} className="bg-negative button w-20 h-12 text-sm rounded-sm">
                                     REMOVE
                                 </button>
                             </div>
