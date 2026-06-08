@@ -267,10 +267,10 @@ export default function Home() {
                             </div>
                             {[
                                 { name: "SkinSlinger", sales: "0%",   deposit: "0%",  withdrawal: "2%",   total: "2%",    highlight: true },
-                                { name: "CSFloat",     sales: "2%",   deposit: "1%",  withdrawal: "0.57%", total: "~3.57%"                 },
-                                { name: "Skinport",    sales: "12%",  deposit: "0%",  withdrawal: "~1%",  total: "~13%"                   },
-                                { name: "DMarket",     sales: "5%",   deposit: "0%",  withdrawal: "~2%",  total: "~7%"                    },
-                                { name: "Waxpeer",     sales: "5%",   deposit: "0%",  withdrawal: "~1%",  total: "~6%"                    },
+                                { name: "CSFloat",     sales: "2%",   deposit: "2.8%", withdrawal: "0.5%", total: "~5.3%"                  },
+                                { name: "Skinport",    sales: "8%",   deposit: "0%",  withdrawal: "0%",   total: "8%"                     },
+                                { name: "DMarket",     sales: "7%",   deposit: "0%",  withdrawal: "2.5%", total: "~9.5%"                  },
+                                { name: "CS.Money",    sales: "7%",   deposit: "0%",  withdrawal: "0%",   total: "7%"                     },
                                 { name: "Steam Market",sales: "15%",  deposit: "0%",  withdrawal: "N/A",  total: "15%+"                   },
                             ].map(({ name, sales, deposit, withdrawal, total, highlight }, i, arr) => (
                                 <div key={name} className={`grid grid-cols-5 px-4 py-3 items-center ${i < arr.length - 1 ? 'border-b border-gray-700' : ''} ${highlight ? 'bg-special/10' : ''}`}>
@@ -283,7 +283,7 @@ export default function Home() {
                             ))}
                         </div>
                     </div>
-                    <p className="text-xs text-gray-500 text-center mt-2">Based on crypto payments only.</p>
+                    <p className="text-xs text-gray-500 text-center mt-2">Fees have been taken from pricempire.com.</p>
                 </div>
 
                 <div className="flex flex-col items-center gap-2">
