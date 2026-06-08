@@ -18,8 +18,8 @@ type Purchase = {
     buyerTradeUrl: string | null;
     buyerId: string;
     sellerId: string;
-    buyer: { username: string | null; email: string | null; steam_trade_url: string | null };
-    seller: { username: string | null; email: string | null };
+    buyer: { name: string | null; email: string | null; steam_trade_url: string | null };
+    seller: { name: string | null; email: string | null };
 };
 
 type PurchaseGroup = {
@@ -108,7 +108,7 @@ function PurchaseRow({ group }: { group: PurchaseGroup }) {
     const [error, setError] = useState("");
     const isActive = group.status === "pending";
     const { label, color } = STATUS_LABEL[group.status] ?? { label: group.status, color: "" };
-    const sellerName = group.seller.username ?? group.seller.email ?? "Seller";
+    const sellerName = group.seller.name ?? group.seller.email ?? "Seller";
 
     async function cancel() {
         setLoading(true);
@@ -181,7 +181,7 @@ function SaleRow({ group }: { group: PurchaseGroup }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const { label, color } = STATUS_LABEL[group.status] ?? { label: group.status, color: "" };
-    const buyerName = group.buyer.username ?? group.buyer.email ?? "Buyer";
+    const buyerName = group.buyer.name ?? group.buyer.email ?? "Buyer";
     const isActive = group.status === "pending";
 
     async function cancel() {

@@ -25,8 +25,8 @@ export default async function OrdersPage() {
             ],
         },
         include: {
-            buyer: { select: { username: true, email: true, steam_trade_url: true } },
-            seller: { select: { username: true, email: true } },
+            buyer: { select: { name: true, email: true, steam_trade_url: true } },
+            seller: { select: { name: true, email: true } },
         },
         orderBy: { createdAt: "desc" },
     });
