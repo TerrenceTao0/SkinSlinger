@@ -63,13 +63,6 @@ model pendingAccount {
   expires DateTime
 }
 
-model resetPassword {
-  id String @id @default(cuid())
-  token String @unique
-  email String @unique
-  expires DateTime
-}
-
 model session {
   id String @id @default(cuid())
   sessionToken String @unique
@@ -77,14 +70,6 @@ model session {
   expires DateTime
 
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model verificationToken {
-  identifier String
-  token String @unique
-  expires DateTime
-
-  @@unique([identifier, token])
 }
 
 model crypto_deposit {
@@ -169,3 +154,4 @@ model purchase {
   buyer user @relation("buyer_purchases", fields: [buyerId], references: [id])
   seller user @relation("seller_purchases", fields: [sellerId], references: [id])
 }
+

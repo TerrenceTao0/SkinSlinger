@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from 'next'
+import { signIn } from "next-auth/react"
 
 //
 
@@ -20,10 +21,9 @@ const fees = [
         value: "2% → 0.5%",
         icon: "/withdraw.svg",
         tiers: [
-            { rate: "2.0%", threshold: "Default" },
-            { rate: "1.5%", threshold: "$1,000+ in sales/purchases" },
-            { rate: "1.0%", threshold: "$5,000+ in sales/purchases" },
-            { rate: "0.5%", threshold: "$25,000+ in sales/purchases" },
+            { rate: "1.5%", threshold: "$1,000 in sales/purchases" },
+            { rate: "1.0%", threshold: "$5,000 in sales/purchases" },
+            { rate: "0.5%", threshold: "$25,000 in sales/purchases" },
         ],
     },
 ]
@@ -212,7 +212,9 @@ export default function Home() {
 
 
                 <div className="flex flex-col items-center text-center gap-1">
-                    <p className="text-green-200 font-semibold text-lg">The lowest fees in the market.</p>
+                    <p className="text-green-200 font-semibold text-lg">
+                        The lowest fees in the market.
+                    </p>
                 </div>
 
                 
@@ -226,12 +228,19 @@ export default function Home() {
                                 </div>
                                 <span className="font-semibold text-special">{value}</span>
                             </div>
+
+
                             {tiers && (
                                 <div className="mt-2 ml-[30px] flex flex-col gap-1">
                                     {tiers.map(({ rate, threshold }) => (
                                         <div key={threshold} className="flex items-center justify-between">
-                                            <span className="text-xs text-gray-500">{threshold}</span>
-                                            <span className="text-xs font-medium text-gray-300">{rate}</span>
+                                            <span className="text-xs text-gray-500"
+                                                >{threshold}
+                                            </span>
+
+                                            <span className="text-xs font-medium text-gray-300">
+                                                {rate}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -242,7 +251,10 @@ export default function Home() {
 
 
                 <div className="flex flex-col items-center gap-2">
-                    <p className="text-xs text-gray-500 tracking-widest">CURRENTLY SUPPORTED PAYMENT METHODS</p>
+                    <p className="text-xs text-gray-500 tracking-widest">
+                        CURRENTLY SUPPORTED PAYMENT METHODS
+                    </p>
+
                     <div className="flex gap-2 flex-wrap justify-center">
                         {paymentMethods.map(method => (
                             <span key={method} className="bg-accent text-gray-400 text-xs px-3 py-1 rounded-sm">
@@ -253,27 +265,14 @@ export default function Home() {
                 </div>
 
 
-                <div className="flex gap-3">
-                    <Link href="/market">
-                        <button className="button bg-special px-8 h-11 rounded-sm font-medium">
-                            Browse Market
-                        </button>
-                    </Link>
-
-                    <Link href="/sign-up">
-                        <button className="button bg-special px-8 h-11 rounded-sm font-medium">
-                            Sign Up
-                        </button>
-                    </Link>
-                </div>
-
-
                 <PointDown />
             </div>
+
 
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+
 
             <div className="w-full max-w-lg mx-auto px-4 pb-12">
                 <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
@@ -288,7 +287,9 @@ export default function Home() {
                 </div>
             </div>
 
+
             <PointDown />
+
 
             <div className="w-full max-w-lg mx-auto px-4 pb-20">
                 <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
@@ -302,6 +303,7 @@ export default function Home() {
                     ))}
                 </div>
             </div>
+
 
             <footer className="border-t border-gray-700/50 mt-4 py-10 px-6 backdrop-blur-xs bg-black/20">
                 <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
