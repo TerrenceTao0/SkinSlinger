@@ -114,7 +114,7 @@ export default function FinanceClient() {
     }
 
 
-    async function handleWithdraw(e: React.SubmitEvent) {
+    async function handleWithdraw(e: React.FormEvent) {
         e.preventDefault()
 
         const amount = parseFloat(amountInput)
