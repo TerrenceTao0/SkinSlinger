@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { posts } from '../posts'
+import PlatformComparisonTable from '../../components/PlatformComparisonTable'
 
 export function generateStaticParams() {
     return posts.map((p) => ({ slug: p.slug }))
@@ -55,6 +56,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                             </div>
                         ))}
                     </div>
+
+                    {post.slug === 'lowest-fee-skins-marketplace' && (
+                        <div className="mt-8">
+                            <PlatformComparisonTable />
+                        </div>
+                    )}
 
                     <div className="mt-10 pt-6 border-t border-white/10">
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Author Perspective</p>

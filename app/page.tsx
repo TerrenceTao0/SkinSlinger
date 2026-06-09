@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from 'next'
 import { signIn } from "next-auth/react"
+import PlatformComparisonTable from "./components/PlatformComparisonTable"
 
 //
 
@@ -164,15 +165,6 @@ const faq = {
     ],
 };
 
-const platformComparisons = [
-    { name: "SkinSlinger", sales: "0%", deposit: "0%", withdrawal: "2%", total: "2%", highlight: true },
-    { name: "CSFloat", sales: "2%", deposit: "2.8%", withdrawal: "0.5%", total: "5.3%" },
-    { name: "CS.Money", sales: "7%", deposit: "0%", withdrawal: "0%", total: "7%" },
-    { name: "Skinport", sales: "8%", deposit: "0%", withdrawal: "0%", total: "8%" },
-    { name: "DMarket", sales: "7%", deposit: "0%", withdrawal: "2.5%", total: "9.5%" },
-    { name: "Steam Market",sales: "15%",  deposit: "0%",   withdrawal: "N/A",  total: "15%+" },
-]
-
 //
 
 function PointDown() { 
@@ -268,53 +260,7 @@ export default function Home() {
                     <p className="text-center font-semibold text-lg mb-4">
                         How we compare
                     </p>
-
-                    <div className="bg-secondary rounded-sm text-xs w-full">
-                        <div className="grid grid-cols-5 px-3 py-2 border-b border-gray-700 text-[10px] text-gray-500 uppercase tracking-widest">
-                            <span>
-                                Platform
-                            </span>
-
-                            <span className="text-center">
-                                Sales
-                            </span>
-
-                            <span className="text-center">
-                                <span className="hidden sm:inline">
-                                    Deposit
-                                </span>
-
-                                <span className="sm:hidden">
-                                    Dep.
-                                </span>
-                            </span>
-
-                            <span className="text-center">
-                                <span className="hidden sm:inline">
-                                    Withdrawal
-                                </span>
-
-                                <span className="sm:hidden">
-                                    W/D
-                                </span>
-                            </span>
-
-                            <span className="text-right">
-                                Total
-                            </span>
-                        </div>
-
-                        {platformComparisons.map(({ name, sales, deposit, withdrawal, total, highlight }, i, arr) => (
-                            <div key={name} className={`grid grid-cols-5 px-3 py-2.5 items-center ${i < arr.length - 1 ? 'border-b border-gray-700' : ''} ${highlight ? 'bg-special/10' : ''}`}>
-                                <span className={`text-[11px] ${highlight ? 'text-special font-semibold' : 'text-gray-300'}`}>{name}</span>
-                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{sales}</span>
-                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{deposit}</span>
-                                <span className={`text-center font-medium ${highlight ? 'text-special' : 'text-gray-300'}`}>{withdrawal}</span>
-                                <span className={`text-right font-semibold ${highlight ? 'text-special' : total.includes('15') ? 'text-red-400' : 'text-gray-300'}`}>{total}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <p className="text-xs text-gray-500 text-center mt-2">Fees have been taken from pricempire.com</p>
+                    <PlatformComparisonTable />
                 </div>
 
                 <div className="flex flex-col items-center gap-2 mt-3 mb-3">
