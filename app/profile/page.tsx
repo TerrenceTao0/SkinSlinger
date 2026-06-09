@@ -21,7 +21,7 @@ export default async function Profile() {
         prisma.item_listing.findMany({
             where: { userId: session.user.id },
             select: { id: true, assetId: true, marketName: true, price: true, icon: true, hexColor: true, game: true, commodity: true },
-            orderBy: { createdAt: "desc" },
+            orderBy: { price: "desc" },
         }),
     ]);
 

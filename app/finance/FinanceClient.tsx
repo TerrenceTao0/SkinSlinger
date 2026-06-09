@@ -30,6 +30,7 @@ export default function FinanceClient() {
     useEffect(() => {
         return () => {
             if (pollRef.current) clearInterval(pollRef.current)
+                
             if (timerRef.current) clearInterval(timerRef.current)
         }
     }, [])
@@ -40,23 +41,29 @@ export default function FinanceClient() {
         pollRef.current = setInterval(async () => {
             try {
                 const res = await fetch(`/api/deposit-status/${paymentId}`)
+
                 if (!res.ok) return
 
                 const { status } = await res.json() as { status: PaymentStatus }
+
                 setPaymentStatus(status)
 
                 if (status === "finished") {
                     clearInterval(pollRef.current!)
                     setView("deposit-success")
-                } else if (status === "failed" || status === "expired") {
+
+                } 
+                else if (status === "failed" || status === "expired") {
                     clearInterval(pollRef.current!)
                 }
             } catch {}
         }, 10000)
     }
 
+
     function startTimer(paymentAddress: string) {
         if (timerRef.current) clearInterval(timerRef.current)
+
         timerRef.current = setInterval(() => {
             setSecondsLeft(prev => {
                 if (prev <= 1) {
@@ -65,17 +72,22 @@ export default function FinanceClient() {
                         .then(r => r.json())
                         .then(({ status }) => { if (status === 'finished') setView('deposit-success') })
                         .catch(() => {})
+
                     return 0
                 }
+
+
                 return prev - 1
             })
         }, 1000)
     }
 
-    async function handleDeposit(e: React.FormEvent) {
+
+    async function handleDeposit(e: React.SubmitEvent) {
         e.preventDefault()
 
         const amount = parseFloat(amountInput)
+
         if (!amount || amount < 1) { setError("Minimum deposit is $1.00"); return }
 
         setLoading(true)
@@ -86,6 +98,8 @@ export default function FinanceClient() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount }),
         })
+
+
         const data = await res.json()
 
         if (!res.ok) { setError(data.error ?? "Failed to create payment"); setLoading(false); return }
@@ -99,11 +113,14 @@ export default function FinanceClient() {
         startTimer(data.payAddress)
     }
 
-    async function handleWithdraw(e: React.FormEvent) {
+
+    async function handleWithdraw(e: React.SubmitEvent) {
         e.preventDefault()
 
         const amount = parseFloat(amountInput)
+
         if (!amount || amount < 1) { setError("Minimum withdrawal is $1.00"); return }
+
         if (!address.trim()) { setError("Wallet address required"); return }
 
         setLoading(true)
@@ -114,6 +131,8 @@ export default function FinanceClient() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount, address }),
         })
+
+
         const data = await res.json()
 
         if (!res.ok) { setError(data.error ?? "Withdrawal failed"); setLoading(false); return }
@@ -123,11 +142,13 @@ export default function FinanceClient() {
         setLoading(false)
     }
 
+
     function copy(text: string, type: "address" | "amount") {
         navigator.clipboard.writeText(text)
         setCopied(type)
         setTimeout(() => setCopied(null), 2000)
     }
+
 
     function reset() {
         setAmountInput("")
@@ -136,8 +157,11 @@ export default function FinanceClient() {
         setView("menu")
     }
 
+
     if (view === "deposit-success") return <DepositSuccessView onDone={reset} />
+
     if (view === "withdraw-success" && withdrawResult) return <WithdrawSuccessView usdcAmount={withdrawResult.usdcAmount} onDone={reset} />
+
     if (view === "payment" && payment) return (
         <PaymentView
             payment={payment}
@@ -148,6 +172,8 @@ export default function FinanceClient() {
             onRetry={() => { setView("deposit-amount"); setPayment(null) }}
         />
     )
+
+
     if (view === "deposit-amount") return (
         <DepositAmountView
             amountInput={amountInput}
@@ -157,6 +183,8 @@ export default function FinanceClient() {
             onSubmit={handleDeposit}
         />
     )
+
+
     if (view === "withdraw") return (
         <WithdrawView
             amountInput={amountInput}
@@ -169,6 +197,7 @@ export default function FinanceClient() {
         />
     )
 
+
     return (
         <MenuView
             balance={session?.user?.cash ?? 0}
@@ -177,3 +206,4 @@ export default function FinanceClient() {
         />
     )
 }
+
