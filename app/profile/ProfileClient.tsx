@@ -5,10 +5,8 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import FloatBar from "@/app/components/FloatBar";
+import { toSlug } from "@/app/lib/site";
 
-function toSlug(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
 
 //
 
@@ -62,7 +60,6 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
     }, [progress])
 
     const withdrawFee = tier === "IV" ? "0.5%" : tier === "III" ? "1.0%" : tier === "II" ? "1.5%" : "2%"
-    const nextWithdrawFee = tier === "I" ? "1.5%" : tier === "II" ? "1.0%" : tier === "III" ? "0.5%" : null
 
     return (
         <div className="w-full h-full overflow-x-hidden overflow-y-auto flex flex-col items-center md:flex-row md:justify-center md:items-center py-8 gap-4 px-3">
@@ -118,12 +115,6 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         </span>
 
                         <div className="flex items-center gap-3">
-                            {nextWithdrawFee && (
-                                <span className="text-xs text-gray-500">
-                                    {nextWithdrawFee} at Tier {nextTierLabel}
-                                </span>
-                            )}
-
                             <span className="text-sm font-medium text-special">
                                 {withdrawFee}
                             </span>
@@ -136,10 +127,6 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         </span>
 
                         <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-500">
-                                {accountAge}
-                            </span>
-
                             <span className="text-sm font-medium">
                                 {memberSince}
                             </span>
@@ -152,10 +139,6 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         </span>
 
                         <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-500">
-                                {purchaseCount} orders
-                            </span>
-
                             <span className="text-sm font-medium">
                                 ${purchases.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
@@ -168,10 +151,6 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         </span>
 
                         <div className="flex items-center gap-3">
-                            <span className="text-xs text-gray-500">
-                                {saleCount} orders
-                            </span>
-
                             <span className="text-sm font-medium">
                                 ${sales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
@@ -215,7 +194,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                         Active Listings ({listings.length})
                     </p>
 
-                    <div className="bg-secondary rounded-sm divide-y divide-gray-700 md:overflow-y-auto md:max-h-[600px]">
+                    <div className="bg-secondary rounded-sm divide-y divide-gray-700 md:overflow-y-auto md:max-h-[650px]">
                         {(() => {
                             type Row = { listing: Listing; quantity: number; href: string }
                             const commodityMap = new Map<string, Row>()
@@ -288,6 +267,7 @@ export default function ProfileClient({ sales, purchases, saleCount, purchaseCou
                                                 )
                                             })()}
                                         </div>
+
 
                                         {/* Right: price */}
                                         <span className="text-sm font-medium text-special shrink-0 leading-none">

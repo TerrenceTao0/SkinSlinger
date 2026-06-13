@@ -25,33 +25,39 @@ export default async function Inventory() {
         redirect("/");
     }
 
+
     const user = await prisma.user.findUnique({ where: { email: session.user!.email! } });
 
     if (!user) {
         redirect("/");
     }
 
+
     if (user.steam_id) {
         const { allowed, reason } = await checkCanTrade(user.steam_id, user.steam_trade_url);
+
         if (!allowed) {
             return <TradeRestrictedClient reason={reason} />;
         }
     }
 
-    const COOLDOWN_MS = 30 * 60 * 1000;
+
+    const COOLDOWN_MS = 20 * 60 * 1000;
     const now = new Date();
-    const cacheValid = user.lastInventoryRefresh
-        && (now.getTime() - user.lastInventoryRefresh.getTime()) < COOLDOWN_MS;
+    const cacheValid = user.lastInventoryRefresh && (now.getTime() - user.lastInventoryRefresh.getTime()) < COOLDOWN_MS;
 
     let rawInventory: SteamItem[] = [];
 
     if (user.steam_id) {
         if (cacheValid && user.inventoryCache) {
             rawInventory = user.inventoryCache as SteamItem[];
-        } else {
+        } 
+        else {
             const fetched = await getInventory(user.steam_id);
+
             if (fetched.length > 0) {
                 rawInventory = [...new Map(fetched.map(i => [i.assetId, i])).values()];
+
                 await prisma.user.update({
                     where: { id: user.id },
                     data: { lastInventoryRefresh: now, inventoryCache: rawInventory as any },
@@ -66,19 +72,23 @@ export default async function Inventory() {
     ]);
     const listedAssetIds = new Set([...listings.map(l => l.assetId), ...pendingSales.map(p => p.assetId)]);
 
+
     // Cache float data from CS2 inventory items (float data comes directly from steamwebapi).
     const floatCandidates = rawInventory.filter(i =>
         i.game === 'CS2' && !i.commodity && !listedAssetIds.has(i.assetId) && i.floatValue !== null
     );
     if (floatCandidates.length > 0) {
-        await Promise.all(floatCandidates.map(async (item) => {
-            await prisma.item_float.upsert({
+        // Batched into a single transaction (one round trip / one connection) instead of
+        // firing N parallel upserts that exhaust the connection pool on large inventories.
+        await prisma.$transaction(floatCandidates.map((item) =>
+            prisma.item_float.upsert({
                 where: { assetId: item.assetId },
                 update: { floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers ?? Prisma.JsonNull, fetchedAt: new Date() },
                 create: { assetId: item.assetId, floatValue: item.floatValue, paintSeed: item.paintSeed, stickers: item.stickers ?? Prisma.JsonNull },
-            });
-        }));
+            })
+        ));
     }
+
 
     // Join float data
     const floatRows = await prisma.item_float.findMany({
@@ -101,12 +111,14 @@ export default async function Inventory() {
         };
     }).filter(item => !listedAssetIds.has(item.assetId));
 
+
     // Sign inventory token for ownership verification when listing
     const inventoryToken = await signInventoryToken(
         user.id,
         rawInventory.map(i => ({ assetId: i.assetId, marketName: i.market_name })),
     );
 
+    
     return <InventoryClient
         isSteamLinked={!!(user?.steam_id && user?.steam_trade_url)}
         inventory={inventoryWithPrices}

@@ -1,10 +1,10 @@
 export const WITHDRAWAL_FEE = 0.02
 
+// Shape returned by /api/create-deposit (the deposit id is the pay address)
 export type Payment = {
-    paymentId: string
+    depositId: string
     payAddress: string
     payAmount: number
-    payCurrency: string
 }
 
 export type PaymentStatus = "waiting" | "confirming" | "confirmed" | "finished" | "failed" | "expired" | "partially_paid"

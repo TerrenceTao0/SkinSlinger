@@ -7,26 +7,17 @@ import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
 import ItemPageClient from "./ItemPageClient";
-
-//
-
-const GAME_NAMES: Record<string, string> = {
-    CS2:   "Counter-Strike 2",
-    Dota2: "Dota 2",
-    Rust:  "Rust",
-    TF2:   "Team Fortress 2",
-};
-
-const GAME_SLUGS: Record<string, string> = {
-    CS2:   "cs2",
-    Dota2: "dota2",
-    Rust:  "rust",
-    TF2:   "tf2",
-};
+import { GAME_NAMES, GAME_SLUGS, getBaseUrl, JsonLd } from "@/app/lib/site";
 
 //
 
 const getItem = cache(async (slug: string) => {
+    // PERF NOTE: this REGEXP_REPLACE in the WHERE clause cannot use an index, so every
+    // hit on this (heavily crawled) page scans item_listing. When you can touch the
+    // schema, either add an indexed `slug` column populated with toSlug() on insert, or
+    // create a functional index on this exact expression:
+    //   CREATE INDEX item_listing_slug_idx ON item_listing
+    //   (TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER("marketName"), '[^a-z0-9]+', '-', 'g')));
     // Reverse the slug to find the marketName via PostgreSQL
     const rows = await prisma.$queryRaw<{ marketName: string }[]>`
         SELECT "marketName" FROM item_listing
@@ -100,7 +91,7 @@ export default async function ItemTypePage({ params }: { params: Promise<{ slug:
     const lowPrice = Math.min(...prices);
     const highPrice = Math.max(...prices);
 
-    const base = process.env.NEXTAUTH_URL ?? '';
+    const base = getBaseUrl();
 
     const jsonLd = {
         "@context": "https://schema.org/",
@@ -181,8 +172,8 @@ export default async function ItemTypePage({ params }: { params: Promise<{ slug:
                 hasPendingPurchase={pendingCount > 0}
                 initialUserCash={session?.user?.cash ?? 0}
             />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+            <JsonLd data={jsonLd} />
+            <JsonLd data={breadcrumbJsonLd} />
         </>
     );
 }

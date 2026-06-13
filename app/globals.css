@@ -8,31 +8,84 @@
     *::-webkit-scrollbar {
         display: none;
     }
+    h1, h2, h3 {
+        font-family: var(--font-display), var(--font-inter), sans-serif;
+        letter-spacing: 0.015em;
+    }
+    :focus-visible {
+        outline: 2px solid var(--color-special);
+        outline-offset: 2px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
 
 @theme {
-    --color-accent: #363636;
-    --color-negative: #834a4a;
-    --color-special: #5e8b1e;
-    --color-less-special: #525e42;
-    --color-secondary: #2c2c2c;
-    --color-primary: #171A21;
+    --color-primary: #14171F;
+    --color-secondary: #1C212B;
+    --color-accent: #29303D;
+
+    --color-special: #A9D14C;
+    --color-special-fill: #6CA32A;
+    --color-less-special: #46562E;
+
+    --color-negative: #E08074;
+    --color-negative-fill: #9C4A44;
+
+    --color-edge: rgba(255, 255, 255, 0.07);
+
+    --radius-sm: 6px;
+
     --font-sans: var(--font-inter);
 }
 
 body {
     background-color: var(--color-primary);
     background-image:
-        linear-gradient(rgba(0, 0, 0, 0.25) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.25) 1px, transparent 1px),
-        linear-gradient(to top, #1a1a1a, var(--color-primary));
-    background-size: 40px 40px, 40px 40px, 100% 100%;
+        radial-gradient(1100px 480px at 50% -120px, rgba(108, 163, 42, 0.09), transparent 65%),
+        linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
     min-height: 100vh;
     margin: 0px;
 }
 
+/* Every panel gets the same hairline edge — outline so it never fights border utilities */
+.bg-secondary {
+    outline: 1px solid var(--color-edge);
+    outline-offset: -1px;
+}
+
+/* Solid fills are darker than the text token, and green fills carry dark ink */
+.bg-special {
+    background-color: var(--color-special-fill);
+    color: #101606;
+    font-weight: 600;
+}
+.bg-special * {
+    color: inherit;
+}
+.bg-negative {
+    background-color: var(--color-negative-fill);
+}
+
+.strip {
+    height: 3px;
+    border-radius: 999px;
+    background: var(--color-special);
+}
+
+.eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.25em] text-gray-500;
+}
+
 .button {
-    @apply hover:bg-primary hover:text-special transition-all cursor-pointer
+    @apply hover:bg-primary hover:text-special transition-all cursor-pointer active:scale-[0.98]
 }
 
 .sign-up-input {
@@ -62,15 +115,20 @@ body {
 }
 
 ::-webkit-scrollbar {
-    width: 12px;
+    width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--color-accent);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-special);
+    background: var(--color-accent);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-special-fill);
 }
 
 .no-scrollbar {
@@ -88,7 +146,7 @@ body {
 }
 
 .frame-shadow {
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
 .mobile_menu_button {

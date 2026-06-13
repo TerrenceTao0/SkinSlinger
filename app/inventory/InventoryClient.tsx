@@ -23,7 +23,7 @@ const url_start = "https://steamcommunity.com/tradeoffer/new/?partner="
 //
 
 function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
-    onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void,
+    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void,
     checkUrl: (event: React.ChangeEvent<HTMLInputElement>) => void,
     error: string,
     waiting: boolean,
@@ -258,7 +258,7 @@ const basePrice = priceState ?? 0;
 
                 if (existing) {
                     existing.quantity += 1;
-                } 
+                }
                 else {
                     const entry = { ...itemWithPrice, quantity: 1 };
                     commodityMap.set(item.market_name, entry);

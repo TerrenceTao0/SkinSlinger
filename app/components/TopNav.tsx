@@ -30,8 +30,8 @@ export default function TopNav() {
             <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
                 <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm shrink-0 frame-shadow">
                     <Link href="/">
-                        <p className="hover:text-special transition-all cursor-pointer text-2xl font-bold">
-                            SkinSlinger
+                        <p className="transition-all cursor-pointer text-xl font-bold tracking-wide [font-family:var(--font-display)] group">
+                            Skin<span className="text-special">Slinger</span>
                         </p>
                     </Link>
                 </div>
@@ -40,7 +40,9 @@ export default function TopNav() {
                 {/* Desktop nav */}
                 <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3 frame-shadow">
                     <div className="flex h-full items-center gap-3">
-                        <Link href="/market" className="right-nav-link button">Market</Link>
+                        <Link href="/market" className="right-nav-link button">
+                            Market
+                        </Link>
                     </div>
 
                     <div className="flex h-full items-center gap-3">
@@ -58,18 +60,26 @@ export default function TopNav() {
                                     </Link>
                                 )}
 
-                                <Link href="/listings" className="right-nav-link button">Listings</Link>
-                                <Link href="/orders" className="right-nav-link button">Orders</Link>
-                                <Link href="/inventory" className="right-nav-link button">Inventory</Link>
+                                <Link href="/listings" className="right-nav-link button">
+                                    Listings
+                                </Link>
 
-                                <Link href="/profile" className="cursor-pointer ring-2 ring-special p-0.5">
-                                    <Image src={session.user.image!} alt="Profile" width={40} height={40} />
+                                <Link href="/orders" className="right-nav-link button">
+                                    Orders
+                                </Link>
+
+                                <Link href="/inventory" className="right-nav-link button">
+                                    Inventory
+                                </Link>
+
+                                <Link href="/profile" className="cursor-pointer ring-2 ring-special rounded-sm p-0.5">
+                                    <Image src={session.user.image!} alt="Profile" width={40} height={40} className="rounded-[4px]" />
                                 </Link>
                             </>
                         ) : (
                             <button
                                 onClick={() => signIn('steam', { callbackUrl: '/market' })}
-                                className="flex items-center gap-2 h-[80%] px-4 rounded-sm cursor-pointer transition-all bg-[#1b2838] hover:bg-[#2a475e] text-white text-sm font-medium"
+                                className="flex items-center gap-2 h-[80%] px-4 rounded-sm cursor-pointer transition-all bg-[#1b2838] hover:bg-[#2a475e] text-sm font-medium"
                             >
                                 <Image src="/steam-icon.svg" alt="Steam" width={20} height={20} className="shrink-0" />
                                 Sign in through Steam
@@ -81,7 +91,7 @@ export default function TopNav() {
 
                 {/* Mobile nav */}
                 <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3 w-[20%]">
-                    {status !== "loading" && session && (
+                    {status !== "loading" && session ? (
                         <>
                             <Link href="/finance">
                                 <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
@@ -89,10 +99,18 @@ export default function TopNav() {
                                 </button>
                             </Link>
 
-                            <Link href="/profile" className="cursor-pointer ring-2 ring-special p-0.5">
-                                <Image src={session.user.image!} alt="Profile" width={40} height={40} />
+                            <Link href="/profile" className="cursor-pointer ring-2 ring-special rounded-sm p-0.5">
+                                <Image src={session.user.image!} alt="Profile" width={40} height={40} className="rounded-[4px]" />
                             </Link>
                         </>
+                    ) : (
+                        <button
+                            onClick={() => signIn('steam', { callbackUrl: '/market' })}
+                            className="flex items-center gap-2 h-[80%] px-4 rounded-sm cursor-pointer transition-all bg-[#1b2838] hover:bg-[#2a475e] text-sm font-medium"
+                        >
+                            <Image src="/steam-icon.svg" alt="Steam" width={20} height={20} className="shrink-0" />
+                            Sign in
+                        </button>
                     )}
 
                     <button
@@ -113,15 +131,15 @@ export default function TopNav() {
                 <nav className="md:hidden fixed top-18 right-[2.5%] w-[30%] z-49 bg-secondary rounded-sm flex flex-col divide-y divide-gray-700 frame-shadow">
                     {status !== "loading" && (session ? (
                         <>
-                            <Link href="/market" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
-                                Market
-                            </Link>
-
                             {basketCount > 0 && (
                                 <Link href="/basket" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                     Basket ({basketCount})
                                 </Link>
                             )}
+
+                            <Link href="/market" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
+                                Market
+                            </Link>
 
                             <Link href="/listings" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Listings
@@ -141,17 +159,9 @@ export default function TopNav() {
                         </>
                     ) : (
                         <>
-                            <Link href="/market" className="flex items-center px-4 h-12 border-b border-gray-700 button" onClick={() => setMenuOpen(false)}>
+                            <Link href="/market" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Market
                             </Link>
-
-                            <button
-                                onClick={() => { signIn('steam', { callbackUrl: '/market' }); setMenuOpen(false); }}
-                                className="flex items-center gap-2 px-4 h-12 cursor-pointer transition-all bg-[#1b2838] hover:bg-[#2a475e] text-white text-sm font-medium"
-                            >
-                                <Image src="/steam-icon.svg" alt="Steam" width={16} height={16} className="shrink-0" />
-                                Sign in through Steam
-                            </button>
                         </>
                     ))}
                 </nav>

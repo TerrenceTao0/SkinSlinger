@@ -17,19 +17,44 @@ export default async function OrdersPage() {
 
     if (!session?.user?.id) redirect("/");
 
-    const purchases = await prisma.purchase.findMany({
+    const userId = session.user.id;
+
+    const rows = await prisma.purchase.findMany({
         where: {
             OR: [
-                { buyerId: session.user.id },
-                { sellerId: session.user.id },
+                { buyerId: userId },
+                { sellerId: userId },
             ],
         },
         include: {
-            buyer: { select: { name: true, email: true, steam_trade_url: true } },
-            seller: { select: { name: true, email: true } },
+            buyer: { select: { name: true, image: true, steam_trade_url: true } },
+            seller: { select: { name: true, image: true } },
         },
         orderBy: { createdAt: "desc" },
+        take: 200,
     });
 
-    return <OrdersClient purchases={purchases} currentUserId={session.user.id} />;
+    // Build a sanitized DTO — never ship counterparty emails to the client
+    // (anything passed to a client component is readable in the RSC payload,
+    // even if it's never rendered). The buyer's trade URL is only needed by
+    // the seller, to send the trade offer.
+    const purchases = rows.map(p => ({
+        id: p.id,
+        createdAt: p.createdAt,
+        status: p.status,
+        price: p.price,
+        marketName: p.marketName,
+        icon: p.icon,
+        hexColor: p.hexColor,
+        commodity: p.commodity,
+        buyerId: p.buyerId,
+        sellerId: p.sellerId,
+        buyerName: p.buyer.name,
+        sellerName: p.seller.name,
+        buyerImage: p.buyer.image,
+        sellerImage: p.seller.image,
+        buyerTradeUrl: p.sellerId === userId ? (p.buyerTradeUrl ?? p.buyer.steam_trade_url) : null,
+    }));
+
+    return <OrdersClient purchases={purchases} currentUserId={userId} />;
 }

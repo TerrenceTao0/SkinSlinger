@@ -35,12 +35,13 @@ export default function FinanceClient() {
         }
     }, [])
 
-    function startPolling(paymentId: string) {
+    // The deposit id returned by /api/create-deposit is the pay address itself.
+    function startPolling(depositId: string) {
         if (pollRef.current) clearInterval(pollRef.current)
 
         pollRef.current = setInterval(async () => {
             try {
-                const res = await fetch(`/api/deposit-status/${paymentId}`)
+                const res = await fetch(`/api/deposit-status/${depositId}`)
 
                 if (!res.ok) return
 
@@ -61,14 +62,14 @@ export default function FinanceClient() {
     }
 
 
-    function startTimer(paymentAddress: string) {
+    function startTimer(depositId: string) {
         if (timerRef.current) clearInterval(timerRef.current)
 
         timerRef.current = setInterval(() => {
             setSecondsLeft(prev => {
                 if (prev <= 1) {
                     clearInterval(timerRef.current!)
-                    fetch(`/api/deposit-status/${paymentAddress}`)
+                    fetch(`/api/deposit-status/${depositId}`)
                         .then(r => r.json())
                         .then(({ status }) => { if (status === 'finished') setView('deposit-success') })
                         .catch(() => {})
@@ -83,7 +84,7 @@ export default function FinanceClient() {
     }
 
 
-    async function handleDeposit(e: React.SubmitEvent) {
+    async function handleDeposit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
 
         const amount = parseFloat(amountInput)
@@ -109,8 +110,8 @@ export default function FinanceClient() {
         setSecondsLeft(20 * 60)
         setView("payment")
         setLoading(false)
-        startPolling(data.payAddress)
-        startTimer(data.payAddress)
+        startPolling(data.depositId)
+        startTimer(data.depositId)
     }
 
 

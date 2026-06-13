@@ -6,15 +6,12 @@ import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
 import { useBasket } from "@/app/components/BasketProvider";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { toSlug } from "@/app/lib/site";
 
 //
 
 type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
-
-function toSlug(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
 
 export type ListingCard = {
     id: string,
@@ -32,6 +29,37 @@ export type ListingCard = {
 
 export type DisplayCard = ListingCard & { quantity: number }
 
+type Filters = {
+    search: string,
+    minPrice: string,
+    maxPrice: string,
+    wear: string | null,
+    minFloat: string,
+    maxFloat: string,
+}
+
+//
+
+function hasActiveFilters(f: Filters): boolean {
+    return !!(f.search || f.minPrice || f.maxPrice || f.wear || f.minFloat || f.maxFloat);
+}
+
+function buildQueryString(f: Filters, hasStickers: boolean): string {
+    const p = new URLSearchParams();
+
+    if (f.search) p.set("search", f.search);
+    if (f.minPrice) p.set("minPrice", f.minPrice);
+    if (f.maxPrice) p.set("maxPrice", f.maxPrice);
+    if (f.wear) p.set("wear", f.wear);
+    if (f.minFloat) p.set("minFloat", f.minFloat);
+    if (f.maxFloat) p.set("maxFloat", f.maxFloat);
+    if (!hasStickers) p.set("stickers", "0");
+
+    const s = p.toString();
+
+    return s ? `?${s}` : "";
+}
+
 //
 
 export default function HomeClient(
@@ -42,6 +70,7 @@ export default function HomeClient(
         hasPendingPurchase,
         initialGame,
         gameBlurb,
+        seoTitle,
     }: {
         initialListings: ListingCard[],
         initialHasMore: boolean,
@@ -49,63 +78,66 @@ export default function HomeClient(
         hasPendingPurchase: boolean,
         initialGame?: GameFilter,
         gameBlurb?: string,
+        seoTitle?: string,
     })
     {
 
-    const [gameFilter, setGameFilter] = useState<GameFilter>(initialGame ?? "all");
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const router = useRouter();
+
+    // Game is fixed per page (/market/cs2 etc.) — switching games navigates and remounts.
+    const game: GameFilter = initialGame ?? "all";
+
+    // All filters live in one object, initialised from the URL so filtered views
+    // survive refresh, can be shared, and work with the back button.
+    const [filters, setFilters] = useState<Filters>(() => ({
+        search: searchParams.get("search") ?? "",
+        minPrice: searchParams.get("minPrice") ?? "",
+        maxPrice: searchParams.get("maxPrice") ?? "",
+        wear: searchParams.get("wear"),
+        minFloat: searchParams.get("minFloat") ?? "",
+        maxFloat: searchParams.get("maxFloat") ?? "",
+    }));
+    const [hasStickers, setHasStickers] = useState(searchParams.get("stickers") !== "0");
+
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
     const [pendingNotice, setPendingNotice] = useState(false);
-    const [search, setSearch] = useState("");
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
-    const [wear, setWear] = useState<string | null>(null);
-    const [minFloat, setMinFloat] = useState("");
-    const [maxFloat, setMaxFloat] = useState("");
     const { basket, setBasket } = useBasket();
     const [cursor, setCursor] = useState<string | null>(initialListings.at(-1)?.id ?? null);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const { data: session } = useSession();
 
-    const router = useRouter();
-
     const loadingRef = useRef(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const mobileSentinelRef = useRef<HTMLDivElement>(null);
-    const isFirstRender = useRef(true);
-    const isFirstSearchRender = useRef(true);
-    const isFirstFilterRender = useRef(true);
-    const searchRef = useRef(search);
-    const gameFilterRef = useRef(gameFilter);
-    const minPriceRef = useRef(minPrice);
-    const maxPriceRef = useRef(maxPrice);
-    const wearRef = useRef(wear);
-    const minFloatRef = useRef(minFloat);
-    const maxFloatRef = useRef(maxFloat);
 
-    useEffect(() => { searchRef.current = search; }, [search]);
-    useEffect(() => { gameFilterRef.current = gameFilter; }, [gameFilter]);
-    useEffect(() => { minPriceRef.current = minPrice; }, [minPrice]);
-    useEffect(() => { maxPriceRef.current = maxPrice; }, [maxPrice]);
-    useEffect(() => { wearRef.current = wear; }, [wear]);
-    useEffect(() => { minFloatRef.current = minFloat; }, [minFloat]);
-    useEffect(() => { maxFloatRef.current = maxFloat; }, [maxFloat]);
+    // Single ref mirror so the infinite-scroll observer always reads current filters
+    // without being recreated on every keystroke.
+    const filtersRef = useRef(filters);
+    useEffect(() => { filtersRef.current = filters; }, [filters]);
 
-    const load = useCallback(async (game: GameFilter, cur: string | null, reset: boolean, search: string, minP: string, maxP: string, wearFilter: string | null, minF: string, maxF: string) => {
+    const setFilter = useCallback(<K extends keyof Filters>(key: K, value: Filters[K]) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    }, []);
+
+    const load = useCallback(async (cur: string | null, reset: boolean) => {
         if (loadingRef.current) return;
 
         loadingRef.current = true;
 
         try {
+            const f = filtersRef.current;
             const params = new URLSearchParams();
 
             if (game !== "all") params.set("game", game);
             if (cur) params.set("cursor", cur);
-            if (search) params.set("search", search);
-            if (minP) params.set("minPrice", minP);
-            if (maxP) params.set("maxPrice", maxP);
-            if (wearFilter) params.set("wear", wearFilter);
-            if (minF) params.set("minFloat", minF);
-            if (maxF) params.set("maxFloat", maxF);
+            if (f.search) params.set("search", f.search);
+            if (f.minPrice) params.set("minPrice", f.minPrice);
+            if (f.maxPrice) params.set("maxPrice", f.maxPrice);
+            if (f.wear) params.set("wear", f.wear);
+            if (f.minFloat) params.set("minFloat", f.minFloat);
+            if (f.maxFloat) params.set("maxFloat", f.maxFloat);
 
             const res = await fetch(`/api/listings?${params}`);
             const data = await res.json();
@@ -122,48 +154,51 @@ export default function HomeClient(
         } finally {
             loadingRef.current = false;
         }
-    }, []);
+    }, [game]);
 
 
-    // On filter change, reset and fetch immediately (skip initial mount — server data already loaded)
+    // On filter change: debounce, sync the URL, and refetch from page one.
+    // On first mount the server has already rendered *unfiltered* data, so only
+    // fetch if the URL carried filters; otherwise skip.
+    const isFirstRender = useRef(true);
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
+
+            if (hasActiveFilters(filters)) load(null, true);
+
             return;
         }
 
-        load(gameFilter, null, true, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current);
-    }, [gameFilter, load]);
+        const id = setTimeout(() => {
+            router.replace(`${pathname}${buildQueryString(filters, hasStickers)}`, { scroll: false });
+            load(null, true);
+        }, 300);
 
-
-    // On search change, debounce then reset and fetch (skip initial mount)
-    useEffect(() => {
-        if (isFirstSearchRender.current) {
-            isFirstSearchRender.current = false;
-            return;
-        }
-
-        const id = setTimeout(() => load(gameFilterRef.current, null, true, search, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current), 300);
         return () => clearTimeout(id);
-    }, [search, load]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filters, load]);
 
 
-    // On price/wear change, debounce then reset and fetch (skip initial mount)
+    // hasStickers is a client-side display filter — sync it to the URL, no refetch.
+    const isFirstStickerRender = useRef(true);
     useEffect(() => {
-        if (isFirstFilterRender.current) {
-            isFirstFilterRender.current = false;
+        if (isFirstStickerRender.current) {
+            isFirstStickerRender.current = false;
             return;
         }
-        const id = setTimeout(() => load(gameFilterRef.current, null, true, searchRef.current, minPrice, maxPrice, wear, minFloat, maxFloat), 400);
-        return () => clearTimeout(id);
-    }, [minPrice, maxPrice, wear, minFloat, maxFloat, load]);
+
+        router.replace(`${pathname}${buildQueryString(filtersRef.current, hasStickers)}`, { scroll: false });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasStickers]);
 
 
-    // Infinite scroll via IntersectionObserver
+    // Infinite scroll via IntersectionObserver. Re-registers whenever the cursor
+    // changes, so a still-visible sentinel immediately triggers the next page.
     useEffect(() => {
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting && hasMore) {
-                load(gameFilterRef.current, cursor, false, searchRef.current, minPriceRef.current, maxPriceRef.current, wearRef.current, minFloatRef.current, maxFloatRef.current);
+                load(cursor, false);
             }
         }, { threshold: 0.1 });
 
@@ -171,7 +206,7 @@ export default function HomeClient(
         if (mobileSentinelRef.current) observer.observe(mobileSentinelRef.current);
 
         return () => observer.disconnect();
-    }, [hasMore, cursor, gameFilter, load]);
+    }, [hasMore, cursor, load]);
 
 
     function handleBuy(item: DisplayCard, qty: number = 1) {
@@ -261,23 +296,30 @@ export default function HomeClient(
                 ? !basket.find(b => b.id === item.id)
                 : item.quantity > 0
             )
+            .filter(item => {
+                if (hasStickers) return true
+                const isGun = !item.commodity && item.marketName.includes(' | ')
+                if (!isGun) return true
+                return !item.stickers || item.stickers.length === 0
+            })
             .sort((a, b) => {
                 if (b.price !== a.price) return b.price - a.price;
 
                 return b.quantity - a.quantity;
             });
-    }, [listings, basket]);
+    }, [listings, basket, hasStickers]);
 
 
     return (
         <>
             <LeftPanel
-                currentGame={gameFilter}
-                minPrice={minPrice} setMinPrice={setMinPrice}
-                maxPrice={maxPrice} setMaxPrice={setMaxPrice}
-                wear={wear} setWear={setWear}
-                minFloat={minFloat} setMinFloat={setMinFloat}
-                maxFloat={maxFloat} setMaxFloat={setMaxFloat}
+                currentGame={game}
+                minPrice={filters.minPrice} setMinPrice={v => setFilter("minPrice", v)}
+                maxPrice={filters.maxPrice} setMaxPrice={v => setFilter("maxPrice", v)}
+                wear={filters.wear} setWear={v => setFilter("wear", v)}
+                minFloat={filters.minFloat} setMinFloat={v => setFilter("minFloat", v)}
+                maxFloat={filters.maxFloat} setMaxFloat={v => setFilter("maxFloat", v)}
+                hasStickers={hasStickers} setHasStickers={setHasStickers}
             />
 
             {pendingNotice && (
@@ -308,13 +350,20 @@ export default function HomeClient(
                     <input
                         type="text"
                         placeholder="Search items..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        value={filters.search}
+                        onChange={e => setFilter("search", e.target.value)}
                         className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
                     />
                 </div>
 
-                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
+                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm flex flex-col">
+                    {(seoTitle || gameBlurb) && (
+                        <div className="mb-3 shrink-0">
+                            {seoTitle && <h1 className="text-base font-semibold leading-snug">{seoTitle}</h1>}
+                            {gameBlurb && <p className="text-xs text-gray-500 mt-0.5 max-w-2xl">{gameBlurb}</p>}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
                         {displayListings.map(listing => (
                             <ListingCard
@@ -324,37 +373,46 @@ export default function HomeClient(
                                 onPreview={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : router.push(`/item/${toSlug(listing.marketName)}/${listing.id}`)}
                             />
                         ))}
-
-                        <div ref={mobileSentinelRef} className="col-span-full h-1" />
                     </div>
+
+                    <div ref={mobileSentinelRef} className="h-1 shrink-0" />
                 </div>
             </div>
 
 
             {/* Desktop layout */}
-            <div className="hidden md:flex w-410 ml-58 mt-20 h-full">
-                <div className="flex-1 flex flex-col gap-2">
-                    <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm">
+            <div className="hidden md:flex flex-1 min-h-0 mt-20 mb-4 mr-[2.5%] ml-[calc(2.5%+11.5rem)]">
+                <div className="flex-1 flex flex-col gap-2 min-h-0">
+                    <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm shrink-0">
                         <input
                             type="text"
                             placeholder="Search items..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            value={filters.search}
+                            onChange={e => setFilter("search", e.target.value)}
                             className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
                         />
                     </div>
 
-                    <div className="bg-secondary w-full overflow-y-auto h-196 grid grid-cols-7 justify-start content-start gap-2 p-3 rounded-sm">
-                        {displayListings.map(listing => (
-                            <ListingCard
-                                key={listing.id} {...listing}
-                                currentUserId={currentUserId}
-                                onBuy={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : handleBuy(listing)}
-                                onPreview={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : router.push(`/item/${toSlug(listing.marketName)}/${listing.id}`)}
-                            />
-                        ))}
+                    <div className="bg-secondary w-full overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
+                        {(seoTitle || gameBlurb) && (
+                        <div className="mb-3 shrink-0">
+                            {seoTitle && <h1 className="text-base font-semibold leading-snug">{seoTitle}</h1>}
+                            {gameBlurb && <p className="text-xs text-gray-500 mt-0.5 max-w-2xl">{gameBlurb}</p>}
+                        </div>
+                    )}
 
-                        <div ref={sentinelRef} className="col-span-7 h-1" />
+                        <div className="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 justify-start content-start gap-2">
+                            {displayListings.map(listing => (
+                                <ListingCard
+                                    key={listing.id} {...listing}
+                                    currentUserId={currentUserId}
+                                    onBuy={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : handleBuy(listing)}
+                                    onPreview={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : router.push(`/item/${toSlug(listing.marketName)}/${listing.id}`)}
+                                />
+                            ))}
+                        </div>
+
+                        <div ref={sentinelRef} className="h-1 shrink-0" />
                     </div>
                 </div>
             </div>

@@ -50,7 +50,9 @@ export async function GET(request: Request) {
             take: PAGE_SIZE + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
             where,
-            orderBy: { createdAt: "desc" },
+            // Must match the initial server render in market/[game]/page.tsx — the
+            // client feeds the last id of that page in as the cursor here.
+            orderBy: [{ price: "desc" }, { id: "asc" }],
         });
 
         const page = rows.slice(0, PAGE_SIZE);

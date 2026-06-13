@@ -6,22 +6,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import BuyButton from "./BuyButton";
 import FloatBar from "@/app/components/FloatBar";
-
-//
-
-const GAME_NAMES: Record<string, string> = {
-    CS2:   "Counter-Strike 2",
-    Dota2: "Dota 2",
-    Rust:  "Rust",
-    TF2:   "Team Fortress 2",
-};
-
-const GAME_SLUGS: Record<string, string> = {
-    CS2:   "cs2",
-    Dota2: "dota2",
-    Rust:  "rust",
-    TF2:   "tf2",
-};
+import { GAME_NAMES, GAME_SLUGS, getBaseUrl, JsonLd } from "@/app/lib/site";
 
 function wearLabel(f: number): string {
     if (f < 0.07) return 'Factory New';
@@ -95,7 +80,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
         : null;
     const stickers = float?.stickers as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null;
 
-    const base = process.env.NEXTAUTH_URL ?? '';
+    const base = getBaseUrl();
 
     const jsonLd = {
         "@context": "https://schema.org/",
@@ -209,8 +194,8 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                 </div>
             </div>
 
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+            <JsonLd data={jsonLd} />
+            <JsonLd data={breadcrumbJsonLd} />
         </div>
     );
 }

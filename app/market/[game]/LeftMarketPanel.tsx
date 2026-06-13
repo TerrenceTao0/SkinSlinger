@@ -45,6 +45,7 @@ export default function LeftPanel({
     wear, setWear,
     minFloat, setMinFloat,
     maxFloat, setMaxFloat,
+    hasStickers, setHasStickers,
 }: {
     currentGame: GameFilter,
     minPrice: string,
@@ -57,6 +58,8 @@ export default function LeftPanel({
     setMinFloat: (v: string) => void,
     maxFloat: string,
     setMaxFloat: (v: string) => void,
+    hasStickers: boolean,
+    setHasStickers: (v: boolean) => void,
 }) {
     const minVal = minPrice !== "" ? Math.min(parseFloat(minPrice) || 0, SLIDER_MAX) : 0;
     const maxVal = maxPrice !== "" ? Math.min(parseFloat(maxPrice) || SLIDER_MAX, SLIDER_MAX) : SLIDER_MAX;
@@ -233,6 +236,24 @@ export default function LeftPanel({
                                     </button>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* CS2 Stickers */}
+                    {currentGame === "CS2" && (
+                        <div className="px-3 py-3 border-t border-gray-700/60">
+                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">
+                                Stickers
+                            </p>
+                            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={hasStickers}
+                                    onChange={e => setHasStickers(e.target.checked)}
+                                    className="w-4 h-4 rounded-sm accent-special cursor-pointer"
+                                />
+                                <span className="text-xs">Include stickers</span>
+                            </label>
                         </div>
                     )}
                 </div>

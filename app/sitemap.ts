@@ -1,12 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/lib/db';
 import { posts } from './blog/posts';
+import { toSlug, getBaseUrl } from './lib/site';
 
-function toSlug(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
-const base = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
+const base = getBaseUrl();
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // One item type page per unique market name (these are the indexed pages)
@@ -24,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const blogUrls: MetadataRoute.Sitemap = posts.map(p => ({
         url: `${base}/blog/${p.slug}`,
-        lastModified: new Date(),
+        lastModified: new Date(p.date),
         changeFrequency: 'monthly',
         priority: 0.7,
     }));

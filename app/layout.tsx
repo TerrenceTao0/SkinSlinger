@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next"
 import Providers from "./components/Providers"
 import TopNav from "./components/TopNav"
 import type { Metadata, Viewport } from 'next'
+import { getBaseUrl } from "./lib/site"
 
 //
 
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
 const OG_IMAGE = { url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger' }
 
 export const metadata: Metadata = {
-    metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
+    metadataBase: new URL(getBaseUrl()),
     title: {
         default: 'No KYC Skins Marketplace — SkinSlinger',
         template: '%s | SkinSlinger',

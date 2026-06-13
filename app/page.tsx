@@ -1,22 +1,22 @@
 import Link from "next/link"
 import Image from "next/image"
 import type { Metadata } from 'next'
-import { signIn } from "next-auth/react"
 import PlatformComparisonTable from "./components/PlatformComparisonTable"
+import { getBaseUrl, JsonLd } from "./lib/site"
 
 //
 
 const games = [
-    { label: "CS2", icon: "/cs2.png" },
-    { label: "Dota 2", icon: "/dota.png" },
-    { label: "Rust", icon: "/rust.png" },
-    { label: "TF2", icon: "/tf2.png" },
+    { label: "CS2 skins", icon: "/cs2.png", href: "/market/cs2" },
+    { label: "Dota 2 items", icon: "/dota.png", href: "/market/dota2" },
+    { label: "Rust skins", icon: "/rust.png", href: "/market/rust" },
+    { label: "TF2 items", icon: "/tf2.png", href: "/market/tf2" },
 ]
 
 const fees = [
-    { label: "Sales Fee", value: "0%", icon: "/percentage.svg", tiers: null },
-    { label: "Deposit Fee", value: "0%", icon: "/deposit.svg", tiers: null },
-    { label: "FX Fee (Crypto)", value: "0%", icon: "/percentage.svg", tiers: null },
+    { label: "Sales Fee", value: "0%", icon: "/percentage.svg" },
+    { label: "Deposit Fee", value: "0%", icon: "/deposit.svg" },
+    { label: "FX Fee (Crypto)", value: "0%", icon: "/percentage.svg" },
     {
         label: "Withdrawal Fee",
         value: "2% → 0.5%",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     },
 }
 
-const base = process.env.NEXTAUTH_URL ?? '';
+const base = getBaseUrl();
 
 const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -167,73 +167,79 @@ const faq = {
 
 //
 
-function PointDown() { 
-    return (
-        <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce mt-3">
-            <Image src="/arrow-down.svg" alt="Scroll Down" height={40} width={40} className="invert" />
-        </div>
-    )
-}
-
-
 export default function Home() {
     return (
         <div className="overflow-y-auto h-full w-full no-scrollbar">
-            <div className="flex flex-col justify-center items-center gap-6 px-4 pt-20">
-                <div className="flex flex-col items-center text-center gap-3">
-                    <Image src="/logo.png" alt="SkinSlinger logo" width={60} height={60} />
+            {/* Hero */}
+            <div className="flex flex-col justify-center items-center gap-8 px-4 pt-24 pb-4">
+                <div className="flex flex-col items-center text-center gap-4">
+                    <Image src="/logo.png" alt="SkinSlinger logo" width={64} height={64} />
 
-                    <h1 className="text-4xl font-bold">
-                        SkinSlinger
-                    </h1>
-
-                    <p className="text-special font-medium text-sm uppercase tracking-widest">
-                        The Best Skins Marketplace
+                    <p className="eyebrow">
+                        Steam Skins Marketplace
                     </p>
+
+                    <div className="flex flex-col items-center gap-3">
+                        <h1 className="text-5xl md:text-6xl font-bold tracking-wide uppercase">
+                            Skin<span className="text-special">Slinger</span>
+                        </h1>
+
+                        <div className="strip w-90 md:w-110"/>
+                    </div>
 
                     <p className="text-gray-400 text-lg max-w-md">
                         Trade CS2, Dota 2, Rust and TF2 skins directly with other players.
+                        No middleman bots, no trade hold.
                     </p>
                 </div>
 
                 <div className="flex gap-3 text-sm flex-wrap justify-center">
-                    {games.map(({ label, icon }) => (
-                        <span key={label} className="bg-accent px-3 py-1.5 rounded-sm flex items-center gap-1.5 opacity-80">
+                    {games.map(({ label, icon, href }) => (
+                        <Link key={label} href={href} className="bg-secondary px-3 py-1.5 rounded-sm flex items-center gap-1.5 text-gray-300 button">
                             <Image src={icon} alt={label} width={16} height={16} />
                             {label}
-                        </span>
+                        </Link>
                     ))}
                 </div>
+            </div>
 
+
+            {/* No KYC + fees */}
+            <div className="flex flex-col items-center gap-6 px-4 pt-10">
                 <div
-                    className="w-full max-w-sm rounded-sm px-6 py-5 flex flex-col items-center gap-1 bg-green-200"
-                    style={{ boxShadow: "0 0 32px rgba(76, 107, 34, 0.6), 0 0 8px rgba(76, 107, 34, 0.3)" }}
+                    className="w-full max-w-sm rounded-sm px-6 py-6 flex flex-col items-center gap-2 bg-secondary relative overflow-hidden"
+                    style={{ boxShadow: "0 0 48px rgba(108, 163, 42, 0.18), inset 0 1px 0 rgba(169, 209, 76, 0.25)" }}
                 >
-                    <p className="text-special text-2xl font-bold underline">
-                        No KYC
-                    </p>
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#A9D14C] to-transparent" />
 
-                    <p className="text-special text-sm text-center font-semibold">
-                        No identity verification required. Login via Steam and trade instantly.
+                    <h2 className="text-special text-3xl font-bold tracking-wide">
+                        NO KYC
+                    </h2>
+
+                    <p className="text-gray-300 text-sm text-center">
+                        No identity verification required. Log in with Steam and trade instantly.
                     </p>
                 </div>
 
-                <div className="flex flex-col items-center text-center gap-1">
-                    <p className="font-semibold text-lg">
-                        The lowest fees in the market
-                        <br />
+                <div className="flex flex-col items-center text-center gap-1 mt-2">
+                    <p className="eyebrow">
                         Fully transparent
                     </p>
+
+                    <h2 className="font-semibold text-2xl">
+                        The lowest fees in the market
+                    </h2>
                 </div>
-                
+
                 <div className="bg-secondary rounded-sm w-full max-w-sm">
                     {fees.map(({ label, value, icon, tiers }, i) => (
-                        <div key={label} className={`px-5 py-3 ${i < fees.length - 1 ? 'border-b border-gray-700' : ''}`}>
+                        <div key={label} className={`px-5 py-3 ${i < fees.length - 1 ? 'border-b border-gray-700/60' : ''}`}>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Image src={icon} alt="" width={18} height={18} className="opacity-60 invert" />
                                     <span className="text-sm text-gray-400">{label}</span>
                                 </div>
+
                                 <span className="font-semibold text-special">{value}</span>
                             </div>
 
@@ -256,68 +262,115 @@ export default function Home() {
                     ))}
                 </div>
 
-                <div className="w-full max-w-2xl">
-                    <p className="text-center font-semibold text-lg mb-4">
-                        How we compare
-                    </p>
+                <div className="w-full max-w-2xl mt-4">
+                    <div className="flex flex-col items-center gap-1 mb-5">
+                        <p className="eyebrow">
+                            Side by side
+                        </p>
+
+                        <h2 className="font-semibold text-2xl text-center">
+                            How we compare
+                        </h2>
+                    </div>
+
                     <PlatformComparisonTable />
                 </div>
 
-                <div className="flex flex-col items-center gap-2 mt-3 mb-3">
-                    <p className="text-lg">
-                        CURRENTLY SUPPORTED PAYMENT METHODS
+                <div className="flex flex-col items-center gap-2 mt-2 mb-3">
+                    <p className="eyebrow">
+                        Supported payment methods
                     </p>
 
                     <div className="flex gap-2 flex-wrap justify-center">
                         {paymentMethods.map(method => (
-                            <span key={method} className="bg-accent text-gray-400 text-xs px-3 py-1 rounded-sm">
+                            <span key={method} className="bg-secondary text-gray-300 text-xs px-3 py-1.5 rounded-sm">
                                 {method}
                             </span>
                         ))}
                     </div>
                 </div>
-
-                <PointDown />
             </div>
 
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
+            <JsonLd data={websiteJsonLd} />
+            <JsonLd data={organizationJsonLd} />
+            <JsonLd data={faq} />
 
-            <div className="w-full max-w-lg mx-auto px-4 pb-8">
-                <h2 className="text-2xl font-bold text-center mb-8">How it works</h2>
 
-                <div className="flex flex-col gap-3">
+            {/* How it works sequence */}
+            <div className="w-full max-w-lg mx-auto px-4 pt-12 pb-8">
+                <div className="flex flex-col items-center gap-1 mb-8">
+                    <p className="eyebrow">
+                        Escrowed P2P trades
+                    </p>
+
+                    <h2 className="text-2xl font-bold text-center">
+                        How it works
+                    </h2>
+                </div>
+
+                <div className="flex flex-col">
                     {steps.map((step, i) => (
-                        <div key={i} className="info-card">
-                            <p className="font-semibold text-sm">{step.title}</p>
-                            <p className="text-gray-400 text-sm mt-1">{step.desc}</p>
+                        <div key={i} className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                                <span className="w-8 h-8 shrink-0 rounded-sm bg-secondary flex items-center justify-center text-special text-sm font-semibold [font-family:var(--font-display)]">
+                                    {i + 1}
+                                </span>
+
+                                {i < steps.length - 1 && <span className="w-px flex-1 bg-gray-700/60 my-1" />}
+                            </div>
+
+                            <div className="pb-6">
+                                <p className="font-semibold text-sm pt-1.5">
+                                    {step.title}
+                                </p>
+
+                                <p className="text-gray-400 text-sm mt-1">
+                                    {step.desc}
+                                </p>
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <PointDown />
 
-            <div className="w-full max-w-lg mx-auto px-4 pb-10">
-                <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+            {/* FAQ */}
+            <div className="w-full max-w-lg mx-auto px-4 pb-14">
+                <div className="flex flex-col items-center gap-1 mb-8">
+                    <p className="eyebrow">
+                        Good to know
+                    </p>
+
+                    <h2 className="text-2xl font-bold text-center">
+                        Frequently asked questions
+                    </h2>
+                </div>
 
                 <div className="flex flex-col gap-3">
                     {faq.mainEntity.map((q, i) => (
                         <div key={i} className="info-card">
-                            <p className="font-semibold text-sm">{q.name}</p>
-                            <p className="text-gray-400 text-sm mt-1">{q.acceptedAnswer.text}</p>
+                            <p className="font-semibold text-sm">
+                                {q.name}
+                            </p>
+
+                            <p className="text-gray-400 text-sm mt-1">
+                                {q.acceptedAnswer.text}
+                            </p>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <footer className="border-t border-gray-700/50 py-10 px-6 backdrop-blur-xs bg-black/20">
+
+            {/* Footer website info */}
+            <footer className="py-10 px-6 bg-black/20 relative">
+                <div className="strip absolute top-0 left-0 right-0 opacity-60" style={{ height: 2, borderRadius: 0 }} />
+
                 <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
                     <div className="flex items-center gap-2">
                         <Image src="/logo.png" alt="SkinSlinger" width={22} height={22} />
 
-                        <span className="text-sm font-semibold text-gray-300">
+                        <span className="text-sm font-semibold text-gray-300 [font-family:var(--font-display)] tracking-wide">
                             SkinSlinger
                         </span>
                     </div>
@@ -348,7 +401,7 @@ export default function Home() {
                         <p className="text-xs text-gray-600 text-center max-w-lg">
                             SkinSlinger is not affiliated with, endorsed by, or in any way officially connected with Valve Corporation or Steam. All game names, logos, and trademarks are the property of their respective owners.
                         </p>
-                        
+
                         <p className="text-xs text-gray-700">
                             © {new Date().getFullYear()} SkinSlinger
                         </p>
@@ -358,4 +411,3 @@ export default function Home() {
         </div>
     )
 }
-

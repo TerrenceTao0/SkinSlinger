@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { posts } from '../posts'
 import PlatformComparisonTable from '../../components/PlatformComparisonTable'
+import { getBaseUrl, JsonLd } from '../../lib/site'
 
 export function generateStaticParams() {
     return posts.map((p) => ({ slug: p.slug }))
@@ -12,13 +13,47 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params
     const post = posts.find((p) => p.slug === slug)
     if (!post) return {}
-    return { title: post.title, description: post.summary }
+    return {
+        title: post.title,
+        description: post.summary,
+        alternates: { canonical: `/blog/${slug}` },
+        openGraph: {
+            title: post.title,
+            description: post.summary,
+            url: `/blog/${slug}`,
+            type: 'article',
+            ...(post.image ? { images: [{ url: post.image, alt: post.title }] } : {}),
+        },
+        twitter: {
+            card: post.image ? 'summary_large_image' : 'summary',
+            title: post.title,
+            description: post.summary,
+        },
+    }
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
     const post = posts.find((p) => p.slug === slug)
     if (!post) notFound()
+
+    const base = getBaseUrl()
+    const articleJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": post.title,
+        "description": post.summary,
+        "datePublished": new Date(post.date).toISOString(),
+        "url": `${base}/blog/${post.slug}`,
+        "mainEntityOfPage": `${base}/blog/${post.slug}`,
+        ...(post.image ? { "image": post.image } : {}),
+        "author": { "@type": "Organization", "name": "SkinSlinger", "url": base },
+        "publisher": {
+            "@type": "Organization",
+            "name": "SkinSlinger",
+            "logo": { "@type": "ImageObject", "url": `${base}/logo.png` },
+        },
+    }
 
     return (
         <div className="overflow-y-auto h-full w-full no-scrollbar">
@@ -84,6 +119,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                         </div>
                     )}
                 </div>
+
+                <JsonLd data={articleJsonLd} />
             </div>
         </div>
     )

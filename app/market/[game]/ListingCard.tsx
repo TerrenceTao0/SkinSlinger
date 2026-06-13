@@ -4,10 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { DisplayCard } from "./Market";
 import FloatBar from "@/app/components/FloatBar";
+import { toSlug } from "@/app/lib/site";
 
-function toSlug(name: string): string {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
 
 //
 
@@ -33,7 +31,7 @@ export default function ListingCard(
 
     return (
         <div
-            className="bg-accent h-60 overflow-hidden relative w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
+            className="bg-accent rounded-sm h-60 overflow-hidden relative w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
             style={{ '--glow': `#${hexColor}44`, border: `1px solid #${hexColor}` } as React.CSSProperties}
         >
             <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none z-1" style={{ background: `linear-gradient(to bottom, #${hexColor}88, transparent)` }} />
@@ -96,7 +94,7 @@ export default function ListingCard(
 
                 {/* Price + Buy */}
                 <div className="flex items-center justify-between h-10 border-t border-gray-700/40">
-                    <span className="text-sm">${price.toFixed(2)}</span>
+                    <span className="text-sm font-semibold [font-family:var(--font-display)]">${price.toFixed(2)}</span>
                     <button
                         onClick={onBuy}
                         disabled={isOwned}

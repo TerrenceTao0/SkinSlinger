@@ -35,6 +35,12 @@ export type SteamItem = {
     stickers: SteamSticker[] | null,
 }
 
+const STEAM_APP_IDS: Record<string, number> = {
+    CS2: 730,
+    Dota2: 570,
+    Rust: 252490,
+    TF2: 440,
+};
 
 export function getStacked(inventory: SteamItem[]) {
     return inventory.map(item => ({ ...item, quantity: 1 }));
@@ -43,7 +49,6 @@ export function getStacked(inventory: SteamItem[]) {
 
 const tradeCache = new Map<string, { allowed: boolean; reason: string | null; at: number }>();
 const TRADE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
 const TRADE_URL_PATTERN = /^https:\/\/steamcommunity\.com\/tradeoffer\/new\/\?partner=(\d+)&token=[a-zA-Z0-9_-]+$/;
 
 // Checks whether a Steam account can trade. Returns { allowed, reason }.
@@ -94,13 +99,6 @@ export async function checkCanTrade(
     }
 }
 
-
-const STEAM_APP_IDS: Record<string, number> = {
-    CS2: 730,
-    Dota2: 570,
-    Rust: 252490,
-    TF2: 440,
-};
 
 // Fetches the average price for an item across all markets from steamwebapi.
 // Falls back to the Steam Community Market price if no third-party market has it.
@@ -185,7 +183,8 @@ export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue:
                 wear: s.wear ?? null,
             })),
         };
-    } catch {
+    } 
+    catch {
         return null;
     }
 }

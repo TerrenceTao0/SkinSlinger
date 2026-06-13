@@ -470,4 +470,115 @@ export const posts: Post[] = [
             { label: 'Steam Community Market: TF2 items', url: 'https://steamcommunity.com/market/search?appid=440' },
         ],
     },
+    {
+        slug: 'sell-rust-skins-for-real-money',
+        title: 'How to Sell Rust Skins for Real Money in 2026',
+        date: 'June 11, 2026',
+        summary: 'The Steam Market locks your Rust skin sales into Wallet credit. Here is how to sell Rust skins peer-to-peer for USDC you can actually withdraw, with 0% sales fee and no identity verification.',
+        image: `${CDN}/6TMcQ7eX6E0EZl2byXi7vaVKyDk_zQLX05x6eLCFM9neAckxGDf7qU2e2gu64OnAeQ7835FW7GLHfCk4nReh8DEiv5daPqk5pbI2Rf63y6_ODyQ`,
+        tldr: 'You cannot cash out Rust skins through the Steam Community Market - proceeds are locked as Steam Wallet credit after a roughly 15% combined fee. Selling on SkinSlinger is peer-to-peer: you list at your own price, a buyer pays into escrow, you send the Steam trade offer, and the full price is released to you in USDC with a 0% sales fee and no KYC at any volume. The whole flow typically takes under 20 minutes once a buyer orders.',
+        body: [
+            {
+                text: 'Rust skins come from the item store, weekly drops, and Twitch drops, and many accumulate real market value over time. The catch is that the obvious place to sell them - the Steam Community Market - takes a combined fee of around 15% and pays you in Steam Wallet credit that can never be converted to real money. To actually cash out Rust skins, you need a third-party marketplace, and they differ a lot in fees, custody model, and verification requirements.',
+            },
+            {
+                heading: 'What to Check Before Choosing a Rust Marketplace',
+                text: 'Three things matter most. First, the fee structure: instant-sell sites typically pay 60% to 80% of market value, while peer-to-peer marketplaces let you set the price and charge a listing or sales fee on top. Second, custody: bot-based platforms hold your items on their accounts during the sale, which concentrates risk; peer-to-peer trades go directly from your inventory to the buyer. Third, KYC: many platforms advertise easy cash-outs but require identity documents once your withdrawals pass a threshold, which is exactly when you need them not to.',
+            },
+            {
+                heading: 'Selling Rust Skins on SkinSlinger Step by Step',
+                text: 'Sign in with Steam and add your Steam trade URL - that is the entire onboarding, with no documents at any point. Open your inventory on SkinSlinger, which loads your tradeable Rust skins with current market reference prices, queue the items you want to sell, and set your prices. When a buyer orders, their payment is escrowed and you get notified. Send the Steam trade offer to the buyer\'s trade URL from your own account, and once the server verifies the item arrived in their inventory - it checks every 5 minutes - the full sale price lands in your USDC balance.',
+            },
+            {
+                heading: 'Pricing Rust Skins to Actually Sell',
+                text: 'Rust skins have no wear or float system, so identical skins are interchangeable and price is the only competitive lever. Listings at 80% to 90% of Steam Market reference tend to move quickly because buyers are getting a genuine discount on the same item. Rarer out-of-circulation skins from old store rotations can hold out for full reference price or above, since supply is fixed once a skin leaves the store.',
+            },
+            {
+                heading: 'Cashing Out: USDC on Polygon',
+                text: 'Sales are credited in USDC, a dollar-pegged stablecoin, on the Polygon network. Withdrawals go to any Polygon-compatible wallet and typically confirm in under 5 minutes. The withdrawal fee starts at 2% and steps down to 0.5% as your trade volume grows. From a wallet, USDC converts to local currency on any major exchange - which is the step Steam Wallet credit can never make.',
+            },
+            {
+                heading: 'One Prerequisite: Steam Guard',
+                text: 'Steam applies a trade hold to items sent from accounts without Steam Guard Mobile Authenticator active for at least 7 consecutive days, and buyers avoid held items. Enable the authenticator in the Steam mobile app a week before you plan to list. This applies on every marketplace, not just SkinSlinger.',
+            },
+        ],
+        authorPerspective: 'Rust sellers get squeezed harder than CS2 sellers because fewer marketplaces compete for their listings, and instant-sell sites exploit that with steep spreads. A peer-to-peer model with a 0% sales fee flips the economics: the seller sets the price and keeps all of it, and the only cost in the system is the withdrawal fee.',
+        sources: [
+            { label: 'Steam Community Market: Rust items', url: 'https://steamcommunity.com/market/search?appid=252490' },
+            { label: 'Steam Support: Trade holds', url: 'https://help.steampowered.com/en/faqs/view/0C28-4D3F-9F77-02B6' },
+        ],
+    },
+    {
+        slug: 'sell-dota2-items-for-real-money',
+        title: 'How to Sell Dota 2 Items for Real Money: Arcanas, Immortals & Sets',
+        date: 'June 11, 2026',
+        summary: 'Dota 2 arcanas and immortals hold real value, but Steam Wallet credit is a dead end. A practical guide to selling Dota 2 items peer-to-peer for withdrawable USDC with no KYC.',
+        image: `${CDN}/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttydbPaERSR0Wqmu7LAocGIyi3kajH_jR1c-zOHSF4Blm_Ibw5U7hSBj_mqnk-C9U4c2rabBoMr6SC2KVkLgl5OA-TC21lxx-sGuGwtz6eS2ROw92CcBxRLEIshHrkNDkKaq8sPDxdt5E`,
+        tldr: 'Tradeable Dota 2 items - arcanas, immortals, couriers, and sets - can be sold for real money on peer-to-peer marketplaces instead of being locked into Steam Wallet credit at a roughly 15% fee. On SkinSlinger you list at your own price with a 0% sales fee, payment is escrowed, you trade directly with the buyer, and you are paid in USDC with no identity verification at any point. Check tradeability in your Steam inventory first: some Dota 2 items are gift-wrapped, untradeable, or still inside a trade-restriction window.',
+        body: [
+            {
+                text: 'Dota 2\'s economy is concentrated in a smaller number of high-value cosmetics than CS2\'s - arcanas, immortals, rare couriers, and event sets carry most of the value. That concentration cuts both ways for sellers: fewer marketplaces compete for Dota 2 listings, so the gap between what instant-buy sites offer and what a peer-to-peer sale earns is often wider than in any other Steam game.',
+            },
+            {
+                heading: 'First, Check What Is Actually Tradeable',
+                text: 'Not every Dota 2 item can be sold. Items can be marketable, tradeable, both, or neither, and some battle pass rewards are permanently bound to your account. Open your Steam inventory, select the item, and check its trade status before planning a sale. Items received via trade or purchase can also sit inside a temporary trade-restriction window. Anything tradeable in your inventory will appear in your SkinSlinger inventory view, which is the quickest practical check.',
+            },
+            {
+                heading: 'Why Peer-to-Peer Beats Instant-Sell for Dota 2',
+                text: 'Instant-sell platforms quote you a fraction of market value - commonly 60% to 75% for Dota 2 cosmetics, and less for niche items they expect to hold in stock for months. On a peer-to-peer marketplace you set the price and wait for a buyer instead. For an arcana worth $30 to $40 on the Steam Market, the difference between an instant quote and a P2P sale at 90% of reference is routinely $10 or more on a single item.',
+            },
+            {
+                heading: 'The Escrowed Trade Flow',
+                text: 'When a buyer orders your item on SkinSlinger, their payment is held by the server - the seller does not get paid yet, and the buyer cannot lose money to a no-show. You send a Steam trade offer to the buyer\'s trade URL from your own account; your item never sits on a bot. After the buyer accepts, the server verifies the item in their inventory within about 5 minutes and releases the full sale price to your USDC balance. The sales fee is 0%.',
+            },
+            {
+                heading: 'Getting Paid Without KYC',
+                text: 'Withdrawals are in USDC on the Polygon network, to any wallet you control, and confirm in minutes. There is no identity verification at sign-up, while trading, or at withdrawal - at any volume. The withdrawal fee starts at 2% and falls to 0.5% as your cumulative trade volume grows, which for a Dota 2 seller clearing a few high-value items is the only fee in the entire flow.',
+            },
+        ],
+        authorPerspective: 'Dota 2 sellers are the most underserved group in the Steam economy: the items are valuable, the marketplaces are few, and instant-buy spreads are brutal. If you own an arcana or immortal you no longer use, pricing it yourself on a P2P market is the single highest-return change you can make to how you sell.',
+        sources: [
+            { label: 'Steam Community Market: Dota 2 items', url: 'https://steamcommunity.com/market/search?appid=570' },
+            { label: 'Steam Support: Trading', url: 'https://help.steampowered.com/en/faqs/view/70BE-ECFC-7CBA-25C6' },
+        ],
+    },
+    {
+        slug: 'tf2-unusual-marketplace-guide',
+        title: 'Where to Sell TF2 Unusuals in 2026: A Marketplace Guide',
+        date: 'June 11, 2026',
+        summary: 'Unusual hats are the blue chips of the TF2 economy. How unusual pricing works, where the fees hide on each platform, and how to sell unusuals peer-to-peer for withdrawable USDC.',
+        image: `${CDN}/IzMF03bi9WpSBq-S-ekoE33L-iLqGFHVaU25ZzQNQcXdEH9myp0erksICfSMf6UeRJpnqWSMU5OD2IwJkXVZnihXOjLx2Sk5MbUqMcbBnQz4ruyeU3f0VyTRIizcDgw4TLYxdjCMvGrzs677AXycBatzHWZYLOBTp3ofaciJPEY90NYO_2C9zhMlSEBxIsFDJly_niAXM-h3ynBKJpIGzHX3ONSH0vuPuxPC`,
+        tldr: 'TF2 unusuals - hats with particle effects unboxed at roughly a 1% rate - are the highest-value items in the TF2 economy, and where you sell them matters more than for any other item class. The Steam Market takes about 15% and locks proceeds as Wallet credit; marketplace.tf charges 10%; key-based community trading is fee-free but slow and capped by key liquidity. SkinSlinger sells unusuals peer-to-peer at a 0% sales fee with USDC payouts and no KYC: the buyer\'s payment is escrowed, you trade hat-for-nothing directly to their backpack, and the full price is released to you.',
+        body: [
+            {
+                text: 'Unusual hats occupy a unique position in the Steam economy: unboxed from Mann Co. crates at roughly a 1% rate, each is a combination of a hat and a particle effect, and the rarest combinations trade for hundreds or thousands of dollars. Because individual unusuals are near-unique, pricing and venue choice matter far more than for commodity items like keys or refined metal.',
+            },
+            {
+                heading: 'How Unusuals Are Priced',
+                text: 'The community convention prices unusuals in keys, with backpack.tf as the reference for both key-to-dollar rates and individual unusual valuations. Effect matters more than the hat: a sought-after effect like Burning Flames on a mediocre hat usually outprices a popular hat with a weak effect. Before listing anywhere, check the backpack.tf price history for your specific hat-and-effect combination - averages for the hat alone will mislead you.',
+            },
+            {
+                heading: 'The Venue Options and Their Real Costs',
+                text: 'The Steam Community Market takes a combined cut of around 15% and pays in Steam Wallet credit that cannot be withdrawn - a dead end for anything beyond pocket change. marketplace.tf, the long-running TF2 specialist, charges sellers 10% and pays out real money. Community key trading on backpack.tf has no platform fee, but converting a high-value unusual into spendable cash means first finding a key buyer, then selling the keys - two slow trades with spread lost on each.',
+            },
+            {
+                heading: 'Selling Unusuals Peer-to-Peer on SkinSlinger',
+                text: 'List the unusual from your backpack at your own dollar price - the sales fee is 0%, so the listed price is what you receive. When a buyer orders, their payment is escrowed by the server. You send the Steam trade offer directly to the buyer\'s trade URL; the hat moves from your backpack to theirs without a bot ever holding it. Once the server verifies delivery - it checks the buyer\'s inventory every 5 minutes - the full amount is credited to your balance in USDC.',
+            },
+            {
+                heading: 'Cashing Out a High-Value Sale',
+                text: 'USDC withdrawals go to any Polygon wallet and confirm in minutes, with no identity verification at any amount - relevant for unusual sellers specifically, because a single sale can cross the payout thresholds at which other platforms demand documents. The withdrawal fee starts at 2% and drops to 0.5% with volume, so a $500 unusual sale costs at most $10 end to end, against $50 on a 10% platform or $75 in locked credit on Steam.',
+            },
+            {
+                heading: 'Listing Tips for Unusual Sellers',
+                text: 'Photograph demand, not hope: price against recent sold history for your exact combination, not against the most optimistic active listing. Unusuals priced within 10% of backpack.tf reference attract serious buyers; trophy pricing attracts none. And as with every Steam marketplace, have Steam Guard Mobile Authenticator active for at least 7 days before listing, or Steam will hold the trade and the sale will fall through.',
+            },
+        ],
+        authorPerspective: 'Unusual sellers tolerate a 10% fee as the cost of a real-money exit because that has been the only liquid option for a decade. Escrowed peer-to-peer trading removes the reason that fee exists: there is no bot inventory to finance and no payment processor to pay, so the fee can be zero and the seller keeps the difference.',
+        sources: [
+            { label: 'backpack.tf: TF2 community pricing', url: 'https://backpack.tf/' },
+            { label: 'marketplace.tf: seller fees', url: 'https://marketplace.tf/' },
+            { label: 'Steam Community Market: TF2 items', url: 'https://steamcommunity.com/market/search?appid=440' },
+        ],
+    },
 ]
