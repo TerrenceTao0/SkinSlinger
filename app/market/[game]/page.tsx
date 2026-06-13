@@ -19,7 +19,7 @@ type GameConfig = {
     description: string;
     h1: string;
     blurb: string;
-    faqs: { q: string; a: string }[];
+    faqs?: { q: string; a: string }[];
 };
 
 // Titles/H1s deliberately target the lower-competition long-tail intents
