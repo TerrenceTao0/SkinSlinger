@@ -73,7 +73,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
         setPriceMap(next);
     }
 
-    function listItems() {
+    async function listItems() {
         const items = stackedQueue.map(item => ({
             assetId: item.assetId,
             marketName: item.market_name,
@@ -85,16 +85,27 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
             hexColor: item.hexColor,
         }));
 
-        const ids = selling.map(i => i.assetId);
+        const queued = selling;
+        const ids = queued.map(i => i.assetId);
         setSelling([]);
         setShowPrompt(false);
-        onListed(ids);
 
-        fetch("/api/listings", {
+        // Wait for the listing to be persisted before refreshing. The optimistic hide
+        // only knows each stack's representative assetId, but the server lists every
+        // individual one (commodity stacks resolve N distinct assetIds). Refreshing
+        // after the POST commits lets the server-side filter remove them all.
+        const response = await fetch("/api/listings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items, inventoryToken }),
         });
+
+        if (!response.ok) {
+            setSelling(queued);
+            return;
+        }
+
+        onListed(ids);
     }
 
     function remove(market_name: string) {

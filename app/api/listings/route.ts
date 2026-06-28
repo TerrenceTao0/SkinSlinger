@@ -2,8 +2,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { verifyInventoryToken } from "@/lib/inventoryToken";
+import { Resend } from "resend";
+import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
 
 //
+
+const resend = new Resend(process.env.RESEND_API);
 
 const PAGE_SIZE = 30;
 
@@ -102,27 +106,8 @@ export async function DELETE(request: Request) {
         if (listings.length === 0) return Response.json(null, { status: 200 });
 
         const idsToDelete = listings.map(l => l.id);
-        const marketNames = [...new Set(listings.map(l => l.marketName))];
 
         await prisma.item_listing.deleteMany({ where: { id: { in: idsToDelete } } });
-
-        // Refund buy orders for market names that now have no listings
-        const remaining = await prisma.item_listing.groupBy({
-            by: ["marketName"],
-            where: { marketName: { in: marketNames } },
-        });
-        const stillListed = new Set(remaining.map(r => r.marketName));
-        const emptied = marketNames.filter(n => !stillListed.has(n));
-
-        if (emptied.length > 0) {
-            const orders = await prisma.buy_order.findMany({ where: { marketName: { in: emptied } } });
-            if (orders.length > 0) {
-                await prisma.$transaction([
-                    prisma.buy_order.deleteMany({ where: { marketName: { in: emptied } } }),
-                    ...orders.map(o => prisma.user.update({ where: { id: o.userId }, data: { cash: { increment: o.price * o.quantity } } })),
-                ]);
-            }
-        }
 
         return Response.json(null, { status: 200 });
     } catch (error) {
@@ -198,6 +183,87 @@ export async function POST(request: Request) {
 
         if (toCreate.length > 0) {
             await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
+        }
+
+        // Fill standing buy orders with the freshly listed items (order-book matching).
+        // Each listing matches the best bid (highest price, then oldest) from a deliverable
+        // buyer; the trade clears at the listed price and the buyer is refunded the difference.
+        const matchedSales: { buyerTradeUrl: string; marketName: string; price: number }[] = [];
+
+        for (const listed of toCreate) {
+            const sale = await prisma.$transaction(async (tx) => {
+                const live = await tx.item_listing.findUnique({ where: { assetId: listed.assetId } });
+                if (!live || live.userId !== user.id) return null;
+
+                const order = await tx.buy_order.findFirst({
+                    where: {
+                        marketName: live.marketName,
+                        price: { gte: live.price },
+                        quantity: { gt: 0 },
+                        userId: { not: user.id },
+                        user: { steam_id: { not: null }, steam_trade_url: { not: null } },
+                    },
+                    orderBy: [{ price: "desc" }, { createdAt: "asc" }],
+                    include: { user: { select: { steam_trade_url: true } } },
+                });
+                if (!order) return null;
+
+                // Consume the listing; bail (rolls back) if it was bought concurrently.
+                const delListing = await tx.item_listing.deleteMany({ where: { id: live.id } });
+                if (delListing.count === 0) return null;
+
+                // Consume one unit of the buy order; if it raced to zero, roll the whole match back.
+                const consumed = await tx.buy_order.updateMany({
+                    where: { id: order.id, quantity: { gt: 0 } },
+                    data: { quantity: { decrement: 1 } },
+                });
+                if (consumed.count === 0) throw new Error("buy order race");
+                await tx.buy_order.deleteMany({ where: { id: order.id, quantity: { lte: 0 } } });
+
+                await tx.purchase.create({
+                    data: {
+                        price: live.price,
+                        assetId: live.assetId,
+                        marketName: live.marketName,
+                        game: live.game,
+                        icon: live.icon,
+                        hexColor: live.hexColor,
+                        commodity: live.commodity,
+                        buyerTradeUrl: order.user.steam_trade_url,
+                        buyerId: order.userId,
+                        sellerId: user.id,
+                    },
+                });
+
+                // The buyer held their bid; the trade clears at the listed (lower-or-equal) price.
+                const diff = order.price - live.price;
+                if (diff > 0.001) {
+                    await tx.user.update({ where: { id: order.userId }, data: { cash: { increment: diff } } });
+                }
+
+                return { buyerTradeUrl: order.user.steam_trade_url!, marketName: live.marketName, price: live.price };
+            }).catch(() => null);
+
+            if (sale) matchedSales.push(sale);
+        }
+
+        // Notify the seller to send any instantly-sold items, grouped by buyer trade URL.
+        const notifyTo = user.notificationEmail;
+        if (matchedSales.length > 0 && notifyTo) {
+            const byBuyer = new Map<string, { marketName: string; price: number }[]>();
+            for (const s of matchedSales) {
+                const items = byBuyer.get(s.buyerTradeUrl) ?? [];
+                items.push({ marketName: s.marketName, price: s.price });
+                byBuyer.set(s.buyerTradeUrl, items);
+            }
+            for (const [buyerTradeUrl, items] of byBuyer) {
+                await resend.emails.send({
+                    from: "SkinSlinger <onboarding@skinslinger.com>",
+                    to: [notifyTo],
+                    subject: `New sale — send your item${items.length > 1 ? "s" : ""}`,
+                    react: PurchaseNotificationEmail({ buyerTradeUrl, buyerName: "Buyer", items }),
+                });
+            }
         }
 
         return Response.json(null, { status: 200 });

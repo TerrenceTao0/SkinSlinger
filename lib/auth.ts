@@ -4,8 +4,18 @@ import { prisma } from "./db"
 
 //
 
+const adapter = PrismaAdapter(prisma)
+
+// next-auth-steam adds a non-schema `steamId` field to the token set (the
+// userinfo step reads it), and NextAuth forwards the whole token into
+// account.create(). The `account` model has no `steamId` column, so strip it
+// before the insert to avoid a PrismaClientValidationError on linkAccount.
+const baseLinkAccount = adapter.linkAccount!
+adapter.linkAccount = ({ steamId, ...account }: Parameters<typeof baseLinkAccount>[0] & { steamId?: string }) =>
+    baseLinkAccount(account)
+
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma),
+    adapter,
     secret: process.env.NEXTAUTH_SECRET,
 
     session: {

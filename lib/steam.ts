@@ -109,8 +109,10 @@ export async function fetchItemPrice(market_hash_name: string, game: string, _na
         url.searchParams.set("market_hash_name", market_hash_name);
 
         const response = await fetch(url.toString());
+        
         if (response.ok) {
             const data = await response.json();
+
             if (Array.isArray(data) && data.length > 0) {
                 const prices = Object.values(data[0].prices as Record<string, { price: number }>)
                     .map(m => m.price)
@@ -130,6 +132,7 @@ export async function fetchItemPrice(market_hash_name: string, game: string, _na
     // Fallback: Steam Community Market
     try {
         const appId = STEAM_APP_IDS[game];
+
         if (!appId) return null;
 
         const steamUrl = new URL("https://steamcommunity.com/market/priceoverview/");
@@ -146,9 +149,11 @@ export async function fetchItemPrice(market_hash_name: string, game: string, _na
         if (!data.success) return null;
 
         const raw = data.median_price ?? data.lowest_price;
+
         if (!raw) return null;
 
         const numeric = parseFloat(raw.replace(/[^0-9.]/g, ""));
+
         if (isNaN(numeric)) return null;
 
         return numeric < 0.05 ? numeric : numeric * 0.8;
@@ -168,6 +173,7 @@ export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue:
         url.searchParams.set("url", inspectLink);
 
         const res = await fetch(url.toString());
+
         if (!res.ok) return null;
 
         const data = await res.json();
@@ -193,20 +199,45 @@ export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue:
 // Fetches a player's inventory for any supported game from steamwebapi.
 // Returns tradable items with price set to 0 (prices are looked up separately from our DB).
 async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
+    // Steam caps each request at 2000 items, so larger inventories must be paged via
+    // start_assetid (the last_assetid response header). Without this, cheap items
+    // (cases, stickers) past the first 2000 are silently dropped, since the API
+    // default-sorts by price descending.
+    const PAGE_SIZE = 2000;
+    const MAX_PAGES = 25;
+
     try {
         const slug = game_slugs[game] ?? "cs2";
-        const url = new URL(`${base_url}/steam/api/inventory`);
-        url.searchParams.set("key", api_key);
-        url.searchParams.set("steam_id", steam_id);
-        url.searchParams.set("game", slug);
+        const raw: any[] = [];
+        let startAssetId: string | null = null;
 
-        const response = await fetch(url.toString());
-        if (!response.ok) return [];
+        for (let page = 0; page < MAX_PAGES; page++) {
+            const url = new URL(`${base_url}/steam/api/inventory`);
+            url.searchParams.set("key", api_key);
+            url.searchParams.set("steam_id", steam_id);
+            url.searchParams.set("game", slug);
+            url.searchParams.set("limit", String(PAGE_SIZE));
+            url.searchParams.set("no_cache", "1");
 
-        const items: any[] = await response.json();
-        if (!Array.isArray(items)) return [];
+            if (startAssetId) url.searchParams.set("start_assetid", startAssetId);
 
-        return items
+            const response = await fetch(url.toString());
+
+            if (!response.ok) break;
+
+            const items: any[] = await response.json();
+
+            if (!Array.isArray(items) || items.length === 0) break;
+
+            raw.push(...items);
+
+            // Last page when the API returns a partial page or stops handing back a cursor.
+            const lastAssetId = response.headers.get("last_assetid");
+            if (items.length < PAGE_SIZE || !lastAssetId) break;
+            startAssetId = lastAssetId;
+        }
+
+        return raw
             .filter((item: any) => item.tradable)
             .map((item: any) => ({
                 assetId: `${game}:${item.assetid}`,
@@ -248,5 +279,73 @@ export async function getInventory(steam_id: string): Promise<SteamItem[]> {
 
 
     return [...cs2, ...dota2, ...rust, ...tf2];
+}
+
+
+export type VerifyResult = "has_item" | "no_item" | "private" | "error";
+
+// Checks whether the buyer's inventory contains the purchased item. assetid changes
+// when an item is traded, so we match on the trade-stable market name and — for CS2
+// skins with stored float data — the exact float value and paint seed (these are
+// intrinsic to the item and survive trades). Commodities match by name only.
+// with_no_tradable=1 is required so the just-received, trade-locked item is included.
+export async function verifyBuyerHasItem(
+    steamId: string,
+    game: string | null,
+    marketName: string,
+    float: { floatValue: number | null; paintSeed: number | null } | null,
+): Promise<VerifyResult> {
+    try {
+        const slug = game ? (game_slugs[game] ?? "cs2") : "cs2";
+        const url = new URL(`${base_url}/steam/api/inventory`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("steam_id", steamId);
+        url.searchParams.set("game", slug);
+        url.searchParams.set("with_no_tradable", "1");
+        url.searchParams.set("no_cache", "1");
+
+        const res = await fetch(url.toString());
+
+        if (res.status === 403) return "private";
+        if (res.status === 410 || res.status === 411) return "no_item"; // accessible, no such item
+        if (!res.ok) return "error";
+
+        const items = await res.json();
+
+        if (!Array.isArray(items)) {
+            const err = typeof items?.error === "string" ? items.error : "";
+
+            if (err === "PRIVATE") return "private";
+
+            return "error";
+        }
+
+
+        const matches = items.filter((i: { marketname?: string }) => i.marketname === marketName);
+
+        if (matches.length === 0) return "no_item";
+
+        // For skins with a known float, require an exact float + pattern match.
+        if (float?.floatValue != null) {
+            const target = float.floatValue;
+
+            const hit = matches.some((i: { float?: { floatvalue?: number; paintseed?: number } }) => {
+                const fv = i.float?.floatvalue;
+
+                if (typeof fv !== "number" || Math.abs(fv - target) > 1e-7) return false;
+                if (float.paintSeed != null && i.float?.paintseed !== float.paintSeed) return false;
+
+                return true;
+            });
+
+
+            return hit ? "has_item" : "no_item";
+        }
+
+        return "has_item";
+    } 
+    catch {
+        return "error";
+    }
 }
 

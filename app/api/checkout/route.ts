@@ -169,13 +169,13 @@ export async function POST(request: Request) {
         const sellers = await prisma.user.findMany({ where: { id: { in: sellerIds } } });
 
         for (const seller of sellers) {
-            if (!seller.email) continue;
+            if (!seller.notificationEmail) continue;
 
             const sellerItems = purchases.filter(p => p.sellerId === seller.id);
 
             await resend.emails.send({
                 from: 'SkinSlinger <onboarding@skinslinger.com>',
-                to: [seller.email],
+                to: [seller.notificationEmail],
                 subject: `New sale — send your item${sellerItems.length > 1 ? "s" : ""}`,
                 react: PurchaseNotificationEmail({
                     buyerTradeUrl: buyer.steam_trade_url ?? "",
@@ -183,21 +183,6 @@ export async function POST(request: Request) {
                     items: sellerItems.map(p => ({ marketName: p.marketName, price: p.price })),
                 }),
             });
-        }
-
-        // For each purchased marketName, clean up buy orders if no listings remain
-        const purchasedNames = [...new Set(toPurchase.map(l => l.marketName))];
-        for (const marketName of purchasedNames) {
-            const remaining = await prisma.item_listing.count({ where: { marketName } });
-            if (remaining === 0) {
-                const orders = await prisma.buy_order.findMany({ where: { marketName } });
-                if (orders.length > 0) {
-                    await prisma.$transaction([
-                        prisma.buy_order.deleteMany({ where: { marketName } }),
-                        ...orders.map(o => prisma.user.update({ where: { id: o.userId }, data: { cash: { increment: o.price * o.quantity } } })),
-                    ]);
-                }
-            }
         }
 
         const updated = await prisma.user.findUnique({ where: { id: buyer.id }, select: { cash: true } });

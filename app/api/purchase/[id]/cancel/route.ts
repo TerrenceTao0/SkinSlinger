@@ -1,29 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-
-//
-
-const GAME_APP_IDS: Record<string, string> = {
-    CS2: "730",
-    Dota2: "570",
-    Rust: "252490",
-    TF2: "440",
-}
-
-async function checkInventory(steamId: string, game: string | null, assetId: string): Promise<"has_item" | "no_item" | "private"> {
-    try {
-        const appId = game ? (GAME_APP_IDS[game] ?? "730") : "730";
-        const rawAssetId = assetId.includes(":") ? assetId.split(":")[1] : assetId;
-        const res = await fetch(`https://steamcommunity.com/inventory/${steamId}/${appId}/2?l=english&count=5000`);
-        if (!res.ok) return "private";
-        const data = await res.json();
-        if (data?.success !== 1) return "private";
-        return data?.assets?.some((a: { assetid: string }) => a.assetid === rawAssetId) ? "has_item" : "no_item";
-    } catch {
-        return "private";
-    }
-}
+import { verifyBuyerHasItem } from "@/lib/steam";
 
 //
 
@@ -57,29 +35,50 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         }
 
 
-        if (purchase.status === "completed") {
-            return Response.json({ error: "Purchase already completed" }, { status: 409 });
+        if (purchase.status === "completed" || purchase.status === "reversed") {
+            return Response.json({ error: "This order has already been finalised." }, { status: 409 });
+        }
+
+        if (purchase.status === "holding") {
+            return Response.json({ error: "This item has been delivered and is in the 7-day clearing period — it can't be cancelled." }, { status: 409 });
         }
 
 
-        // Check the buyer's inventory before cancelling to prevent scamming
+        // Check the buyer's inventory before cancelling to prevent scamming.
         if (purchase.buyer.steam_id) {
-            const result = await checkInventory(purchase.buyer.steam_id, purchase.game, purchase.assetId);
+            const float = await prisma.item_float.findUnique({ where: { assetId: purchase.assetId } });
+            const floatData = float ? { floatValue: float.floatValue, paintSeed: float.paintSeed } : null;
+            const result = await verifyBuyerHasItem(purchase.buyer.steam_id, purchase.game, purchase.marketName, floatData);
+
+            if (result === "error") {
+                // Couldn't reach Steam — don't move money on a guess; let the caller retry.
+                return Response.json({ error: "Couldn't verify the trade with Steam right now. Please try again in a moment." }, { status: 503 });
+            }
+
+            if (result === "private") {
+                // Can't verify a private inventory — refuse rather than guess, so a buyer
+                // can't receive the item, hide it, then cancel for a refund.
+                return Response.json({ error: "Make your Steam inventory public so we can verify the trade, then try again." }, { status: 409 });
+            }
+
             if (result === "has_item") {
-                // Buyer already received the item — complete instead of cancel
-                await prisma.$transaction(async (tx) => {
-                    await tx.purchase.update({ where: { id }, data: { status: "completed" } });
-                    await tx.user.update({ where: { id: purchase.sellerId }, data: { cash: { increment: purchase.price } } });
+                // The item has already been delivered — start the hold instead of cancelling,
+                // so the seller still can't get paid until the clearing window passes.
+                await prisma.purchase.updateMany({
+                    where: { id, status: "pending" },
+                    data: { status: "holding", deliveredAt: new Date() },
                 });
 
-
-                return Response.json({ error: "Trade already completed — the buyer has the item. The seller has been paid." }, { status: 409 });
+                return Response.json({ error: "The item has already been delivered — it's now in the 7-day clearing period and can't be cancelled." }, { status: 409 });
             }
         }
 
 
         await prisma.$transaction(async (tx) => {
-            await tx.purchase.delete({ where: { id } });
+            // Only refund/restore if this request is the one that removes the still-pending
+            // purchase — stops a concurrent delivery/completion from being refunded as well.
+            const removed = await tx.purchase.deleteMany({ where: { id, status: "pending" } });
+            if (removed.count === 0) return;
 
             // Refund buyer
             await tx.user.update({
@@ -87,14 +86,18 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
                 data: { cash: { increment: purchase.price } },
             });
 
-            
-            // Restore listing
+
+            // Restore listing — carry over the display fields stored on the purchase, else the
+            // listing comes back with a null icon and is filtered out of the market entirely.
             await tx.item_listing.create({
                 data: {
                     assetId: purchase.assetId,
                     marketName: purchase.marketName,
                     price: purchase.price,
                     game: purchase.game,
+                    icon: purchase.icon,
+                    hexColor: purchase.hexColor,
+                    commodity: purchase.commodity,
                     userId: purchase.sellerId,
                 },
             });

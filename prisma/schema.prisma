@@ -10,6 +10,7 @@ datasource db {
 model user {
   id String @id @default(cuid())
   email String? @unique
+  emailVerified DateTime?
   name String?
   image String?
   createdAt DateTime @default(now())
@@ -20,6 +21,11 @@ model user {
   purchases Float @default(0)
   lastInventoryRefresh DateTime?
   inventoryCache Json?
+
+  notificationEmail String?
+  pendingEmail String?
+  emailCode String?
+  emailCodeExpires DateTime?
 
   accounts account[]
   sessions session[]
@@ -133,6 +139,7 @@ model purchase {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   status String @default("pending")
+  deliveredAt DateTime?
   price Float
   assetId String
   marketName String

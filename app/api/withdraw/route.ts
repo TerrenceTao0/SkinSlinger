@@ -11,6 +11,13 @@ export async function POST(req: Request) {
     const { amount, address } = await req.json()
     const userId = session.user.id
 
+    if (typeof amount !== "number" || !Number.isFinite(amount)) {
+        return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
+    }
+    if (typeof address !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+        return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 })
+    }
+
     try {
         const result = await processWithdrawal(
             amount,

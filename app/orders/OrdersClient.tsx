@@ -10,6 +10,7 @@ import Link from "next/link";
 type Purchase = {
     id: string;
     createdAt: Date;
+    deliveredAt: Date | null;
     status: string;
     price: number;
     marketName: string;
@@ -28,6 +29,7 @@ type Purchase = {
 type PurchaseGroup = {
     ids: string[];
     createdAt: Date;
+    deliveredAt: Date | null;
     marketName: string;
     icon: string | null;
     hexColor: string | null;
@@ -55,6 +57,7 @@ function groupPurchases(purchases: Purchase[]): PurchaseGroup[] {
             map.set(key, {
                 ids: [p.id],
                 createdAt: p.createdAt,
+                deliveredAt: p.deliveredAt,
                 marketName: p.marketName,
                 icon: p.icon,
                 hexColor: p.hexColor,
@@ -78,7 +81,9 @@ function groupPurchases(purchases: Purchase[]): PurchaseGroup[] {
 
 const STATUS_CHIP: Record<string, { label: string; className: string }> = {
     pending:   { label: "In progress", className: "bg-yellow-400/10 text-yellow-400" },
+    holding:   { label: "Clearing",    className: "bg-blue-400/10 text-blue-400" },
     completed: { label: "Completed",   className: "bg-special/10 text-special" },
+    reversed:  { label: "Reversed",    className: "bg-red-400/10 text-red-400" },
     cancelled: { label: "Cancelled",   className: "bg-white/5 text-gray-400" },
 };
 
@@ -255,9 +260,12 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
         ];
 
 
-    // The platform tracks pending -> completed; within "pending", the trade offer
-    // step is the live one. Completed trades render in history, not here.
-    const currentStep = 1;
+    // "pending" is awaiting the trade; "holding" means delivered and clearing.
+    const isHolding = group.status === "holding";
+    const currentStep = isHolding ? 3 : 1;
+    const releaseText = group.deliveredAt
+        ? formatDate(new Date(new Date(group.deliveredAt).getTime() + 7 * 24 * 60 * 60 * 1000))
+        : "soon";
 
     return (
         <div className="bg-secondary rounded-sm p-5 flex flex-col gap-4" style={group.hexColor ? { boxShadow: `0 0 32px #${group.hexColor}1a` } : undefined}>
@@ -307,7 +315,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
 
 
             {/* Seller action: the trade URL they need right now */}
-            {role === "seller" && (
+            {role === "seller" && !isHolding && (
                 <div className="bg-primary/60 rounded-sm p-3 -mt-2">
                     <p className="text-xs text-gray-500 mb-1">Send the trade offer from your Steam account to:</p>
                     {group.buyerTradeUrl ? (
@@ -321,16 +329,26 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
             )}
 
 
-            {/* Verification + cancel */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700/50 pt-3 -mt-1">
-                <p className="text-xs text-gray-500">
-                    Next inventory check in <NextCheckTimer /> — trades are verified automatically every 5 minutes.
-                </p>
+            {/* Footer: clearing notice while holding, otherwise verify + cancel */}
+            {isHolding ? (
+                <div className="border-t border-gray-700/50 pt-3 -mt-1">
+                    <p className="text-xs text-gray-500">
+                        {role === "seller"
+                            ? <>Delivered. Funds clear to your balance around <span className="text-gray-300">{releaseText}</span>, once Steam&apos;s trade-reversal window passes.</>
+                            : <>Item received. Protection period ends around <span className="text-gray-300">{releaseText}</span> — if the trade is reversed before then, you&apos;re refunded automatically.</>}
+                    </p>
+                </div>
+            ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700/50 pt-3 -mt-1">
+                    <p className="text-xs text-gray-500">
+                        Next inventory check in <NextCheckTimer /> — trades are verified automatically every 5 minutes.
+                    </p>
 
-                <button onClick={() => setConfirming(true)} className="h-8 px-3 rounded-sm bg-negative button text-sm shrink-0">
-                    Cancel order
-                </button>
-            </div>
+                    <button onClick={() => setConfirming(true)} className="h-8 px-3 rounded-sm bg-negative button text-sm shrink-0">
+                        Cancel order
+                    </button>
+                </div>
+            )}
 
             {error && (
                 <p className="text-red-400 text-sm">
@@ -398,7 +416,154 @@ function HistoryRow({ group, role }: { group: PurchaseGroup; role: "buyer" | "se
 
 //
 
-export default function OrdersClient({ purchases, currentUserId }: { purchases: Purchase[]; currentUserId: string }) {
+function maskEmail(email: string) {
+    const [local, domain] = email.split("@");
+    if (!domain) return "*".repeat(email.length);
+    const maskedLocal = local.length <= 1 ? "*" : local[0] + "*".repeat(local.length - 1);
+    return `${maskedLocal}@${domain}`;
+}
+
+function EmailNotificationCard({ notificationEmail, pendingEmail }: { notificationEmail: string | null; pendingEmail: string | null }) {
+    const [step, setStep] = useState<"idle" | "code" | "done">(
+        notificationEmail ? "done" : pendingEmail ? "code" : "idle"
+    );
+    const [email, setEmail] = useState(notificationEmail ?? pendingEmail ?? "");
+    const [confirmedEmail, setConfirmedEmail] = useState(notificationEmail ?? "");
+    const [code, setCode] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [revealed, setRevealed] = useState(false);
+
+    async function sendCode() {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/notification-email/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.trim() }),
+            });
+            if (!res.ok) {
+                const d = await res.json();
+                setError(d.error ?? "Something went wrong");
+                return;
+            }
+            setCode("");
+            setStep("code");
+        } catch {
+            setError("Network error");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function confirm() {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/notification-email/confirm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code.trim() }),
+            });
+            const d = await res.json();
+            if (!res.ok) {
+                setError(d.error ?? "Something went wrong");
+                return;
+            }
+            setConfirmedEmail(d.email);
+            setStep("done");
+        } catch {
+            setError("Network error");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <section className="bg-secondary rounded-sm p-5 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <h2 className="text-lg font-semibold">Email notifications</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                        Get an email when you make a sale or need to send a trade offer.
+                    </p>
+                </div>
+                {step === "done" && (
+                    <span className="text-xs px-2 py-0.5 rounded-sm bg-special/10 text-special shrink-0">Confirmed</span>
+                )}
+            </div>
+
+            {step === "done" ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-primary/60 rounded-sm px-3 py-2.5">
+                    <p className="text-sm break-all">{revealed ? confirmedEmail : maskEmail(confirmedEmail)}</p>
+                    <div className="flex gap-2 shrink-0">
+                        <button
+                            onClick={() => setRevealed(r => !r)}
+                            className="h-8 px-3 rounded-sm bg-accent button text-sm"
+                        >
+                            {revealed ? "Hide" : "Show"}
+                        </button>
+                        <button
+                            onClick={() => { setStep("idle"); setEmail(confirmedEmail); setCode(""); setError(""); }}
+                            className="h-8 px-3 rounded-sm bg-accent button text-sm"
+                        >
+                            Change
+                        </button>
+                    </div>
+                </div>
+            ) : step === "code" ? (
+                <div className="flex flex-col gap-2">
+                    <p className="text-sm text-gray-400">
+                        Enter the 4-digit code sent to <span className="text-white break-all">{email}</span>.
+                    </p>
+                    <div className="flex gap-2">
+                        <input
+                            value={code}
+                            onChange={e => setCode(e.target.value)}
+                            inputMode="numeric"
+                            placeholder="1234"
+                            className="bg-primary rounded-sm h-10 px-3 outline-none border border-gray-600 text-sm flex-1 min-w-0 tracking-widest"
+                        />
+                        <button
+                            onClick={confirm}
+                            disabled={loading || code.trim().length === 0}
+                            className="h-10 px-4 rounded-sm bg-special button text-sm shrink-0"
+                        >
+                            {loading ? "..." : "Confirm"}
+                        </button>
+                    </div>
+                    <button onClick={sendCode} disabled={loading} className="text-special text-xs underline underline-offset-2 self-start">
+                        Resend code
+                    </button>
+                </div>
+            ) : (
+                <div className="flex gap-2">
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="bg-primary rounded-sm h-10 px-3 outline-none border border-gray-600 text-sm flex-1 min-w-0"
+                    />
+                    <button
+                        onClick={sendCode}
+                        disabled={loading || email.trim().length === 0}
+                        className="h-10 px-4 rounded-sm bg-special button text-sm shrink-0"
+                    >
+                        {loading ? "..." : "Send code"}
+                    </button>
+                </div>
+            )}
+
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+        </section>
+    );
+}
+
+//
+
+export default function OrdersClient({ purchases, currentUserId, notificationEmail, pendingEmail }: { purchases: Purchase[]; currentUserId: string; notificationEmail: string | null; pendingEmail: string | null }) {
     const groups = groupPurchases(purchases);
 
     const withRole = groups.map(g => ({
@@ -408,7 +573,8 @@ export default function OrdersClient({ purchases, currentUserId }: { purchases: 
 
 
     const active = withRole.filter(({ group }) => group.status === "pending");
-    const history = withRole.filter(({ group }) => group.status !== "pending");
+    const clearing = withRole.filter(({ group }) => group.status === "holding");
+    const history = withRole.filter(({ group }) => group.status !== "pending" && group.status !== "holding");
 
     return (
         <div className="w-full flex-1 min-h-0 flex justify-center pt-40 px-4 md:px-8 overflow-y-auto pb-10">
@@ -416,6 +582,9 @@ export default function OrdersClient({ purchases, currentUserId }: { purchases: 
                 <h1 className="text-2xl font-bold">
                     Orders
                 </h1>
+
+
+                <EmailNotificationCard notificationEmail={notificationEmail} pendingEmail={pendingEmail} />
 
 
                 {/* Active trades, front and center */}
@@ -446,6 +615,23 @@ export default function OrdersClient({ purchases, currentUserId }: { purchases: 
                         ))
                     )}
                 </section>
+
+
+                {/* Clearing — delivered, inside the 7-day reversal hold */}
+                {clearing.length > 0 && (
+                    <section className="flex flex-col gap-3">
+                        <h2 className="text-lg font-semibold">
+                            Clearing
+                            <span className="text-gray-500 font-normal text-sm ml-2">
+                                {clearing.length}
+                            </span>
+                        </h2>
+
+                        {clearing.map(({ group, role }) => (
+                            <ActiveTradeCard key={group.ids[0]} group={group} role={role} />
+                        ))}
+                    </section>
+                )}
 
 
                 {/* History */}

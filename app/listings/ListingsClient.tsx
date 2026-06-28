@@ -230,7 +230,7 @@ export default function ListingsClient({ listings }: { listings: Listing[] }) {
                 {groups.length === 0 ? (
                     <p className="opacity-40">You have no active listings.</p>
                 ) : (
-                    <div className="overflow-y-auto flex-1 pb-8 pr-2">
+                    <div className="overflow-y-auto flex-1 px-2 pt-2 pb-8">
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                             {groups.map((g) => <ListingCard key={g.ids[0]} group={g} onDelist={() => removeGroup(g.ids[0])} />)}
                         </div>

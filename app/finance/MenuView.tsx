@@ -1,9 +1,11 @@
 export default function MenuView({
     balance,
+    pending,
     onDeposit,
     onWithdraw,
 }: {
     balance: number
+    pending: number
     onDeposit: () => void
     onWithdraw: () => void
 }) {
@@ -18,6 +20,12 @@ export default function MenuView({
                     <span className="text-3xl font-semibold">
                         ${balance.toFixed(2)}
                     </span>
+
+                    {pending > 0 && (
+                        <span className="text-sm text-gray-400 mt-1">
+                            + ${pending.toFixed(2)} clearing from recent sales
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-5 justify-center items-center w-full">

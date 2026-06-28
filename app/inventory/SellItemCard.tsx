@@ -4,19 +4,14 @@ import Image from "next/image";
 
 //
 
-const discounts = [0, 5, 15, 20];
-
-//
-
 export default function SellItemCard({ market_name, quantity, icon, hexColor, priceStr, setPriceStr, marketPrice, bidPrice, remove }: {
     market_name: string, quantity: number, icon: string, hexColor: string,
     priceStr: string, setPriceStr: (val: string) => void, marketPrice: number, bidPrice: number | null, remove: () => void
 }) {
     const basePrice = parseFloat(marketPrice.toFixed(2))
     const price = parseFloat(priceStr)
-    const activeDiscount = discounts.find(d => priceStr === (basePrice * (1 - d / 100)).toFixed(2)) ?? null
-    const calculatedDiscount = basePrice > 0 && !isNaN(price) ? Math.round((1 - price / basePrice) * 100) : 0
-    const displayDiscount = activeDiscount !== null ? activeDiscount : calculatedDiscount
+    const modifier = basePrice > 0 && !isNaN(price) ? Math.round((price / basePrice - 1) * 100) : 0
+    const sliderValue = Math.max(-20, Math.min(20, modifier))
 
     return (
         <div className="bg-accent rounded-sm mx-2 mt-2 p-2 flex flex-col gap-2" style={{ borderLeft: `3px solid #${hexColor}` }}>
@@ -52,30 +47,32 @@ export default function SellItemCard({ market_name, quantity, icon, hexColor, pr
 
             <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                    <p className="text-xs opacity-40">Discount modifiers</p>
-                    <p className={`text-xs ${displayDiscount > 0 ? 'text-red-400' : displayDiscount < 0 ? 'text-green-400' : 'opacity-40'}`}>
-                        {displayDiscount > 0 ? `-${displayDiscount}%` : displayDiscount < 0 ? `+${Math.abs(displayDiscount)}%` : '0%'}
+                    <p className="text-xs opacity-40">Price modifier</p>
+                    <p className={`text-xs ${modifier > 0 ? 'text-green-400' : modifier < 0 ? 'text-red-400' : 'opacity-40'}`}>
+                        {modifier > 0 ? `+${modifier}%` : modifier < 0 ? `-${Math.abs(modifier)}%` : '0%'}
                     </p>
                 </div>
-                <div className="flex gap-1">
-                    {discounts.map(d => (
-                        <button
-                            key={d}
-                            onClick={() => setPriceStr((basePrice * (1 - d / 100)).toFixed(2))}
-                            className={`flex-1 h-6 rounded-sm text-xs cursor-pointer transition-colors ${activeDiscount === d ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
-                        >
-                            {d === 0 ? '0%' : `-${d}%`}
-                        </button>
-                    ))}
-                    {bidPrice !== null && (
-                        <button
-                            onClick={() => setPriceStr(bidPrice.toFixed(2))}
-                            className={`flex-1 h-6 rounded-sm text-xs cursor-pointer transition-colors ${priceStr === bidPrice.toFixed(2) ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
-                        >
-                            Instant
-                        </button>
-                    )}
+                <input
+                    type="range"
+                    min={-20}
+                    max={20}
+                    step={1}
+                    value={sliderValue}
+                    onChange={e => setPriceStr((basePrice * (1 + Number(e.target.value) / 100)).toFixed(2))}
+                    className="w-full accent-special cursor-pointer"
+                />
+                <div className="flex justify-between text-xs opacity-30">
+                    <span>-20%</span>
+                    <span>+20%</span>
                 </div>
+                {bidPrice !== null && (
+                    <button
+                        onClick={() => setPriceStr(bidPrice.toFixed(2))}
+                        className={`h-6 rounded-sm text-xs cursor-pointer transition-colors ${priceStr === bidPrice.toFixed(2) ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                    >
+                        Instant
+                    </button>
+                )}
             </div>
         </div>
     )

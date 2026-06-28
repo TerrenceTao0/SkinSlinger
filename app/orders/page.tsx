@@ -19,6 +19,11 @@ export default async function OrdersPage() {
 
     const userId = session.user.id;
 
+    const me = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { notificationEmail: true, pendingEmail: true },
+    });
+
     const rows = await prisma.purchase.findMany({
         where: {
             OR: [
@@ -41,6 +46,7 @@ export default async function OrdersPage() {
     const purchases = rows.map(p => ({
         id: p.id,
         createdAt: p.createdAt,
+        deliveredAt: p.deliveredAt,
         status: p.status,
         price: p.price,
         marketName: p.marketName,
@@ -56,5 +62,12 @@ export default async function OrdersPage() {
         buyerTradeUrl: p.sellerId === userId ? (p.buyerTradeUrl ?? p.buyer.steam_trade_url) : null,
     }));
 
-    return <OrdersClient purchases={purchases} currentUserId={userId} />;
+    return (
+        <OrdersClient
+            purchases={purchases}
+            currentUserId={userId}
+            notificationEmail={me?.notificationEmail ?? null}
+            pendingEmail={me?.pendingEmail ?? null}
+        />
+    );
 }

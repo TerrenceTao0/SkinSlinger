@@ -12,7 +12,7 @@ import WithdrawSuccessView from './WithdrawSuccessView'
 
 //
 
-export default function FinanceClient() {
+export default function FinanceClient({ pendingBalance }: { pendingBalance: number }) {
     const { data: session } = useSession()
     const [view, setView] = useState<"menu" | "deposit-amount" | "payment" | "deposit-success" | "withdraw" | "withdraw-success">("menu")
     const [amountInput, setAmountInput] = useState("")
@@ -202,6 +202,7 @@ export default function FinanceClient() {
     return (
         <MenuView
             balance={session?.user?.cash ?? 0}
+            pending={pendingBalance}
             onDeposit={() => { setAmountInput(""); setError(""); setView("deposit-amount") }}
             onWithdraw={() => { setAmountInput(""); setError(""); setView("withdraw") }}
         />

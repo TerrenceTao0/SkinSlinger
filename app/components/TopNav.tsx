@@ -49,13 +49,13 @@ export default function TopNav() {
                         {status !== "loading" && (session ? (
                             <>
                                 <Link href="/finance" className="h-full flex items-center">
-                                    <button className="h-[80%] flex items-center justify-center w-20 bg-special button rounded-sm">
+                                    <button className="h-[80%] flex items-center justify-center w-20 bg-special button rounded-sm text-white!">
                                         ${(session.user.cash ?? 0).toFixed(2)}
                                     </button>
                                 </Link>
 
                                 {basketCount > 0 && (
-                                    <Link href="/basket" className="right-nav-link button bg-special">
+                                    <Link href="/basket" className="right-nav-link button bg-special text-white!">
                                         Basket ({basketCount})
                                     </Link>
                                 )}
@@ -94,7 +94,7 @@ export default function TopNav() {
                     {status !== "loading" && session ? (
                         <>
                             <Link href="/finance">
-                                <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm">
+                                <button className="h-8 px-3 cursor-pointer flex items-center justify-center bg-special button rounded-sm text-sm text-white!">
                                     ${(session.user.cash ?? 0).toFixed(2)}
                                 </button>
                             </Link>

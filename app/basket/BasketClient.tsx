@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useBasket } from "@/app/components/BasketProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import SteamUrlPrompt from "@/app/components/SteamUrlPrompt";
 
 //
 
@@ -15,6 +16,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
     const [checking, setChecking] = useState(false);
     const [error, setError] = useState("");
     const [inventoryPrompt, setInventoryPrompt] = useState(false);
+    const [linkPrompt, setLinkPrompt] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -50,6 +52,8 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
 
         if (res.ok) {
             clearBasketState();
+        } else if (data.error?.includes("link your Steam")) {
+            setLinkPrompt(true);
         } else if (data.error?.includes("inventory")) {
             setInventoryPrompt(true);
         } else {
@@ -70,6 +74,12 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
 
     return (
         <div className="w-full h-full flex justify-center items-center">
+            {linkPrompt && (
+                <SteamUrlPrompt
+                    onLinked={() => { setLinkPrompt(false); router.refresh(); checkout(); }}
+                    onClose={() => setLinkPrompt(false)}
+                />
+            )}
             {inventoryPrompt && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
@@ -100,7 +110,7 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                         basket.map(item => (
                             <div key={item.id} className="bg-accent flex items-center gap-4 p-3 rounded-sm">
                                 <div style={{ filter: `drop-shadow(0 0 6px #${item.hexColor}99)` }}>
-                                    <Image src={item.icon} alt="" width={60} height={60} style={{ width: 'auto', height: 'auto' }} />
+                                    <Image src={item.icon} alt="" width={60} height={60} style={{ width: 'auto', height: '60px' }} />
                                 </div>
 
                                 <div className="flex-1">
