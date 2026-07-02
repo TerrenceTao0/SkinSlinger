@@ -1,11 +1,13 @@
 export default function MenuView({
     balance,
     pending,
+    locked,
     onDeposit,
     onWithdraw,
 }: {
     balance: number
     pending: number
+    locked: number
     onDeposit: () => void
     onWithdraw: () => void
 }) {
@@ -24,6 +26,12 @@ export default function MenuView({
                     {pending > 0 && (
                         <span className="text-sm text-gray-400 mt-1">
                             + ${pending.toFixed(2)} clearing from recent sales
+                        </span>
+                    )}
+
+                    {locked > 0 && (
+                        <span className="text-sm text-gray-400">
+                            ${locked.toFixed(2)} locked in pending purchases
                         </span>
                     )}
                 </div>

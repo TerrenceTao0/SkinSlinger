@@ -31,6 +31,6 @@ export default async function Profile() {
     const floatMap = new Map(floats.map(f => [f.assetId, { floatValue: f.floatValue, stickers: f.stickers }]));
     const listingsWithFloat = listings.map(l => ({ ...l, floatValue: floatMap.get(l.assetId)?.floatValue ?? null, stickers: floatMap.get(l.assetId)?.stickers ?? null }));
 
-    return <ProfileClient sales={user?.sales ?? 0} purchases={user?.purchases ?? 0} purchaseCount={purchaseCount} saleCount={saleCount} createdAt={user?.createdAt ?? new Date()} steamId={user?.steam_id ?? null} listings={listingsWithFloat} name={user?.name ?? null} image={user?.image ?? null} />
+    return <ProfileClient sales={user?.sales ?? 0} purchases={user?.purchases ?? 0} createdAt={user?.createdAt ?? new Date()} steamId={user?.steam_id ?? null} listings={listingsWithFloat} name={user?.name ?? null} image={user?.image ?? null} />
 }
 

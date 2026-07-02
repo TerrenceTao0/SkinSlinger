@@ -1,5 +1,5 @@
 const platformComparisons = [
-    { name: 'SkinSlinger', sales: '0%',  deposit: '0%',   withdrawal: '2%',   total: '2%',   highlight: true },
+    { name: 'SkinSlinger', sales: '0%',  deposit: '0%',   withdrawal: '2.5%',   total: '2.5%',   highlight: true },
     { name: 'CSFloat',     sales: '2%',  deposit: '2.8%', withdrawal: '0.5%', total: '5.3%' },
     { name: 'CS.Money',    sales: '7%',  deposit: '0%',   withdrawal: '0%',   total: '7%' },
     { name: 'Skinport',    sales: '8%',  deposit: '0%',   withdrawal: '0%',   total: '8%' },

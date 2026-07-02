@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { TradeCompleteEmail } from "@/app/components/TradeCompleteEmail";
 import { ReversalRefundEmail } from "@/app/components/ReversalRefundEmail";
+import { TradeOfferSentEmail } from "@/app/components/TradeOfferSentEmail";
 
 //
 
@@ -58,6 +59,18 @@ export async function sendTradeCompleteEmails(trades: CompletedTrade[]) {
     }
 
     await Promise.allSettled(sends);
+}
+
+// Notifies a buyer that the seller has marked a trade offer as sent: self-reported by
+// the seller, purely informational (doesn't affect payout/escrow, which only advances on
+// the actual Steam inventory check).
+export async function sendTradeOfferSentEmail(buyerEmail: string, sellerName: string, items: { marketName: string; price: number }[]) {
+    await resend.emails.send({
+        from: "SkinSlinger <onboarding@skinslinger.com>",
+        to: [buyerEmail],
+        subject: items.length > 1 ? "Action needed: accept your trade offers" : "Action needed: accept your trade offer",
+        react: TradeOfferSentEmail({ sellerName, items }),
+    }).catch(() => {});
 }
 
 // Notifies buyers that a delivered trade was reversed and they've been refunded.

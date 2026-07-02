@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     let failed = 0;
 
     for (const item of items) {
-        const price = await fetchItemPrice(item.marketHashName, item.game, item.marketName);
+        const price = await fetchItemPrice(item.marketHashName, item.game);
 
         if (price && price >= 0.30) {
             await prisma.item.update({

@@ -52,7 +52,7 @@ export async function GET(req: Request) {
                 buyer: { steam_id: { not: null } },
             },
             include: {
-                buyer: { select: { steam_id: true, notificationEmail: true } },
+                buyer: { select: { steam_id: true, steam_trade_url: true, notificationEmail: true } },
                 seller: { select: { notificationEmail: true } },
             },
         });
@@ -77,7 +77,8 @@ export async function GET(req: Request) {
 
             const f = floatMap.get(p.assetId);
             const float = f ? { floatValue: f.floatValue, paintSeed: f.paintSeed } : null;
-            const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float);
+            const buyerTradeUrl = p.buyerTradeUrl ?? p.buyer.steam_trade_url;
+            const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float, buyerTradeUrl);
 
             if (result === "error") continue; // Steam unreachable — retry next run
 

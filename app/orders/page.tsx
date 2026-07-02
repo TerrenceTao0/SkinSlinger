@@ -47,6 +47,7 @@ export default async function OrdersPage() {
         id: p.id,
         createdAt: p.createdAt,
         deliveredAt: p.deliveredAt,
+        tradeOfferSentAt: p.tradeOfferSentAt,
         status: p.status,
         price: p.price,
         marketName: p.marketName,

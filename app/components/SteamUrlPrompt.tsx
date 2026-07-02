@@ -63,18 +63,21 @@ export default function SteamUrlPrompt({ onLinked, onClose }: {
 
     return (
         <>
-            {/* Blur background */}
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" onClick={onClose} />
 
-            {/* Modal */}
             <div className="fixed inset-0 z-6 flex items-center justify-center">
                 <form
                     className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4"
                     onSubmit={onSubmit}
                 >
                     <div className="flex flex-col gap-1">
-                        <p className="text-xl font-semibold">Steam Trade URL required</p>
-                        <p className="text-sm text-gray-400">We need your trade URL so buyers can send you items directly.</p>
+                        <p className="text-xl font-semibold">
+                            Steam Trade URL required
+                        </p>
+
+                        <p className="text-sm text-gray-400">
+                            We need your trade URL so buyers can send you items directly.
+                        </p>
                     </div>
 
                     <div className="flex flex-col gap-1">
@@ -86,10 +89,14 @@ export default function SteamUrlPrompt({ onLinked, onClose }: {
                             onChange={checkUrl}
                         />
                         {error === "Invalid url" && (
-                            <p className="text-red-500 text-xs">Invalid trade URL.</p>
+                            <p className="text-red-500 text-xs">
+                                Invalid trade URL.
+                            </p>
                         )}
                         {error && error !== "Invalid url" && (
-                            <p className="text-red-500 text-xs">{error}</p>
+                            <p className="text-red-500 text-xs">
+                                {error}
+                            </p>
                         )}
                     </div>
 

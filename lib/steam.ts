@@ -1,5 +1,3 @@
-import { PassThrough } from "stream";
-
 const base_url = "https://www.steamwebapi.com";
 const api_key = process.env.STEAM_WEB_KEY!;
 
@@ -35,12 +33,14 @@ export type SteamItem = {
     stickers: SteamSticker[] | null,
 }
 
-const STEAM_APP_IDS: Record<string, number> = {
+export const STEAM_APP_IDS: Record<string, number> = {
     CS2: 730,
     Dota2: 570,
     Rust: 252490,
     TF2: 440,
 };
+
+//
 
 export function getStacked(inventory: SteamItem[]) {
     return inventory.map(item => ({ ...item, quantity: 1 }));
@@ -52,20 +52,24 @@ const TRADE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 const TRADE_URL_PATTERN = /^https:\/\/steamcommunity\.com\/tradeoffer\/new\/\?partner=(\d+)&token=[a-zA-Z0-9_-]+$/;
 
 // Checks whether a Steam account can trade. Returns { allowed, reason }.
-// Fails open (allows trade) if external APIs are unavailable.
+// Fails open if external APIs are unavailable.
 export async function checkCanTrade(
     steamId: string,
     tradeUrl?: string | null,
 ): Promise<{ allowed: boolean; reason: string | null }> {
     const cached = tradeCache.get(steamId);
+
     if (cached && Date.now() - cached.at < TRADE_CACHE_TTL) {
         return { allowed: cached.allowed, reason: cached.reason };
     }
 
+
     const store = (result: { allowed: boolean; reason: string | null }) => {
         tradeCache.set(steamId, { ...result, at: Date.now() });
+
         return result;
     };
+
 
     if (!tradeUrl) return store({ allowed: true, reason: null });
 
@@ -73,13 +77,15 @@ export async function checkCanTrade(
         return store({ allowed: false, reason: "corrupt_url" });
     }
 
+
     try {
         const url = new URL(`${base_url}/steam/api/profile/trade-eligibility`);
         url.searchParams.set("key", api_key);
         url.searchParams.set("trade_url", tradeUrl);
 
         const res = await fetch(url.toString());
-        if (!res.ok) return { allowed: true, reason: null }; // fail open — don't cache errors
+
+        if (!res.ok) return { allowed: true, reason: null }; // Fail open.
 
         const data = await res.json();
 
@@ -87,22 +93,26 @@ export async function checkCanTrade(
             return store({ allowed: false, reason: "Your Steam account cannot trade at this time." });
         }
 
+
         if (data.isescrow && data.escrowdays > 0) {
             const liftDate = new Date(Date.now() + data.escrowdays * 24 * 60 * 60 * 1000);
             const formatted = liftDate.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" });
+            
             return store({ allowed: false, reason: `Your Steam account has a trade hold due to Steam Guard settings. It lifts on ${formatted}.` });
         }
 
+
         return store({ allowed: true, reason: null });
-    } catch {
-        return { allowed: true, reason: null }; // fail open — don't cache errors
+    }
+    catch {
+        return { allowed: true, reason: null }; // Fail open.
     }
 }
 
 
 // Fetches the average price for an item across all markets from steamwebapi.
-// Falls back to the Steam Community Market price if no third-party market has it.
-export async function fetchItemPrice(market_hash_name: string, game: string, _name: string): Promise<number | null> {
+// Falls back to the Steam Community Market price if no third-party market has the item.
+export async function fetchItemPrice(market_hash_name: string, game: string): Promise<number | null> {
     try {
         const url = new URL(`${base_url}/markets/prices`);
         url.searchParams.set("key", api_key);
@@ -129,7 +139,7 @@ export async function fetchItemPrice(market_hash_name: string, game: string, _na
     }
 
 
-    // Fallback: Steam Community Market
+    // Fallback to Steam Community Market if we failed to get a price from third-party markets.
     try {
         const appId = STEAM_APP_IDS[game];
 
@@ -199,10 +209,7 @@ export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue:
 // Fetches a player's inventory for any supported game from steamwebapi.
 // Returns tradable items with price set to 0 (prices are looked up separately from our DB).
 async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
-    // Steam caps each request at 2000 items, so larger inventories must be paged via
-    // start_assetid (the last_assetid response header). Without this, cheap items
-    // (cases, stickers) past the first 2000 are silently dropped, since the API
-    // default-sorts by price descending.
+    // Steam caps each request at 2000 items, so larger inventories must be paged using start_assetid (the last_assetid response header).
     const PAGE_SIZE = 2000;
     const MAX_PAGES = 25;
 
@@ -233,9 +240,12 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
 
             // Last page when the API returns a partial page or stops handing back a cursor.
             const lastAssetId = response.headers.get("last_assetid");
+
             if (items.length < PAGE_SIZE || !lastAssetId) break;
+
             startAssetId = lastAssetId;
         }
+
 
         return raw
             .filter((item: any) => item.tradable)
@@ -255,7 +265,8 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
                 paintSeed: item.float?.paintseed ?? null,
                 stickers: item.float?.stickers ?? null,
             }));
-    } catch {
+    } 
+    catch {
         return [];
     }
 }
@@ -264,6 +275,7 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
 // Fetches inventory for a specific subset of games (used for targeted verification).
 export async function fetchInventoryForGames(steam_id: string, games: string[]): Promise<SteamItem[]> {
     const results = await Promise.all(games.map(game => fetchGameInventory(steam_id, game)));
+    
     return results.flat();
 }
 
@@ -288,12 +300,15 @@ export type VerifyResult = "has_item" | "no_item" | "private" | "error";
 // when an item is traded, so we match on the trade-stable market name and — for CS2
 // skins with stored float data — the exact float value and paint seed (these are
 // intrinsic to the item and survive trades). Commodities match by name only.
-// with_no_tradable=1 is required so the just-received, trade-locked item is included.
+// with_no_tradable=1 surfaces generic non-tradeable items, but CS2's 7-10 day trade
+// lock on freshly-received skins specifically needs the buyer's trade_url passed too,
+// or steamwebapi won't return the item at all while it's locked.
 export async function verifyBuyerHasItem(
     steamId: string,
     game: string | null,
     marketName: string,
     float: { floatValue: number | null; paintSeed: number | null } | null,
+    buyerTradeUrl?: string | null,
 ): Promise<VerifyResult> {
     try {
         const slug = game ? (game_slugs[game] ?? "cs2") : "cs2";
@@ -303,6 +318,7 @@ export async function verifyBuyerHasItem(
         url.searchParams.set("game", slug);
         url.searchParams.set("with_no_tradable", "1");
         url.searchParams.set("no_cache", "1");
+        if (buyerTradeUrl) url.searchParams.set("trade_url", buyerTradeUrl);
 
         const res = await fetch(url.toString());
 

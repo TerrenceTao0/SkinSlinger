@@ -140,6 +140,7 @@ model purchase {
   createdAt DateTime @default(now())
   status String @default("pending")
   deliveredAt DateTime?
+  tradeOfferSentAt DateTime?
   price Float
   assetId String
   marketName String

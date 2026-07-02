@@ -48,7 +48,7 @@ export async function POST(request: Request) {
                     return;
                 }
 
-                const price = await fetchItemPrice(item.market_hash_name, item.game, item.market_name) ?? 0;
+                const price = await fetchItemPrice(item.market_hash_name, item.game) ?? 0;
    
                 if (price > 0) {
                     await prisma.item.upsert({

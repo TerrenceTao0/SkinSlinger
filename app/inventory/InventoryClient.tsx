@@ -80,11 +80,153 @@ function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
 }
 
 
+function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
+    const [step, setStep] = useState<"idle" | "code" | "done">("idle");
+    const [email, setEmail] = useState("");
+    const [code, setCode] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    async function sendCode() {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/notification-email/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email.trim() }),
+            });
+            if (!res.ok) {
+                const d = await res.json();
+                setError(d.error ?? "Something went wrong");
+                return;
+            }
+            setCode("");
+            setStep("code");
+        } catch {
+            setError("Network error");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function confirm() {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/notification-email/confirm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code.trim() }),
+            });
+            const d = await res.json();
+            if (!res.ok) {
+                setError(d.error ?? "Something went wrong");
+                return;
+            }
+            setStep("done");
+        } catch {
+            setError("Network error");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" onClick={onDone} />
+
+            <div className="fixed inset-0 z-6 flex items-center justify-center">
+                <div className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4">
+                    <div className="flex flex-col gap-1">
+                        <p className="text-xl font-semibold">Want email notifications?</p>
+                        <p className="text-sm text-gray-400">
+                            {step === "done"
+                                ? "You're all set — we'll email you about sales and trades."
+                                : "Get notified when you make a sale or need to send a trade offer. Completely optional."}
+                        </p>
+                    </div>
+
+                    {step === "idle" && (
+                        <>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
+                            />
+                            {error && <p className="text-red-500 text-xs">{error}</p>}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={onDone}
+                                    className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
+                                >
+                                    Skip
+                                </button>
+                                <button
+                                    onClick={sendCode}
+                                    disabled={loading || email.trim().length === 0}
+                                    className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
+                                >
+                                    {loading ? "..." : "Send code"}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {step === "code" && (
+                        <>
+                            <p className="text-sm text-gray-400">
+                                Enter the code sent to <span className="text-white break-all">{email}</span>.
+                            </p>
+                            <input
+                                value={code}
+                                onChange={e => setCode(e.target.value)}
+                                inputMode="numeric"
+                                placeholder="1234"
+                                className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm tracking-widest"
+                            />
+                            {error && <p className="text-red-500 text-xs">{error}</p>}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={onDone}
+                                    className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
+                                >
+                                    Skip
+                                </button>
+                                <button
+                                    onClick={confirm}
+                                    disabled={loading || code.trim().length === 0}
+                                    className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
+                                >
+                                    {loading ? "..." : "Confirm"}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {step === "done" && (
+                        <button
+                            onClick={onDone}
+                            className="rounded-sm button bg-special h-10 text-sm font-medium"
+                        >
+                            Done
+                        </button>
+                    )}
+                </div>
+            </div>
+        </>
+    )
+}
+
+
 export default function InventoryClient({ isSteamLinked, inventory, lastRefresh, inventoryToken }: { isSteamLinked: boolean, inventory: SteamItem[], lastRefresh: Date, inventoryToken: string }) {
     const router = useRouter();
     const [error, setError] = useState("");
     const [url, setUrl] = useState("");
     const [waiting, setWaiting] = useState(false);
+    const [showEmailPrompt, setShowEmailPrompt] = useState(false);
     const [selling, setSelling] = useState<SteamItem[]>([])
     const [listedAssetIds, setListedAssetIds] = useState(new Set<string>())
     const [gameFilter, setGameFilter] = useState<"CS2" | "Dota2" | "Rust" | "TF2">("CS2")
@@ -222,6 +364,7 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                 if (data.error) router.push(`/status?message=${data.error}`);
             }
             else {
+                setShowEmailPrompt(true);
                 router.refresh();
             }
         }
@@ -285,6 +428,10 @@ const basePrice = priceState ?? 0;
     
     return (
         <>
+            {isSteamLinked && showEmailPrompt && (
+                <PromptNotificationEmail onDone={() => setShowEmailPrompt(false)} />
+            )}
+
             <LeftInventoryPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
 
             <RightPanel selling={selling} setSelling={setSelling} onListed={(ids) => { setListedAssetIds(prev => new Set([...prev, ...ids])); router.refresh(); }} livePrices={livePrices} inventoryToken={inventoryToken} />

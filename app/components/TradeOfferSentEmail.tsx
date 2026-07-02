@@ -3,15 +3,15 @@ import * as React from 'react';
 //
 
 interface Props {
-    buyerName: string;
-    buyerTradeUrl: string;
+    sellerName: string;
     items: { marketName: string; price: number }[];
 }
 
 //
 
-export function PurchaseNotificationEmail({ buyerName, buyerTradeUrl, items }: Props) {
+export function TradeOfferSentEmail({ sellerName, items }: Props) {
     const total = items.reduce((sum, item) => sum + item.price, 0);
+    const many = items.length > 1;
 
     return (
         <div style={{ backgroundColor: '#1f1f1f', padding: '40px 0', fontFamily: 'Arial, sans-serif' }}>
@@ -25,16 +25,13 @@ export function PurchaseNotificationEmail({ buyerName, buyerTradeUrl, items }: P
 
                 <div style={{ padding: '36px 32px' }}>
                     <h2 style={{ margin: '0 0 12px', color: '#ffffff', fontSize: '20px', fontWeight: 'bold' }}>
-                        You have a new sale!
+                        Action needed: accept your trade offer
                     </h2>
 
                     <p style={{ margin: '0 0 24px', color: '#aaaaaa', fontSize: '15px', lineHeight: '1.6' }}>
-                        <strong style={{ color: '#ffffff' }}>
-                            {buyerName} 
-                        </strong>
-
-                        has purchased the following item{items.length > 1 ? 's' : ''} from you.
-                        Send them a trade offer on Steam to receive payment.
+                        <strong style={{ color: '#ffffff' }}>{sellerName}</strong> says they&apos;ve sent a Steam
+                        trade offer for the following item{many ? 's' : ''}. Check your Steam trade offers and
+                        accept it to receive {many ? 'them' : 'it'}.
                     </p>
 
                     {items.map((item, i) => (
@@ -50,15 +47,10 @@ export function PurchaseNotificationEmail({ buyerName, buyerTradeUrl, items }: P
                     </div>
 
                     <div style={{ backgroundColor: '#1a3a4a', borderRadius: '4px', padding: '16px', margin: '24px 0' }}>
-                        <p style={{ margin: '0 0 8px', color: '#aaaaaa', fontSize: '13px' }}>
-                            Trade URL
-                        </p>
-
-                        <a href="https://skinslinger.com/orders" style={{ color: '#0088be', fontSize: '13px', wordBreak: 'break-all' }}>
-                            {buyerTradeUrl || 'No trade URL on file'}
+                        <a href="https://skinslinger.com/orders" style={{ color: '#0088be', fontSize: '13px' }}>
+                            View your orders →
                         </a>
                     </div>
-
                 </div>
             </div>
         </div>

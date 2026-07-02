@@ -11,6 +11,7 @@ type Purchase = {
     id: string;
     createdAt: Date;
     deliveredAt: Date | null;
+    tradeOfferSentAt: Date | null;
     status: string;
     price: number;
     marketName: string;
@@ -30,6 +31,7 @@ type PurchaseGroup = {
     ids: string[];
     createdAt: Date;
     deliveredAt: Date | null;
+    tradeOfferSentAt: Date | null;
     marketName: string;
     icon: string | null;
     hexColor: string | null;
@@ -53,11 +55,13 @@ function groupPurchases(purchases: Purchase[]): PurchaseGroup[] {
         if (existing) {
             existing.ids.push(p.id);
             existing.totalPrice += p.price;
+            existing.tradeOfferSentAt = existing.tradeOfferSentAt ?? p.tradeOfferSentAt;
         } else {
             map.set(key, {
                 ids: [p.id],
                 createdAt: p.createdAt,
                 deliveredAt: p.deliveredAt,
+                tradeOfferSentAt: p.tradeOfferSentAt,
                 marketName: p.marketName,
                 icon: p.icon,
                 hexColor: p.hexColor,
@@ -92,17 +96,21 @@ function statusChip(status: string) {
 }
 
 function formatDate(d: Date) {
-    return new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 //
 
-function CancelModal({ refundMessage, onConfirm, onClose, loading }: {
+function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loading }: {
     refundMessage: string
+    tradeOfferSent: boolean
     onConfirm: () => void
     onClose: () => void
     loading: boolean
 }) {
+    const [confirmedCancelled, setConfirmedCancelled] = useState(false);
+    const canSubmit = !tradeOfferSent || confirmedCancelled;
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
             <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
@@ -118,8 +126,20 @@ function CancelModal({ refundMessage, onConfirm, onClose, loading }: {
                     If the trade has already gone through, it will be detected and marked complete instead - use this to complete trades faster.
                 </p>
 
+                {tradeOfferSent && (
+                    <label className="flex items-start gap-2 text-sm bg-primary/60 rounded-sm p-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={confirmedCancelled}
+                            onChange={e => setConfirmedCancelled(e.target.checked)}
+                            className="mt-0.5 shrink-0"
+                        />
+                        A Steam trade offer was already sent for this order. I've cancelled it on Steam first.
+                    </label>
+                )}
+
                 <div className="flex gap-3">
-                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-negative button flex-1">
+                    <button onClick={onConfirm} disabled={loading || !canSubmit} className="h-9 px-4 rounded-sm bg-negative button flex-1">
                         {loading ? "..." : "Yes, cancel"}
                     </button>
 
@@ -162,6 +182,37 @@ function useCancel(ids: string[]) {
 
 
     return { cancel, loading, error };
+}
+
+
+function useMarkSent(ids: string[]) {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    async function markSent() {
+        setLoading(true);
+        setError("");
+
+        const res = await fetch("/api/purchase/mark-sent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids }),
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            setError(data.error ?? "Something went wrong");
+            setLoading(false);
+            return false;
+        }
+
+        router.refresh();
+        setLoading(false);
+        return true;
+    }
+
+    return { markSent, loading, error };
 }
 
 
@@ -247,28 +298,32 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
 
     const stages = role === "buyer"
         ? [
-            "Order placed - payment held in escrow",
-            `${counterpartyName} sends you a Steam trade offer`,
-            "You accept the trade on Steam",
-            "Trade verified - item is yours",
+            "Payment held in escrow",
+            `${counterpartyName} sends a trade offer`,
+            "You accept it on Steam",
+            "Waiting out Steam's 7-day trade-reversal window",
+            "Verified - item is yours",
         ]
         : [
-            "Order received - buyer's payment held in escrow",
-            `Send a Steam trade offer to ${counterpartyName}`,
-            `${counterpartyName} accepts the trade on Steam`,
-            "Trade verified - funds released to your balance",
+            "Buyer's payment held in escrow",
+            `Send a trade offer to ${counterpartyName}`,
+            "They accept it on Steam",
+            "Waiting out Steam's 7-day trade-reversal window",
+            "Verified - funds released to seller",
         ];
 
 
-    // "pending" is awaiting the trade; "holding" means delivered and clearing.
+    const { markSent, loading: markSentLoading, error: markSentError } = useMarkSent(group.ids);
+
+    // "pending" is awaiting the trade; "holding" means delivered and clearing (waiting out the 7-day window).
     const isHolding = group.status === "holding";
-    const currentStep = isHolding ? 3 : 1;
+    const currentStep = isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1;
     const releaseText = group.deliveredAt
         ? formatDate(new Date(new Date(group.deliveredAt).getTime() + 7 * 24 * 60 * 60 * 1000))
         : "soon";
 
     return (
-        <div className="bg-secondary rounded-sm p-5 flex flex-col gap-4" style={group.hexColor ? { boxShadow: `0 0 32px #${group.hexColor}1a` } : undefined}>
+        <div className="bg-secondary rounded-sm p-5 flex flex-col gap-3" style={group.hexColor ? { boxShadow: `0 0 32px #${group.hexColor}1a` } : undefined}>
             {/* Header: item + counterparty + price */}
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -316,22 +371,49 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
 
             {/* Seller action: the trade URL they need right now */}
             {role === "seller" && !isHolding && (
-                <div className="bg-primary/60 rounded-sm p-3 -mt-2">
+                <div className="bg-primary/60 rounded-sm p-3 flex flex-col gap-2">
                     <p className="text-xs text-gray-500 mb-1">Send the trade offer from your Steam account to:</p>
                     {group.buyerTradeUrl ? (
                         <a href={group.buyerTradeUrl} target="_blank" rel="noopener noreferrer" className="text-special text-sm break-all underline underline-offset-2">
                             {group.buyerTradeUrl}
                         </a>
                     ) : (
-                        <p className="text-negative text-sm">The buyer has no trade URL on file — they need to add one before you can send the offer.</p>
+                        <p className="text-negative text-sm">The buyer has no trade URL on file: they need to add one before you can send the offer.</p>
                     )}
+
+                    {group.tradeOfferSentAt ? (
+                        <p className="text-xs text-special">Marked as sent. Waiting for the buyer to accept it on Steam.</p>
+                    ) : (
+                        <button
+                            onClick={markSent}
+                            disabled={markSentLoading}
+                            className="self-start h-8 px-3 rounded-sm bg-special button text-sm text-white!"
+                        >
+                            {markSentLoading ? "Marking..." : "I've sent the trade offer"}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Buyer action: accept the trade offer once the seller has sent it */}
+            {role === "buyer" && !isHolding && group.tradeOfferSentAt && (
+                <div className="bg-primary/60 rounded-sm p-3 flex flex-col gap-2">
+                    <p className="text-xs text-gray-500">{counterpartyName} says they've sent the trade offer.</p>
+                    <a
+                        href="https://steamcommunity.com/id/me/tradeoffers/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="self-start h-8 px-3 rounded-sm bg-special button text-sm text-white! flex items-center"
+                    >
+                        View & accept on Steam
+                    </a>
                 </div>
             )}
 
 
             {/* Footer: clearing notice while holding, otherwise verify + cancel */}
             {isHolding ? (
-                <div className="border-t border-gray-700/50 pt-3 -mt-1">
+                <div className="border-t border-gray-700/50 pt-3">
                     <p className="text-xs text-gray-500">
                         {role === "seller"
                             ? <>Delivered. Funds clear to your balance around <span className="text-gray-300">{releaseText}</span>, once Steam&apos;s trade-reversal window passes.</>
@@ -339,7 +421,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                     </p>
                 </div>
             ) : (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700/50 pt-3 -mt-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700/50 pt-3">
                     <p className="text-xs text-gray-500">
                         Next inventory check in <NextCheckTimer /> — trades are verified automatically every 5 minutes.
                     </p>
@@ -350,9 +432,9 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                 </div>
             )}
 
-            {error && (
+            {(error || markSentError) && (
                 <p className="text-red-400 text-sm">
-                    {error}
+                    {error || markSentError}
                 </p>
             )}
 
@@ -361,6 +443,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                     refundMessage={role === "buyer"
                         ? "Your funds will be refunded to your balance."
                         : "The buyer will be refunded to their balance."}
+                    tradeOfferSent={!!group.tradeOfferSentAt}
                     onConfirm={cancel}
                     onClose={() => setConfirming(false)}
                     loading={loading}

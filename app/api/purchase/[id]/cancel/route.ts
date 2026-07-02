@@ -19,7 +19,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         const purchase = await prisma.purchase.findUnique({
             where: { id },
             include: {
-                buyer: { select: { steam_id: true } },
+                buyer: { select: { steam_id: true, steam_trade_url: true } },
             },
         });
 
@@ -48,7 +48,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         if (purchase.buyer.steam_id) {
             const float = await prisma.item_float.findUnique({ where: { assetId: purchase.assetId } });
             const floatData = float ? { floatValue: float.floatValue, paintSeed: float.paintSeed } : null;
-            const result = await verifyBuyerHasItem(purchase.buyer.steam_id, purchase.game, purchase.marketName, floatData);
+            const buyerTradeUrl = purchase.buyerTradeUrl ?? purchase.buyer.steam_trade_url;
+            const result = await verifyBuyerHasItem(purchase.buyer.steam_id, purchase.game, purchase.marketName, floatData, buyerTradeUrl);
 
             if (result === "error") {
                 // Couldn't reach Steam — don't move money on a guess; let the caller retry.

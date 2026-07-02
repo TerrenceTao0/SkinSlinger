@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
@@ -13,6 +13,7 @@ export default function TopNav() {
     const { data: session, status } = useSession();
     const { basket } = useBasket();
     const [menuOpen, setMenuOpen] = useState(false);
+    const [pendingOrderCount, setPendingOrderCount] = useState(0);
 
     let basketCount = 0
 
@@ -23,6 +24,22 @@ export default function TopNav() {
 
         else basketCount += 1;
     }
+
+    useEffect(() => {
+        if (!session?.user?.id) {
+            setPendingOrderCount(0);
+            return;
+        }
+
+        let cancelled = false;
+
+        fetch("/api/orders/pending")
+            .then(res => res.json())
+            .then(data => { if (!cancelled) setPendingOrderCount(data.count ?? 0); })
+            .catch(() => {});
+
+        return () => { cancelled = true; };
+    }, [session?.user?.id]);
 
 
     return (
@@ -64,8 +81,11 @@ export default function TopNav() {
                                     Listings
                                 </Link>
 
-                                <Link href="/orders" className="right-nav-link button">
-                                    Orders
+                                <Link
+                                    href="/orders"
+                                    className={`right-nav-link button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
+                                >
+                                    {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
                                 </Link>
 
                                 <Link href="/inventory" className="right-nav-link button">
@@ -145,8 +165,12 @@ export default function TopNav() {
                                 Listings
                             </Link>
 
-                            <Link href="/orders" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
-                                Orders
+                            <Link
+                                href="/orders"
+                                className={`mobile_menu_button button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
                             </Link>
 
                             <Link href="/inventory" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>

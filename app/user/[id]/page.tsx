@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation"
 import type { Metadata } from "next";
 import ProfileClient from "@/app/profile/ProfileClient";
 
@@ -33,7 +33,8 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
         },
     });
 
-    if (!user) notFound();
+
+    if (!user) redirect("/");
 
     const [purchaseCount, saleCount, listings] = await Promise.all([
         prisma.purchase.count({ where: { buyer: { steam_id: id }, status: "completed" } }),
@@ -65,3 +66,4 @@ export default async function PublicProfile({ params }: { params: Promise<{ id: 
         />
     );
 }
+

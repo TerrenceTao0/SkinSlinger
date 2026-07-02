@@ -28,10 +28,10 @@ const OG_IMAGE = { url: '/logo.png', width: 512, height: 512, alt: 'SkinSlinger'
 export const metadata: Metadata = {
     metadataBase: new URL(getBaseUrl()),
     title: {
-        default: 'No KYC Skins Marketplace — SkinSlinger',
+        default: 'No KYC Skins Marketplace - SkinSlinger',
         template: '%s | SkinSlinger',
     },
-    description: 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto — 0% sales fee, no identity verification, no trade hold.',
+    description: 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto - 0% sales fee, no identity verification, no trade hold.',
     keywords: [
         'no kyc skins marketplace', 'no kyc skin marketplace', 'no kyc steam skins',
         'sell rust skins for real money', 'rust skin marketplace', 'buy rust skins with crypto',
@@ -54,6 +54,11 @@ export const metadata: Metadata = {
     },
     icons: {
         icon: '/logo.png',
+    },
+    verification: {
+        other: {
+            'msvalidate.01': 'D04C675E3F4096B62560643463D1ADC4',
+        },
     },
 }
 
