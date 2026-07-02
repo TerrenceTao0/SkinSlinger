@@ -80,6 +80,8 @@ export async function GET(req: Request) {
             const buyerTradeUrl = p.buyerTradeUrl ?? p.buyer.steam_trade_url;
             const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float, buyerTradeUrl);
 
+            console.log(`[process-purchases] id=${p.id} status=${p.status} game=${p.game} marketName=${p.marketName} hasFloat=${!!float} hasTradeUrl=${!!buyerTradeUrl} result=${result}`);
+
             if (result === "error") continue; // Steam unreachable — retry next run
 
             if (p.status === "pending") {
