@@ -324,7 +324,10 @@ export async function verifyBuyerHasItem(
 
         if (res.status === 403) return "private";
         if (res.status === 410 || res.status === 411) return "no_item"; // accessible, no such item
-        if (!res.ok) return "error";
+        if (!res.ok) {
+            console.error(`[verifyBuyerHasItem] non-ok response: status=${res.status} body=${(await res.text()).slice(0, 500)}`);
+            return "error";
+        }
 
         const items = await res.json();
 
@@ -333,6 +336,7 @@ export async function verifyBuyerHasItem(
 
             if (err === "PRIVATE") return "private";
 
+            console.error(`[verifyBuyerHasItem] unexpected response shape: ${JSON.stringify(items).slice(0, 500)}`);
             return "error";
         }
 
@@ -359,8 +363,9 @@ export async function verifyBuyerHasItem(
         }
 
         return "has_item";
-    } 
-    catch {
+    }
+    catch (err) {
+        console.error(`[verifyBuyerHasItem] threw: ${err}`);
         return "error";
     }
 }
