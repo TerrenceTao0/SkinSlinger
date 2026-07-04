@@ -13,7 +13,7 @@ export async function GET() {
 
     const count = await prisma.purchase.count({
         where: {
-            status: "pending",
+            status: { in: ["pending", "holding"] },
             OR: [
                 { buyerId: session.user.id },
                 { sellerId: session.user.id },

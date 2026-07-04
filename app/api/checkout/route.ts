@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
-import { checkCanTrade } from "@/lib/steam";
+import { checkCanTrade, countInventoryItem } from "@/lib/steam";
 
 //
 
@@ -129,6 +129,14 @@ export async function POST(request: Request) {
             // Other non-200 responses (rate limit, server error) — allow checkout
         }
 
+        // Snapshot how many of each commodity the buyer already holds, so the cron can
+        // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
+        const preCounts = new Map<string, number | null>();
+        for (const listing of toPurchase) {
+            if (!listing.commodity || preCounts.has(listing.marketName)) continue;
+            preCounts.set(listing.marketName, await countInventoryItem(buyer.steam_id, listing.game, listing.marketName));
+        }
+
         // Deduct buyer cash and create pending purchases
         const purchases = await prisma.$transaction(async (tx) => {
             const deducted = await tx.user.updateMany({
@@ -153,6 +161,7 @@ export async function POST(request: Request) {
                         hexColor: listing.hexColor,
                         commodity: listing.commodity,
                         buyerTradeUrl: buyer.steam_trade_url,
+                        buyerPreCount: listing.commodity ? (preCounts.get(listing.marketName) ?? null) : null,
                         buyerId: buyer.id,
                         sellerId: listing.sellerId,
                     },

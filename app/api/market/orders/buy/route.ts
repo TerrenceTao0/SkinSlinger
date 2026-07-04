@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
+import { countInventoryItem } from "@/lib/steam";
 
 //
 
@@ -70,6 +71,12 @@ export async function POST(request: Request) {
         let matched = 0;
         const sellerNotifications = new Map<string, { email: string | null; items: { marketName: string; price: number }[] }>();
 
+        // Snapshot how many of this commodity the buyer already holds, so the cron can
+        // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
+        const buyerPreCount = matchable.length > 0 && matchable[0].commodity
+            ? await countInventoryItem(buyer.steam_id, matchable[0].game, marketName)
+            : null;
+
         if (matchable.length > 0) {
             await prisma.$transaction(async (tx) => {
                 for (const listing of matchable) {
@@ -83,6 +90,7 @@ export async function POST(request: Request) {
                             hexColor: listing.hexColor,
                             commodity: listing.commodity,
                             buyerTradeUrl: buyer.steam_trade_url,
+                            buyerPreCount: listing.commodity ? buyerPreCount : null,
                             buyerId: buyer.id,
                             sellerId: listing.userId,
                         },

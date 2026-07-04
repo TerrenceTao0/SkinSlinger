@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { verifyInventoryToken } from "@/lib/inventoryToken";
 import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
+import { countInventoryItem } from "@/lib/steam";
 
 //
 
@@ -204,7 +205,7 @@ export async function POST(request: Request) {
                         user: { steam_id: { not: null }, steam_trade_url: { not: null } },
                     },
                     orderBy: [{ price: "desc" }, { createdAt: "asc" }],
-                    include: { user: { select: { steam_trade_url: true } } },
+                    include: { user: { select: { steam_id: true, steam_trade_url: true } } },
                 });
                 if (!order) return null;
 
@@ -220,6 +221,12 @@ export async function POST(request: Request) {
                 if (consumed.count === 0) throw new Error("buy order race");
                 await tx.buy_order.deleteMany({ where: { id: order.id, quantity: { lte: 0 } } });
 
+                // Snapshot how many of this commodity the buyer already holds, so the cron can
+                // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
+                const buyerPreCount = live.commodity && order.user.steam_id
+                    ? await countInventoryItem(order.user.steam_id, live.game, live.marketName)
+                    : null;
+
                 await tx.purchase.create({
                     data: {
                         price: live.price,
@@ -230,6 +237,7 @@ export async function POST(request: Request) {
                         hexColor: live.hexColor,
                         commodity: live.commodity,
                         buyerTradeUrl: order.user.steam_trade_url,
+                        buyerPreCount,
                         buyerId: order.userId,
                         sellerId: user.id,
                     },

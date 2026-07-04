@@ -26,7 +26,7 @@ export default function TopNav() {
     }
 
     useEffect(() => {
-        if (!session?.user?.id) {
+        if (!session?.user?.id || !session.user.steam_trade_url) {
             setPendingOrderCount(0);
             return;
         }
@@ -39,7 +39,7 @@ export default function TopNav() {
             .catch(() => {});
 
         return () => { cancelled = true; };
-    }, [session?.user?.id]);
+    }, [session?.user?.id, session?.user?.steam_trade_url]);
 
 
     return (
@@ -81,12 +81,14 @@ export default function TopNav() {
                                     Listings
                                 </Link>
 
-                                <Link
-                                    href="/orders"
-                                    className={`right-nav-link button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
-                                >
-                                    {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
-                                </Link>
+                                {session.user.steam_trade_url && (
+                                    <Link
+                                        href="/orders"
+                                        className={`right-nav-link button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
+                                    >
+                                        {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
+                                    </Link>
+                                )}
 
                                 <Link href="/inventory" className="right-nav-link button">
                                     Inventory
@@ -165,13 +167,15 @@ export default function TopNav() {
                                 Listings
                             </Link>
 
-                            <Link
-                                href="/orders"
-                                className={`mobile_menu_button button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
-                                onClick={() => setMenuOpen(false)}
-                            >
-                                {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
-                            </Link>
+                            {session.user.steam_trade_url && (
+                                <Link
+                                    href="/orders"
+                                    className={`mobile_menu_button button ${pendingOrderCount > 0 ? "bg-special text-white!" : ""}`}
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    {pendingOrderCount > 0 ? `Orders (${pendingOrderCount})` : "Orders"}
+                                </Link>
+                            )}
 
                             <Link href="/inventory" className="mobile_menu_button button" onClick={() => setMenuOpen(false)}>
                                 Inventory

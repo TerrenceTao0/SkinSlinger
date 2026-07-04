@@ -121,6 +121,7 @@ export default async function Inventory() {
     
     return <InventoryClient
         isSteamLinked={!!(user?.steam_id && user?.steam_trade_url)}
+        hasNotificationEmail={!!user.notificationEmail}
         inventory={inventoryWithPrices}
         lastRefresh={cacheValid ? user.lastInventoryRefresh! : now}
         inventoryToken={inventoryToken}

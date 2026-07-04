@@ -149,6 +149,7 @@ model purchase {
   hexColor String?
   commodity Boolean @default(false)
   buyerTradeUrl String?
+  buyerPreCount Int?
 
   buyerId String
   sellerId String

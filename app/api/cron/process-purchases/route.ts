@@ -8,6 +8,10 @@ import { sendTradeCompleteEmails, sendReversalRefundEmails, CompletedTrade, Reve
 // released to the seller, so a seller can't deliver, get paid, then reverse the trade.
 const HOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
+// A pending order that the seller hasn't even sent a trade offer for yet (stage 2) is
+// auto-cancelled after this long, so a buyer's cash isn't held hostage by an unresponsive seller.
+const AUTO_CANCEL_MS = 3 * 24 * 60 * 60 * 1000;
+
 //
 
 // Releases held funds to the seller once the hold has elapsed and the item is still
@@ -28,6 +32,36 @@ async function refundReversal(id: string, buyerId: string, price: number): Promi
         const updated = await tx.purchase.updateMany({ where: { id, status: "holding" }, data: { status: "reversed" } });
         if (updated.count === 0) return false;
         await tx.user.update({ where: { id: buyerId }, data: { cash: { increment: price } } });
+        return true;
+    });
+}
+
+// Auto-cancels a pending order that never made it past stage 2 (no trade offer sent):
+// refunds the buyer and restores the listing, same as a manual cancel. Returns true only
+// on the real pending -> deleted transition.
+async function autoCancelPurchase(p: {
+    id: string; buyerId: string; sellerId: string; price: number; assetId: string;
+    marketName: string; game: string | null; icon: string | null; hexColor: string | null; commodity: boolean;
+}): Promise<boolean> {
+    return prisma.$transaction(async (tx) => {
+        const removed = await tx.purchase.deleteMany({ where: { id: p.id, status: "pending" } });
+        if (removed.count === 0) return false;
+
+        await tx.user.update({ where: { id: p.buyerId }, data: { cash: { increment: p.price } } });
+
+        await tx.item_listing.create({
+            data: {
+                assetId: p.assetId,
+                marketName: p.marketName,
+                price: p.price,
+                game: p.game,
+                icon: p.icon,
+                hexColor: p.hexColor,
+                commodity: p.commodity,
+                userId: p.sellerId,
+            },
+        });
+
         return true;
     });
 }
@@ -66,6 +100,7 @@ export async function GET(req: Request) {
         const completedTrades: CompletedTrade[] = [];
         const reversedTrades: ReversedTrade[] = [];
         let delivered = 0;
+        let autoCancelled = 0;
 
         for (const p of active) {
             if (!p.buyer.steam_id) continue;
@@ -78,9 +113,7 @@ export async function GET(req: Request) {
             const f = floatMap.get(p.assetId);
             const float = f ? { floatValue: f.floatValue, paintSeed: f.paintSeed } : null;
             const buyerTradeUrl = p.buyerTradeUrl ?? p.buyer.steam_trade_url;
-            const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float, buyerTradeUrl);
-
-            console.log(`[process-purchases] id=${p.id} status=${p.status} game=${p.game} marketName=${p.marketName} hasFloat=${!!float} hasTradeUrl=${!!buyerTradeUrl} result=${result}`);
+            const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float, buyerTradeUrl, p.buyerPreCount);
 
             if (result === "error") continue; // Steam unreachable — retry next run
 
@@ -93,7 +126,12 @@ export async function GET(req: Request) {
                     });
                     if (moved.count > 0) delivered++;
                 }
-                // "no_item" => not delivered yet
+                // "no_item" => not delivered yet. If the seller hasn't even sent the trade
+                // offer within the window, auto-cancel rather than leave the buyer's cash stuck.
+                else if (p.tradeOfferSentAt == null && (now - p.createdAt.getTime()) >= AUTO_CANCEL_MS) {
+                    const cancelled = await autoCancelPurchase(p);
+                    if (cancelled) autoCancelled++;
+                }
             }
             else {
                 // Holding and matured. Item still there (or hidden) => pay seller; gone => reversal.
@@ -116,7 +154,7 @@ export async function GET(req: Request) {
         await sendTradeCompleteEmails(completedTrades);
         await sendReversalRefundEmails(reversedTrades);
 
-        return Response.json({ delivered, completed: completedTrades.length, reversed: reversedTrades.length });
+        return Response.json({ delivered, completed: completedTrades.length, reversed: reversedTrades.length, autoCancelled });
     }
     catch (error) {
         console.error(error);

@@ -221,7 +221,7 @@ function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
 }
 
 
-export default function InventoryClient({ isSteamLinked, inventory, lastRefresh, inventoryToken }: { isSteamLinked: boolean, inventory: SteamItem[], lastRefresh: Date, inventoryToken: string }) {
+export default function InventoryClient({ isSteamLinked, hasNotificationEmail, inventory, lastRefresh, inventoryToken }: { isSteamLinked: boolean, hasNotificationEmail: boolean, inventory: SteamItem[], lastRefresh: Date, inventoryToken: string }) {
     const router = useRouter();
     const [error, setError] = useState("");
     const [url, setUrl] = useState("");
@@ -364,7 +364,6 @@ export default function InventoryClient({ isSteamLinked, inventory, lastRefresh,
                 if (data.error) router.push(`/status?message=${data.error}`);
             }
             else {
-                setShowEmailPrompt(true);
                 router.refresh();
             }
         }
@@ -434,7 +433,11 @@ const basePrice = priceState ?? 0;
 
             <LeftInventoryPanel gameFilter={gameFilter} setGameFilter={setGameFilter} />
 
-            <RightPanel selling={selling} setSelling={setSelling} onListed={(ids) => { setListedAssetIds(prev => new Set([...prev, ...ids])); router.refresh(); }} livePrices={livePrices} inventoryToken={inventoryToken} />
+            <RightPanel selling={selling} setSelling={setSelling} onListed={(ids) => {
+                setListedAssetIds(prev => new Set([...prev, ...ids]));
+                if (!hasNotificationEmail) setShowEmailPrompt(true);
+                router.refresh();
+            }} livePrices={livePrices} inventoryToken={inventoryToken} />
 
 
             {/* Mobile layout */}

@@ -296,10 +296,43 @@ export async function getInventory(steam_id: string): Promise<SteamItem[]> {
 
 export type VerifyResult = "has_item" | "no_item" | "private" | "error";
 
+// Counts how many of the given item the buyer currently holds. Used to snapshot the
+// buyer's pre-trade count for commodities, which have no per-unit identity — without
+// this, a buyer who already owned one of these before the trade would pass verification
+// immediately, whether or not the seller ever delivered. Returns null if the count
+// couldn't be determined (private/unreachable inventory); callers should treat that as
+// "unknown" rather than zero.
+export async function countInventoryItem(steamId: string, game: string | null, marketName: string): Promise<number | null> {
+    try {
+        const slug = game ? (game_slugs[game] ?? "cs2") : "cs2";
+        const url = new URL(`${base_url}/steam/api/inventory`);
+        url.searchParams.set("key", api_key);
+        url.searchParams.set("steam_id", steamId);
+        url.searchParams.set("game", slug);
+        url.searchParams.set("no_cache", "1");
+
+        const res = await fetch(url.toString());
+        if (!res.ok) return null;
+
+        const items = await res.json();
+        if (!Array.isArray(items)) return null;
+
+        return items.filter((i: { marketname?: string }) => i.marketname === marketName).length;
+    }
+    catch {
+        return null;
+    }
+}
+
 // Checks whether the buyer's inventory contains the purchased item. assetid changes
 // when an item is traded, so we match on the trade-stable market name and — for CS2
 // skins with stored float data — the exact float value and paint seed (these are
-// intrinsic to the item and survive trades). Commodities match by name only.
+// intrinsic to the item and survive trades). Commodities have no such per-unit identity,
+// so delivery is proven by the buyer's count rising past their pre-trade snapshot
+// (buyerPreCount) rather than by mere presence — otherwise a buyer who already owned one
+// would pass instantly. buyerPreCount is only available for purchases created after this
+// snapshot was introduced; older purchases pass it as null/undefined and fall back to the
+// original "any match" check.
 // with_no_tradable=1 surfaces generic non-tradeable items, but CS2's 7-10 day trade
 // lock on freshly-received skins specifically needs the buyer's trade_url passed too,
 // or steamwebapi won't return the item at all while it's locked.
@@ -309,6 +342,7 @@ export async function verifyBuyerHasItem(
     marketName: string,
     float: { floatValue: number | null; paintSeed: number | null } | null,
     buyerTradeUrl?: string | null,
+    buyerPreCount?: number | null,
 ): Promise<VerifyResult> {
     try {
         const slug = game ? (game_slugs[game] ?? "cs2") : "cs2";
@@ -324,10 +358,7 @@ export async function verifyBuyerHasItem(
 
         if (res.status === 403) return "private";
         if (res.status === 410 || res.status === 411) return "no_item"; // accessible, no such item
-        if (!res.ok) {
-            console.error(`[verifyBuyerHasItem] non-ok response: status=${res.status} body=${(await res.text()).slice(0, 500)}`);
-            return "error";
-        }
+        if (!res.ok) return "error";
 
         const items = await res.json();
 
@@ -336,7 +367,6 @@ export async function verifyBuyerHasItem(
 
             if (err === "PRIVATE") return "private";
 
-            console.error(`[verifyBuyerHasItem] unexpected response shape: ${JSON.stringify(items).slice(0, 500)}`);
             return "error";
         }
 
@@ -345,8 +375,16 @@ export async function verifyBuyerHasItem(
 
         if (matches.length === 0) return "no_item";
 
-        // For skins with a known float, require an exact float + pattern match.
+        // CS2 skins have stored float data — an intrinsic, trade-surviving fingerprint that
+        // identifies the exact unit traded, regardless of how many copies the buyer holds.
         if (float?.floatValue != null) {
+            // Only one item with this name in the inventory — no ambiguity to resolve, so
+            // there's no need for a float match (and freshly-received, trade-locked items
+            // often don't have float data populated yet, which would otherwise false-negative).
+            if (matches.length === 1) return "has_item";
+
+            // Multiple items share this name — require an exact float + pattern match to
+            // identify the specific one that was traded.
             const target = float.floatValue;
 
             const hit = matches.some((i: { float?: { floatvalue?: number; paintseed?: number } }) => {
@@ -362,10 +400,14 @@ export async function verifyBuyerHasItem(
             return hit ? "has_item" : "no_item";
         }
 
-        return "has_item";
+        // Commodities (and anything else with no stored float): fungible, so presence alone
+        // doesn't prove delivery. Require the buyer's count to have risen past their
+        // pre-trade snapshot. No snapshot (older purchases) => fall back to "any match".
+        const required = (buyerPreCount ?? 0) + 1;
+
+        return matches.length >= required ? "has_item" : "no_item";
     }
-    catch (err) {
-        console.error(`[verifyBuyerHasItem] threw: ${err}`);
+    catch {
         return "error";
     }
 }
