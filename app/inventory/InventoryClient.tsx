@@ -364,6 +364,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                 if (data.error) router.push(`/status?message=${data.error}`);
             }
             else {
+                if (!hasNotificationEmail) setShowEmailPrompt(true);
                 router.refresh();
             }
         }
