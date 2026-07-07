@@ -35,9 +35,10 @@ export async function GET() {
                 appid,
                 contextid: STEAM_CONTEXT_ID,
                 assetId,
+                tradeOfferId: p.tradeOfferId,
             };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    return Response.json({ items });
+    return Response.json({ sellerSteamId: session.user.steam_id ?? null, items });
 }

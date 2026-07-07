@@ -23,10 +23,21 @@ export const authOptions: NextAuthOptions = {
     },
 
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             if (user) {
                 token.id = user.id
                 token.steam_id = user.steam_id
+            }
+
+            // next-auth-steam's profile() doesn't include steam_id, so the adapter
+            // never persists it on the user row. Backfill it from the OAuth account's
+            // providerAccountId (the Steam64 id) whenever a Steam sign-in happens.
+            if (account?.provider === 'steam' && account.providerAccountId && token.id && token.steam_id !== account.providerAccountId) {
+                await prisma.user.update({
+                    where: { id: token.id as string },
+                    data: { steam_id: account.providerAccountId },
+                });
+                token.steam_id = account.providerAccountId;
             }
 
             // Fallback: if token.id was never set, look up by email

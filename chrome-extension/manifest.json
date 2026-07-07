@@ -3,9 +3,11 @@
   "name": "SkinSlinger Trade Helper",
   "version": "1.0.0",
   "description": "Automatically adds the items you owe a buyer to a Steam trade offer. You still review and click Make Offer yourself.",
-  "permissions": [],
+  "permissions": ["alarms"],
   "host_permissions": [
-    "https://skinslinger.com/api/extension/*"
+    "https://skinslinger.com/api/extension/*",
+    "https://skinslinger.com/api/purchase/*",
+    "https://steamcommunity.com/inventory/*"
   ],
   "background": {
     "service_worker": "background.js"

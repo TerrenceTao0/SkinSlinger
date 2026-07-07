@@ -354,7 +354,18 @@ export async function verifyBuyerHasItem(
         url.searchParams.set("no_cache", "1");
         if (buyerTradeUrl) url.searchParams.set("trade_url", buyerTradeUrl);
 
-        const res = await fetch(url.toString());
+        let res = await fetch(url.toString());
+
+        // steamwebapi's live (no_cache) fetch can fail specifically for the
+        // with_no_tradable+trade_url combo (used to see trade-locked CS2 items) while
+        // still succeeding on cached data with the same trade-lock visibility. Retry
+        // once against the cache rather than surfacing "error" and stalling the
+        // purchase (and its auto-cancel safety net) indefinitely.
+        if (!res.ok && res.status !== 403 && res.status !== 410 && res.status !== 411) {
+            const cachedUrl = new URL(url.toString());
+            cachedUrl.searchParams.delete("no_cache");
+            res = await fetch(cachedUrl.toString());
+        }
 
         if (res.status === 403) return "private";
         if (res.status === 410 || res.status === 411) return "no_item"; // accessible, no such item

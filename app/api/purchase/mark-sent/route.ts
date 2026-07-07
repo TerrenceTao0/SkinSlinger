@@ -16,9 +16,13 @@ export async function POST(req: Request) {
             return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { ids } = await req.json();
+        const { ids, tradeofferid } = await req.json();
 
         if (!Array.isArray(ids) || ids.length === 0 || !ids.every(id => typeof id === "string")) {
+            return Response.json({ error: "Invalid request" }, { status: 400 });
+        }
+
+        if (tradeofferid !== undefined && typeof tradeofferid !== "string") {
             return Response.json({ error: "Invalid request" }, { status: 400 });
         }
 
@@ -42,6 +46,13 @@ export async function POST(req: Request) {
             where: { id: { in: ids }, status: "pending", tradeOfferSentAt: null },
             data: { tradeOfferSentAt: new Date() },
         });
+
+        if (tradeofferid) {
+            await prisma.purchase.updateMany({
+                where: { id: { in: ids }, status: "pending" },
+                data: { tradeOfferId: tradeofferid },
+            });
+        }
 
         if (updated.count > 0) {
             const buyerEmail = purchases[0].buyer.notificationEmail;

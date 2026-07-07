@@ -87,6 +87,22 @@
         dispatchDoubleClick(el);
     }
 
+    let currentMatches = [];
+
+    // Steam's send response is only observable in the page's own JS world (see
+    // page-world.js), which relays it here via a custom event. Reports the orderIds
+    // that were just added to this offer, along with the resulting tradeofferid, so the
+    // server can link them for the extension's later acceptance check.
+    window.addEventListener("skinslinger-trade-offer-sent", (event) => {
+        if (currentMatches.length === 0) return;
+
+        chrome.runtime.sendMessage({
+            type: "TRADE_SENT",
+            orderIds: currentMatches.map(m => m.orderId),
+            tradeofferid: event.detail.tradeofferid,
+        });
+    });
+
     async function run() {
         const partnerSteamId64 = getPartnerSteamId64();
         if (!partnerSteamId64) return;
@@ -97,8 +113,12 @@
             return;
         }
 
-        const matches = response.items.filter(item => item.buyerSteamId64 === partnerSteamId64);
+        // Items already sent in an earlier offer (tradeOfferId set) are awaiting the
+        // extension's own acceptance check, not another trade offer.
+        const matches = response.items.filter(item => item.buyerSteamId64 === partnerSteamId64 && !item.tradeOfferId);
         if (matches.length === 0) return;
+
+        currentMatches = matches;
 
         showBanner(`SkinSlinger: adding ${matches.length} item${matches.length > 1 ? "s" : ""} owed to this buyer...`);
 

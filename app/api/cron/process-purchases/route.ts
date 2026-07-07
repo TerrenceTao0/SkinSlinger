@@ -110,6 +110,12 @@ export async function GET(req: Request) {
             const matured = p.status === "holding" && p.deliveredAt != null && (now - p.deliveredAt.getTime()) >= HOLD_MS;
             if (p.status === "holding" && !matured) continue;
 
+            // Orders the extension is tracking wait for its own acceptance report
+            // (POST /api/extension/trade-status) instead of this inventory heuristic —
+            // Steam hides recently-traded/trade-locked items from third-party inventory
+            // lookups, which makes this check unreliable for freshly-sent trades anyway.
+            if (p.status === "pending" && p.tradeOfferId) continue;
+
             const f = floatMap.get(p.assetId);
             const float = f ? { floatValue: f.floatValue, paintSeed: f.paintSeed } : null;
             const buyerTradeUrl = p.buyerTradeUrl ?? p.buyer.steam_trade_url;
