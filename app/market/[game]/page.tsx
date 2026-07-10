@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
     const { game } = await params;
     const config = GAMES[game];
     if (!config) return {};
-    const title = config.title;
+    const title = config.displayName;
     return {
         title,
         alternates: { canonical: `/market/${config.slug}` },
