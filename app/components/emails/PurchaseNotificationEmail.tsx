@@ -33,7 +33,7 @@ export function PurchaseNotificationEmail({ buyerName, buyerTradeUrl, items }: P
                             {buyerName} 
                         </strong>
 
-                        has purchased the following item{items.length > 1 ? 's' : ''} from you.
+                        has purchased the following item {items.length > 1 ? 's' : ''} from you.
                         Send them a trade offer on Steam to receive payment.
                     </p>
 

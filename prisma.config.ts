@@ -9,6 +9,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Only used by CLI commands (migrate/introspect): the app connects via lib/db.ts
+    // using DATABASE_URL. Migrations cannot run through Supabase transaction pooling
+    // (pgbouncer), so the CLI uses the direct session-mode URL.
+    url: process.env["DIRECT_URL"],
   },
 });

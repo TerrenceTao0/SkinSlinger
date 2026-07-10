@@ -15,7 +15,7 @@ export async function GET() {
 - No KYC at any point: not at sign-up, not for trading, not for withdrawals. Login is via Steam only.
 - Fees: 0% sales fee, 0% deposit fee, 0% FX fee. Withdrawal fee starts at 2% and falls to 0.5% with trade volume ($1,000 -> 1.5%, $5,000 -> 1.0%, $25,000 -> 0.5%).
 - Payments: USDC on the Polygon network. Deposits and withdrawals typically confirm in under 5 minutes.
-- Trades are peer-to-peer Steam trades between players with escrowed payment: the buyer pays, the seller sends a Steam trade offer, the server verifies delivery (checks the buyer's inventory every 5 minutes), then funds are released to the seller. There is no trade hold.
+- Trades are peer-to-peer Steam trades between players with escrowed payment: the buyer pays, the seller sends a Steam trade offer, the server verifies delivery (checks the buyer's inventory every 5 minutes), then funds are released to the seller.
 - Sellers keep 100% of the listed price. Buyers trade directly with other players, not with bots.
 
 ## Main pages

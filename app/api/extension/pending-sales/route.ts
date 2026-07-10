@@ -20,6 +20,12 @@ export async function GET() {
         include: { buyer: { select: { steam_id: true } } },
     });
 
+    // Offers whose orders were cancelled on the site but still need cancelling on Steam.
+    const toCancel = await prisma.cancelled_trade_offer.findMany({
+        where: { sellerId: session.user.id },
+        select: { tradeOfferId: true },
+    });
+
     const items = rows
         .filter(p => p.buyer.steam_id)
         .map(p => {
@@ -40,5 +46,9 @@ export async function GET() {
         })
         .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    return Response.json({ sellerSteamId: session.user.steam_id ?? null, items });
+    return Response.json({
+        sellerSteamId: session.user.steam_id ?? null,
+        items,
+        cancelOfferIds: toCancel.map(r => r.tradeOfferId),
+    });
 }

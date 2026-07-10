@@ -111,7 +111,7 @@ export async function GET(req: Request) {
             if (p.status === "holding" && !matured) continue;
 
             // Orders the extension is tracking wait for its own acceptance report
-            // (POST /api/extension/trade-status) instead of this inventory heuristic —
+            // (POST /api/extension/offer-status) instead of this inventory heuristic:
             // Steam hides recently-traded/trade-locked items from third-party inventory
             // lookups, which makes this check unreliable for freshly-sent trades anyway.
             if (p.status === "pending" && p.tradeOfferId) continue;

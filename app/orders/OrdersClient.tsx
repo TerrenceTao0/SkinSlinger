@@ -108,9 +108,6 @@ function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loadin
     onClose: () => void
     loading: boolean
 }) {
-    const [confirmedCancelled, setConfirmedCancelled] = useState(false);
-    const canSubmit = !tradeOfferSent || confirmedCancelled;
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
             <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
@@ -123,23 +120,17 @@ function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loadin
                 </p>
 
                 <p className="text-sm opacity-60">
-                    If the trade has already gone through, it will be detected and marked complete instead - use this to complete trades faster.
+                    If the trade has already gone through, and has passed the 7 day verification window, it will be detected and marked complete instead.
                 </p>
 
                 {tradeOfferSent && (
-                    <label className="flex items-start gap-2 text-sm bg-primary/60 rounded-sm p-3 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={confirmedCancelled}
-                            onChange={e => setConfirmedCancelled(e.target.checked)}
-                            className="mt-0.5 shrink-0"
-                        />
-                        A Steam trade offer was already sent for this order. I've cancelled it on Steam first.
-                    </label>
+                    <p className="text-sm bg-primary/60 rounded-sm p-3">
+                        A Steam trade offer was already sent for this order. The extension will cancel it on Steam automatically.
+                    </p>
                 )}
 
                 <div className="flex gap-3">
-                    <button onClick={onConfirm} disabled={loading || !canSubmit} className="h-9 px-4 rounded-sm bg-negative button flex-1">
+                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-negative button flex-1">
                         {loading ? "..." : "Yes, cancel"}
                     </button>
 
@@ -185,61 +176,34 @@ function useCancel(ids: string[]) {
 }
 
 
-function useMarkSent(ids: string[]) {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+// Keep in sync with AUTO_CANCEL_MS in app/api/cron/process-purchases.
+const AUTO_CANCEL_MS = 3 * 24 * 60 * 60 * 1000;
 
-    async function markSent() {
-        setLoading(true);
-        setError("");
-
-        const res = await fetch("/api/purchase/mark-sent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids }),
-        });
-
-        if (!res.ok) {
-            const data = await res.json();
-            setError(data.error ?? "Something went wrong");
-            setLoading(false);
-            return false;
-        }
-
-        router.refresh();
-        setLoading(false);
-        return true;
-    }
-
-    return { markSent, loading, error };
-}
-
-
-function NextCheckTimer() {
-    const [secondsLeft, setSecondsLeft] = useState(0);
+// Counts down to when the cron auto-cancels an order whose trade offer was never sent.
+function ExpiryTimer({ createdAt }: { createdAt: Date }) {
+    const [msLeft, setMsLeft] = useState<number | null>(null);
 
     useEffect(() => {
-        function calc() {
-            const now = Date.now();
-            const next = Math.ceil(now / (5 * 60 * 1000)) * (5 * 60 * 1000);
-            setSecondsLeft(Math.round((next - now) / 1000));
-        }
-
+        const expiresAt = new Date(createdAt).getTime() + AUTO_CANCEL_MS;
+        const calc = () => setMsLeft(expiresAt - Date.now());
 
         calc();
         const id = setInterval(calc, 1000);
 
         return () => clearInterval(id);
-    }, []);
+    }, [createdAt]);
 
+    if (msLeft === null) return <span className="font-mono text-gray-300">...</span>;
+    if (msLeft <= 0) return <span className="font-mono text-gray-300">any moment now</span>;
 
-    const m = Math.floor(secondsLeft / 60);
-    const s = secondsLeft % 60;
+    const d = Math.floor(msLeft / 86400000);
+    const h = Math.floor(msLeft / 3600000) % 24;
+    const m = Math.floor(msLeft / 60000) % 60;
+    const s = Math.floor(msLeft / 1000) % 60;
 
     return (
         <span className="font-mono text-gray-300">
-            {m}:{s.toString().padStart(2, "0")}
+            {d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s.toString().padStart(2, "0")}s`}
         </span>
     );
 }
@@ -307,17 +271,16 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
         : [
             "Buyer's payment held in escrow",
             `Send a trade offer to ${counterpartyName}`,
-            "They accept it on Steam",
             "Waiting out Steam's 7-day trade-reversal window",
             "Verified - funds released to seller",
         ];
 
 
-    const { markSent, loading: markSentLoading, error: markSentError } = useMarkSent(group.ids);
-
     // "pending" is awaiting the trade; "holding" means delivered and clearing (waiting out the 7-day window).
     const isHolding = group.status === "holding";
-    const currentStep = isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1;
+    const currentStep = role === "seller"
+        ? (isHolding ? 2 : 1)
+        : (isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1);
     const releaseText = group.deliveredAt
         ? formatDate(new Date(new Date(group.deliveredAt).getTime() + 7 * 24 * 60 * 60 * 1000))
         : "soon";
@@ -382,23 +345,18 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                     )}
 
                     {group.tradeOfferSentAt ? (
-                        <p className="text-xs text-special">Marked as sent. Waiting for the buyer to accept it on Steam.</p>
+                        <p className="text-xs text-special">Trade offer sent. Waiting for the buyer to accept it on Steam.</p>
                     ) : (
-                        <button
-                            onClick={markSent}
-                            disabled={markSentLoading}
-                            className="self-start h-8 px-3 rounded-sm bg-special button text-sm text-white!"
-                        >
-                            {markSentLoading ? "Marking..." : "I've sent the trade offer"}
-                        </button>
+                        <p className="text-xs text-gray-500">Sent offers are detected automatically: no need to confirm anything here.</p>
                     )}
                 </div>
             )}
 
+
             {/* Buyer action: accept the trade offer once the seller has sent it */}
             {role === "buyer" && !isHolding && group.tradeOfferSentAt && (
                 <div className="bg-primary/60 rounded-sm p-3 flex flex-col gap-2">
-                    <p className="text-xs text-gray-500">{counterpartyName} says they've sent the trade offer.</p>
+                    <p className="text-xs text-gray-500">{counterpartyName} has sent the trade offer.</p>
                     <a
                         href="https://steamcommunity.com/id/me/tradeoffers/"
                         target="_blank"
@@ -417,32 +375,38 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                     <p className="text-xs text-gray-500">
                         {role === "seller"
                             ? <>Delivered. Funds clear to your balance around <span className="text-gray-300">{releaseText}</span>, once Steam&apos;s trade-reversal window passes.</>
-                            : <>Item received. Protection period ends around <span className="text-gray-300">{releaseText}</span> — if the trade is reversed before then, you&apos;re refunded automatically.</>}
+                            : <>Item received. Protection period ends around <span className="text-gray-300">{releaseText}</span>: if the trade is reversed before then, you&apos;re refunded automatically.</>}
                     </p>
                 </div>
             ) : (
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-700/50 pt-3">
-                    <p className="text-xs text-gray-500">
-                        Next inventory check in <NextCheckTimer /> — trades are verified automatically every 5 minutes.
-                    </p>
+                    <div className="flex flex-col gap-1">
+                        {!group.tradeOfferSentAt && (
+                            <p className="text-xs text-gray-500">
+                                {role === "seller"
+                                    ? <>Send the trade offer within <ExpiryTimer createdAt={group.createdAt} /> or the order is cancelled and the buyer refunded.</>
+                                    : <>Order cancels automatically in <ExpiryTimer createdAt={group.createdAt} /> if the seller doesn&apos;t send the trade offer.</>}
+                            </p>
+                        )}
+                    </div>
 
-                    <button onClick={() => setConfirming(true)} className="h-8 px-3 rounded-sm bg-negative button text-sm shrink-0">
-                        Cancel order
-                    </button>
+                    {role === "seller" && (
+                        <button onClick={() => setConfirming(true)} className="h-8 px-3 rounded-sm bg-negative button text-sm shrink-0">
+                            Cancel order
+                        </button>
+                    )}
                 </div>
             )}
 
-            {(error || markSentError) && (
+            {error && (
                 <p className="text-red-400 text-sm">
-                    {error || markSentError}
+                    {error}
                 </p>
             )}
 
             {confirming && (
                 <CancelModal
-                    refundMessage={role === "buyer"
-                        ? "Your funds will be refunded to your balance."
-                        : "The buyer will be refunded to their balance."}
+                    refundMessage="The buyer will be refunded to their balance."
                     tradeOfferSent={!!group.tradeOfferSentAt}
                     onConfirm={cancel}
                     onClose={() => setConfirming(false)}
@@ -646,6 +610,71 @@ function EmailNotificationCard({ notificationEmail, pendingEmail }: { notificati
 
 //
 
+const EXTENSION_ID = "mdnnnglffnidgnhkmffegicnohmbnedk";
+const EXTENSION_STORE_URL = `https://chromewebstore.google.com/detail/skinslinger-trade-helper/${EXTENSION_ID}`;
+
+// Detects the SkinSlinger Trade Helper via Chrome's externally_connectable
+// messaging. null while checking, false when missing (or not a Chromium browser).
+function useExtensionInstalled() {
+    const [installed, setInstalled] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        type ChromeRuntime = {
+            sendMessage: (id: string, msg: unknown, cb: (res?: { ok?: boolean }) => void) => void;
+            lastError?: unknown;
+        };
+        const runtime = (window as unknown as { chrome?: { runtime?: ChromeRuntime } }).chrome?.runtime;
+
+        if (!runtime?.sendMessage) {
+            setInstalled(false);
+            return;
+        }
+
+        const timeout = setTimeout(() => setInstalled(false), 2000);
+
+        try {
+            runtime.sendMessage(EXTENSION_ID, { type: "PING" }, (response) => {
+                clearTimeout(timeout);
+                // Reading lastError stops Chrome logging an unchecked-error warning
+                // when the extension isn't installed.
+                void runtime.lastError;
+                setInstalled(!!response?.ok);
+            });
+        } catch {
+            clearTimeout(timeout);
+            setInstalled(false);
+        }
+
+        return () => clearTimeout(timeout);
+    }, []);
+
+    return installed;
+}
+
+function ExtensionPromptCard() {
+    return (
+        <section className="bg-secondary rounded-sm p-5 flex flex-col gap-3 ring-1 ring-yellow-400/30">
+            <div>
+                <h2 className="text-lg font-semibold">Install the trade helper extension</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                    The SkinSlinger Trade Helper extension is required to verify your trades: it detects
+                    when you send a trade offer, confirms when the buyer accepts it, and cancels the
+                    Steam offer if an order is cancelled. Without it your sales can&apos;t be verified.
+                </p>
+            </div>
+
+            <a
+                href={EXTENSION_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="self-start h-9 px-4 rounded-sm bg-special button text-sm text-white! flex items-center"
+            >
+                Install from the Chrome Web Store
+            </a>
+        </section>
+    );
+}
+
 export default function OrdersClient({ purchases, currentUserId, notificationEmail, pendingEmail }: { purchases: Purchase[]; currentUserId: string; notificationEmail: string | null; pendingEmail: string | null }) {
     const groups = groupPurchases(purchases);
 
@@ -659,6 +688,11 @@ export default function OrdersClient({ purchases, currentUserId, notificationEma
     const clearing = withRole.filter(({ group }) => group.status === "holding");
     const history = withRole.filter(({ group }) => group.status !== "pending" && group.status !== "holding");
 
+    // Only sellers need the extension (it runs in the seller's Steam session), so
+    // buyers are never prompted to install it.
+    const extensionInstalled = useExtensionInstalled();
+    const isSellingActively = active.some(({ role }) => role === "seller");
+
     return (
         <div className="w-full flex-1 min-h-0 flex justify-center pt-40 px-4 md:px-8 overflow-y-auto pb-10">
             <div className="w-full max-w-3xl flex flex-col gap-8 h-fit">
@@ -666,9 +700,8 @@ export default function OrdersClient({ purchases, currentUserId, notificationEma
                     Orders
                 </h1>
 
-
+                {isSellingActively && extensionInstalled === false && <ExtensionPromptCard />}
                 <EmailNotificationCard notificationEmail={notificationEmail} pendingEmail={pendingEmail} />
-
 
                 {/* Active trades, front and center */}
                 <section className="flex flex-col gap-3">
@@ -700,7 +733,7 @@ export default function OrdersClient({ purchases, currentUserId, notificationEma
                 </section>
 
 
-                {/* Clearing — delivered, inside the 7-day reversal hold */}
+                {/* Clearing: delivered, inside the 7-day reversal hold */}
                 {clearing.length > 0 && (
                     <section className="flex flex-col gap-3">
                         <h2 className="text-lg font-semibold">

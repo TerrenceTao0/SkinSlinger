@@ -29,8 +29,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         }
 
 
-        // Only buyer or seller can cancel
-        if (purchase.buyerId !== session.user.id && purchase.sellerId !== session.user.id) {
+        // Only the seller can cancel: a buyer cancelling could race a trade offer the
+        // seller already sent (refund lands while the offer is still acceptable).
+        if (purchase.sellerId !== session.user.id) {
             return Response.json({ error: "Forbidden" }, { status: 403 });
         }
 
@@ -76,10 +77,26 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
 
         await prisma.$transaction(async (tx) => {
+            // Re-read tradeOfferId here rather than trusting the value fetched before the
+            // Steam verification call above: the extension can report a freshly-sent offer
+            // (setting tradeOfferId) while that call is in flight, and using the stale value
+            // would delete the purchase without queuing the now-live offer for cancellation.
+            const current = await tx.purchase.findUnique({ where: { id }, select: { tradeOfferId: true } });
+
             // Only refund/restore if this request is the one that removes the still-pending
             // purchase — stops a concurrent delivery/completion from being refunded as well.
             const removed = await tx.purchase.deleteMany({ where: { id, status: "pending" } });
             if (removed.count === 0) return;
+
+            // If a Steam trade offer was already sent, queue it for the seller's
+            // extension to cancel on Steam (the purchase row is gone after this, so the
+            // offer id has to be remembered here).
+            if (current?.tradeOfferId) {
+                await tx.cancelled_trade_offer.createMany({
+                    data: [{ tradeOfferId: current.tradeOfferId, sellerId: purchase.sellerId }],
+                    skipDuplicates: true,
+                });
+            }
 
             // Refund buyer
             await tx.user.update({

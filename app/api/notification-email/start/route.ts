@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
 import { randomInt } from "crypto";
-import { EmailVerificationEmail } from "@/app/components/EmailVerificationEmail";
+import { EmailVerificationEmail } from "@/app/components/emails/EmailVerificationEmail";
 
 //
 

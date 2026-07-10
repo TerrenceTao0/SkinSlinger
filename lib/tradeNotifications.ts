@@ -1,7 +1,7 @@
 import { Resend } from "resend";
-import { TradeCompleteEmail } from "@/app/components/TradeCompleteEmail";
-import { ReversalRefundEmail } from "@/app/components/ReversalRefundEmail";
-import { TradeOfferSentEmail } from "@/app/components/TradeOfferSentEmail";
+import { TradeCompleteEmail } from "@/app/components/emails/TradeCompleteEmail";
+import { ReversalRefundEmail } from "@/app/components/emails/ReversalRefundEmail";
+import { TradeOfferSentEmail } from "@/app/components/emails/TradeOfferSentEmail";
 
 //
 

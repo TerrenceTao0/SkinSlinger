@@ -69,16 +69,12 @@ export default function HomeClient(
         currentUserId,
         hasPendingPurchase,
         initialGame,
-        gameBlurb,
-        seoTitle,
     }: {
         initialListings: ListingCard[],
         initialHasMore: boolean,
         currentUserId: string | null,
         hasPendingPurchase: boolean,
         initialGame?: GameFilter,
-        gameBlurb?: string,
-        seoTitle?: string,
     })
     {
 
@@ -357,13 +353,6 @@ export default function HomeClient(
                 </div>
 
                 <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm flex flex-col">
-                    {(seoTitle || gameBlurb) && (
-                        <div className="mb-3 shrink-0">
-                            {seoTitle && <h1 className="text-base font-semibold leading-snug">{seoTitle}</h1>}
-                            {gameBlurb && <p className="text-xs text-gray-500 mt-0.5 max-w-2xl">{gameBlurb}</p>}
-                        </div>
-                    )}
-
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
                         {displayListings.map(listing => (
                             <ListingCard
@@ -394,13 +383,6 @@ export default function HomeClient(
                     </div>
 
                     <div className="bg-secondary w-full overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
-                        {(seoTitle || gameBlurb) && (
-                        <div className="mb-3 shrink-0">
-                            {seoTitle && <h1 className="text-base font-semibold leading-snug">{seoTitle}</h1>}
-                            {gameBlurb && <p className="text-xs text-gray-500 mt-0.5 max-w-2xl">{gameBlurb}</p>}
-                        </div>
-                    )}
-
                         <div className="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 justify-start content-start gap-2">
                             {displayListings.map(listing => (
                                 <ListingCard

@@ -15,44 +15,20 @@ type GameConfig = {
     dbValue: string;
     displayName: string;
     slug: string;
-    title: string;
-    description: string;
-    h1: string;
-    blurb: string;
-    faqs?: { q: string; a: string }[];
 };
 
-// Titles/H1s deliberately target the lower-competition long-tail intents
-// ("sell X items for real money", "no KYC", per-game item vocabulary) where
-// ranking is achievable, while CS2 keeps the head-term framing.
 const GAMES: Record<string, GameConfig> = {
     cs2: {
         dbValue: "CS2", displayName: "CS2", slug: "cs2",
-        title: "CS2 No KYC Skins Marketplace - Buy & Sell CS2 Skins with Crypto",
-        description: "Buy and sell CS2 skins with crypto on SkinSlinger - the P2P Counter-Strike 2 marketplace with 0% sales fee, no KYC, and no trade hold. Trade directly with real players. Easy, fast and secure.",
-        h1: "CS2 Skins Marketplace - No KYC, 0% Sales Fee",
-        blurb: "Buy Counter-Strike 2 skins with crypto. No KYC, no identity checks, 0% sales fee, and no trade hold."
     },
     dota2: {
         dbValue: "Dota2", displayName: "Dota 2", slug: "dota2",
-        title: "Dota 2 Marketplace - Sell Dota 2 Items for Real Money (No KYC)",
-        description: "Sell Dota 2 items for real money on SkinSlinger - arcanas, immortals and sets. P2P marketplace with 0% sales fee, no KYC, crypto payouts in USDC, and no trade hold.",
-        h1: "Sell Dota 2 Items for Real Money - Arcanas, Immortals & Sets",
-        blurb: "Buy and sell Dota 2 items with crypto. No KYC, no identity checks, 0% sales fee, and no trade hold."
     },
     rust: {
         dbValue: "Rust", displayName: "Rust", slug: "rust",
-        title: "Rust Skin Marketplace - Buy & Sell Rust Skins for Crypto (No KYC)",
-        description: "Buy and sell Rust skins for real money on SkinSlinger - the P2P Rust marketplace with 0% sales fee, no KYC, and USDC crypto payouts. Trade Rust skins directly with real players.",
-        h1: "Rust Skin Marketplace - Buy & Sell Rust Skins with Crypto",
-        blurb: "Buy Rust skins with crypto. No KYC, no identity checks, 0% sales fee, and no trade hold."
     },
     tf2: {
         dbValue: "TF2", displayName: "TF2", slug: "tf2",
-        title: "TF2 Marketplace - Sell TF2 Items & Unusuals for Real Money (No KYC)",
-        description: "Sell TF2 items for real money on SkinSlinger - unusuals, hats, and keys. P2P Team Fortress 2 marketplace with 0% sales fee, no KYC, and USDC crypto payouts. No trade hold.",
-        h1: "Sell TF2 Items for Real Money - Unusuals, Hats & Keys",
-        blurb: "Buy and sell Team Fortress 2 items with crypto. No KYC, no identity checks, 0% sales fee, and no trade hold."
     },
 };
 
@@ -67,18 +43,15 @@ export async function generateMetadata({ params }: { params: Promise<{ game: str
     const title = config.title;
     return {
         title,
-        description: config.description,
         alternates: { canonical: `/market/${config.slug}` },
         openGraph: {
             title,
-            description: config.description,
             url: `/market/${config.slug}`,
             images: [OG_IMAGE],
         },
         twitter: {
             card: 'summary',
             title,
-            description: config.description,
             images: ['/logo.png'],
         },
     };
@@ -167,8 +140,6 @@ export default async function GameMarketPage({ params }: { params: Promise<{ gam
                     currentUserId={currentUserId}
                     hasPendingPurchase={hasPendingPurchase}
                     initialGame={config.dbValue as "CS2" | "Dota2" | "Rust" | "TF2"}
-                    gameBlurb={config.blurb}
-                    seoTitle={config.h1}
                 />
             </Suspense>
             <JsonLd data={itemListJsonLd} />

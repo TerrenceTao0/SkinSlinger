@@ -41,7 +41,7 @@ const steps = [
     },
     {
         title: "You accept the trade",
-        desc: "Once you accept the trade offer, the item arrives in your inventory instantly with no trade hold.",
+        desc: "Once you accept the trade offer, the item arrives in your inventory instantly.",
     },
     {
         title: "Server verifies the trade",
@@ -54,7 +54,7 @@ const steps = [
 ]
 
 const paymentMethods = ["USDC (Polygon Network)"]
-const description = 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto — 0% sales fee, no identity verification, no trade hold, instant P2P trades.'
+const description = 'SkinSlinger is the no KYC skins marketplace for CS2, Dota 2, Rust, and TF2. Buy and sell Steam skins with crypto — 0% sales fee, no identity verification, instant P2P trades.'
 
 export const metadata: Metadata = {
     title: 'No KYC Skins Marketplace - Buy & Sell Steam Skins with Crypto | SkinSlinger',
@@ -140,11 +140,6 @@ const faq = {
         },
         {
             "@type": "Question",
-            "name": "Is there a trade hold on SkinSlinger?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. Trades have no hold. Items are transferred instantly via Steam peer-to-peer trades." },
-        },
-        {
-            "@type": "Question",
             "name": "What games does SkinSlinger support?",
             "acceptedAnswer": { "@type": "Answer", "text": "SkinSlinger supports CS2 (Counter-Strike 2), Dota 2, Rust, and Team Fortress 2." },
         },
@@ -188,7 +183,6 @@ function Hero() {
 
                 <p className="text-gray-400 text-lg max-w-md">
                     Trade CS2, Dota 2, Rust and TF2 skins directly with other players.
-                    No middleman bots, no trade hold.
                 </p>
             </div>
             

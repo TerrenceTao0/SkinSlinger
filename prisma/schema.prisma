@@ -135,6 +135,16 @@ model buy_order {
   user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Steam offers that still need cancelling on Steam after their order was cancelled
+// on the site. The purchase row is deleted on cancel, so the offer id is queued here
+// for the seller extension to pick up (via pending-sales), cancel in their real
+// Steam session, and confirm (via offer-status), which removes the row.
+model cancelled_trade_offer {
+  tradeOfferId String @id
+  sellerId String
+  createdAt DateTime @default(now())
+}
+
 model purchase {
   id String @id @default(cuid())
   createdAt DateTime @default(now())

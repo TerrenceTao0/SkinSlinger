@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Resend } from "resend";
-import { PurchaseNotificationEmail } from "@/app/components/PurchaseNotificationEmail";
+import { PurchaseNotificationEmail } from "@/app/components/emails/PurchaseNotificationEmail";
 import { countInventoryItem } from "@/lib/steam";
 
 //
