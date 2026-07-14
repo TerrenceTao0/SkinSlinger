@@ -99,6 +99,8 @@ function formatDate(d: Date) {
     return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+const HOLD_MS = 7 * 24 * 60 * 60 * 1000;
+
 //
 
 function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loading }: {
@@ -221,7 +223,7 @@ function Avatar({ image, name }: { image: string | null; name: string }) {
     );
 }
 
-function StageTracker({ stages, currentStep }: { stages: string[]; currentStep: number }) {
+function StageTracker({ stages, currentStep, extra }: { stages: string[]; currentStep: number; extra?: Partial<Record<number, React.ReactNode>> }) {
     return (
         <ol className="flex flex-col gap-0">
             {stages.map((stage, i) => {
@@ -241,10 +243,13 @@ function StageTracker({ stages, currentStep }: { stages: string[]; currentStep: 
                             )}
                         </div>
 
-                        <p className={`text-sm pb-4 pt-0.5 ${done ? "text-gray-400" : active ? "text-white font-medium" : "text-gray-500"}`}>
-                            {stage}
-                            {active && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse align-middle" />}
-                        </p>
+                        <div className="pb-4 pt-0.5 min-w-0 flex-1">
+                            <p className={`text-sm ${done ? "text-gray-400" : active ? "text-white font-medium" : "text-gray-500"}`}>
+                                {stage}
+                                {active && <span className="ml-2 inline-block w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse align-middle" />}
+                            </p>
+                            {extra?.[i]}
+                        </div>
                     </li>
                 );
             })}
@@ -252,9 +257,28 @@ function StageTracker({ stages, currentStep }: { stages: string[]; currentStep: 
     );
 }
 
+function HoldProgress({ deliveredAt }: { deliveredAt: Date }) {
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const id = setInterval(() => setNow(Date.now()), 30000);
+        return () => clearInterval(id);
+    }, []);
+
+    const elapsed = now - new Date(deliveredAt).getTime();
+    const pct = Math.min(100, Math.max(0, (elapsed / HOLD_MS) * 100));
+
+    return (
+        <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden mt-1.5">
+            <div className="h-full bg-special transition-[width] duration-1000" style={{ width: `${pct}%` }} />
+        </div>
+    );
+}
+
 
 function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" | "seller" }) {
     const [confirming, setConfirming] = useState(false);
+    const [showHoldInfo, setShowHoldInfo] = useState(false);
     const { cancel, loading, error } = useCancel(group.ids);
 
     const counterpartyName = role === "buyer" ? (group.sellerName ?? "Seller") : (group.buyerName ?? "Buyer");
@@ -264,26 +288,49 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
         ? [
             "Payment held in escrow",
             `${counterpartyName} sends a trade offer`,
-            "You accept it on Steam",
+            "You accept the offer",
             "Waiting out Steam's 7-day trade-reversal window",
-            "Verified - item is yours",
+            "Complete",
         ]
         : [
             "Buyer's payment held in escrow",
             `Send a trade offer to ${counterpartyName}`,
+            `Wait for ${counterpartyName} to accept the offer`,
             "Waiting out Steam's 7-day trade-reversal window",
-            "Verified - funds released to seller",
+            "Complete",
         ];
 
 
     // "pending" is awaiting the trade; "holding" means delivered and clearing (waiting out the 7-day window).
     const isHolding = group.status === "holding";
-    const currentStep = role === "seller"
-        ? (isHolding ? 2 : 1)
-        : (isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1);
+    const currentStep = isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1;
     const releaseText = group.deliveredAt
-        ? formatDate(new Date(new Date(group.deliveredAt).getTime() + 7 * 24 * 60 * 60 * 1000))
+        ? formatDate(new Date(new Date(group.deliveredAt).getTime() + HOLD_MS))
         : "soon";
+
+    const holdStageIndex = stages.length - 2;
+    const stageExtra = {
+        [holdStageIndex]: (
+            <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={() => setShowHoldInfo(v => !v)}
+                        aria-label="Why is there a waiting period?"
+                        className="w-4 h-4 rounded-full bg-white/10 text-[10px] text-gray-400 flex items-center justify-center hover:bg-white/20 hover:text-gray-200 shrink-0"
+                    >
+                        i
+                    </button>
+                    {showHoldInfo && (
+                        <p className="text-xs text-gray-500">
+                            Steam allows a trade to be reversed for up to 7 days after it&apos;s accepted. We hold {role === "seller" ? "your payout" : "this order"} until that window passes to protect against reversed/scammed trades.
+                        </p>
+                    )}
+                </div>
+                {isHolding && group.deliveredAt && <HoldProgress deliveredAt={group.deliveredAt} />}
+            </div>
+        ),
+    };
 
     return (
         <div className="bg-secondary rounded-sm p-5 flex flex-col gap-3" style={group.hexColor ? { boxShadow: `0 0 32px #${group.hexColor}1a` } : undefined}>
@@ -329,7 +376,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
 
 
             {/* Stage tracker */}
-            <StageTracker stages={stages} currentStep={currentStep} />
+            <StageTracker stages={stages} currentStep={currentStep} extra={stageExtra} />
 
 
             {/* Seller action: the trade URL they need right now */}

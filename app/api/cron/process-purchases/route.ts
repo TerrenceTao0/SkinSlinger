@@ -105,6 +105,10 @@ export async function GET(req: Request) {
         for (const p of active) {
             if (!p.buyer.steam_id) continue;
 
+            // Never move money for a non-positive price. Such a row can only exist from a bad
+            // listing that predates the price validation; skip it so it can't pay out or refund.
+            if (!Number.isFinite(p.price) || p.price <= 0) continue;
+
             // Holding orders only need checking once the hold has elapsed — no point polling
             // Steam during the window since the item is trade-locked and can't move.
             const matured = p.status === "holding" && p.deliveredAt != null && (now - p.deliveredAt.getTime()) >= HOLD_MS;

@@ -161,6 +161,15 @@ export async function POST(request: Request) {
 
         type ListingInput = { assetId: string, marketName: string, price: number, game: string, commodity: boolean, quantity: number, icon: string, hexColor: string };
 
+        // Reject non-positive/insane prices: a negative price flips checkout's cash
+        // deduction into a credit, minting money for the buyer and driving the seller negative.
+        const MAX_PRICE = 1_000_000;
+        for (const item of items as ListingInput[]) {
+            if (typeof item.price !== "number" || !Number.isFinite(item.price) || item.price <= 0 || item.price > MAX_PRICE) {
+                return Response.json({ error: "Invalid price" }, { status: 400 });
+            }
+        }
+
         const toCreate: { userId: string, assetId: string, marketName: string, price: number, game: string, icon: string, hexColor: string, commodity: boolean }[] = [];
 
         for (const item of items as ListingInput[]) {

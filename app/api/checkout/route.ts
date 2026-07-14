@@ -106,6 +106,13 @@ export async function POST(request: Request) {
             }
         }
 
+        // Guard against non-positive prices (e.g. a maliciously-listed negative price):
+        // a negative total would pass the `cash >= total` check and turn the deduction
+        // into a credit. Reject rather than move money.
+        if (toPurchase.some(l => !Number.isFinite(l.price) || l.price <= 0)) {
+            return Response.json({ error: "One or more items have an invalid price." }, { status: 409 });
+        }
+
         const total = toPurchase.reduce((sum, listing) => sum + listing.price, 0);
 
         // Require public Steam inventory so the cron can verify trade completion
