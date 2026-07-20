@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
         const { marketName, price, quantity, game, icon, hexColor } = await request.json();
 
-        if (!marketName || typeof price !== "number" || price <= 0) {
+        if (!marketName || typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
             return Response.json({ error: "Invalid price" }, { status: 400 });
         }
         if (!Number.isInteger(quantity) || quantity < 1) {
@@ -46,15 +46,6 @@ export async function POST(request: Request) {
         const totalCost = price * quantity;
 
         if (buyer.cash < totalCost) {
-            return Response.json({ error: "Insufficient balance" }, { status: 400 });
-        }
-
-        // Deduct full bid amount upfront
-        const deducted = await prisma.user.updateMany({
-            where: { id: buyer.id, cash: { gte: totalCost } },
-            data: { cash: { decrement: totalCost } },
-        });
-        if (deducted.count === 0) {
             return Response.json({ error: "Insufficient balance" }, { status: 400 });
         }
 
@@ -77,9 +68,29 @@ export async function POST(request: Request) {
             ? await countInventoryItem(buyer.steam_id, matchable[0].game, marketName)
             : null;
 
-        if (matchable.length > 0) {
+        // Deduction, matching, and the remainder buy order all commit together — a
+        // failure anywhere rolls back the deduction too, so the buyer can never be
+        // charged without receiving purchases and/or a standing order.
+        let insufficient = false;
+        try {
             await prisma.$transaction(async (tx) => {
+                // Deduct full bid amount upfront
+                const deducted = await tx.user.updateMany({
+                    where: { id: buyer.id, cash: { gte: totalCost } },
+                    data: { cash: { decrement: totalCost } },
+                });
+                if (deducted.count === 0) {
+                    insufficient = true;
+                    throw new Error("Insufficient balance");
+                }
+
                 for (const listing of matchable) {
+                    // Count-guarded claim: if the listing was bought or delisted since
+                    // the findMany above, skip it (it becomes part of the standing order)
+                    // instead of failing the whole transaction.
+                    const claimed = await tx.item_listing.deleteMany({ where: { id: listing.id } });
+                    if (claimed.count === 0) continue;
+
                     await tx.purchase.create({
                         data: {
                             price: listing.price,
@@ -105,7 +116,6 @@ export async function POST(request: Request) {
                         });
                     }
 
-                    await tx.item_listing.delete({ where: { id: listing.id } });
                     matched++;
 
                     // Collect seller notification
@@ -119,23 +129,28 @@ export async function POST(request: Request) {
                         });
                     }
                 }
-            });
-        }
 
-        // Create buy order for unmatched quantity
-        const remaining = quantity - matched;
-        if (remaining > 0) {
-            await prisma.buy_order.create({
-                data: {
-                    userId: buyer.id,
-                    marketName,
-                    price,
-                    quantity: remaining,
-                    game: game ?? null,
-                    icon: icon ?? null,
-                    hexColor: hexColor ?? null,
-                },
+                // Create buy order for unmatched quantity
+                const remaining = quantity - matched;
+                if (remaining > 0) {
+                    await tx.buy_order.create({
+                        data: {
+                            userId: buyer.id,
+                            marketName,
+                            price,
+                            quantity: remaining,
+                            game: game ?? null,
+                            icon: icon ?? null,
+                            hexColor: hexColor ?? null,
+                        },
+                    });
+                }
             });
+        } catch (error) {
+            if (insufficient) {
+                return Response.json({ error: "Insufficient balance" }, { status: 400 });
+            }
+            throw error;
         }
 
         // Notify sellers
@@ -153,7 +168,7 @@ export async function POST(request: Request) {
             });
         }
 
-        return Response.json({ matched, remaining });
+        return Response.json({ matched, remaining: quantity - matched });
     } catch (error) {
         console.error(error);
         return Response.json({ error: "Server error" }, { status: 500 });

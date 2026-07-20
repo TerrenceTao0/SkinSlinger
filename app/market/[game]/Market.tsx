@@ -108,6 +108,13 @@ export default function HomeClient(
     const sentinelRef = useRef<HTMLDivElement>(null);
     const mobileSentinelRef = useRef<HTMLDivElement>(null);
 
+    // ListingCard is memoized and may hold a stale onBuy closure, so handleBuy must
+    // read basket/session through refs to always act on current state.
+    const basketRef = useRef(basket);
+    useEffect(() => { basketRef.current = basket; }, [basket]);
+    const sessionRef = useRef(session);
+    useEffect(() => { sessionRef.current = session; }, [session]);
+
     // Single ref mirror so the infinite-scroll observer always reads current filters
     // without being recreated on every keystroke.
     const filtersRef = useRef(filters);
@@ -206,7 +213,7 @@ export default function HomeClient(
 
 
     function handleBuy(item: DisplayCard, qty: number = 1) {
-        if (session === null) {
+        if (sessionRef.current === null) {
             router.push("/sign-up");
 
             return;
@@ -221,7 +228,7 @@ export default function HomeClient(
         }
 
 
-        const current = basket;
+        const current = basketRef.current;
         let updated: BasketItem[];
 
         if (item.commodity) {

@@ -41,7 +41,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         }
 
         if (purchase.status === "holding") {
-            return Response.json({ error: "This item has been delivered and is in the 7-day clearing period — it can't be cancelled." }, { status: 409 });
+            return Response.json({ error: "This item has been delivered and is in the 8-day clearing period — it can't be cancelled." }, { status: 409 });
         }
 
 
@@ -71,7 +71,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
                     data: { status: "holding", deliveredAt: new Date() },
                 });
 
-                return Response.json({ error: "The item has already been delivered — it's now in the 7-day clearing period and can't be cancelled." }, { status: 409 });
+                return Response.json({ error: "The item has already been delivered — it's now in the 8-day clearing period and can't be cancelled." }, { status: 409 });
             }
         }
 

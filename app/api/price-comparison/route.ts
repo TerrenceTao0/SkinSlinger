@@ -1,9 +1,17 @@
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
 const BASE_URL = 'https://www.steamwebapi.com';
 
 export async function GET(req: NextRequest) {
+    // Each upstream call costs steamwebapi credits — don't proxy for anonymous callers.
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const market_hash_name = req.nextUrl.searchParams.get('market_hash_name');
     if (!market_hash_name?.trim()) {
         return Response.json({ error: 'market_hash_name required' }, { status: 400 });

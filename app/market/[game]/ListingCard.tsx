@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { memo } from "react";
 import { DisplayCard } from "./Market";
 import FloatBar from "@/app/components/FloatBar";
 import { toSlug } from "@/app/lib/site";
@@ -9,7 +10,7 @@ import { toSlug } from "@/app/lib/site";
 
 //
 
-export default function ListingCard(
+function ListingCard(
     {
         id,
         marketName,
@@ -108,3 +109,14 @@ export default function ListingCard(
         </div>
     );
 }
+
+// onBuy/onPreview are fresh closures every parent render — ignore them and compare
+// the fields that change for a given listing id (handleBuy reads live state via refs,
+// so a stale closure is safe). Everything else is static per id.
+export default memo(ListingCard, (prev, next) =>
+    prev.id === next.id &&
+    prev.price === next.price &&
+    prev.quantity === next.quantity &&
+    prev.currentUserId === next.currentUserId &&
+    prev.hexColor === next.hexColor
+)

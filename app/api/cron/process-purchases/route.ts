@@ -6,7 +6,7 @@ import { sendTradeCompleteEmails, sendReversalRefundEmails, CompletedTrade, Reve
 
 // Funds are held after delivery for the Steam trade-reversal window before being
 // released to the seller, so a seller can't deliver, get paid, then reverse the trade.
-const HOLD_MS = 7 * 24 * 60 * 60 * 1000;
+const HOLD_MS = 8 * 24 * 60 * 60 * 1000;
 
 // A pending order that the seller hasn't even sent a trade offer for yet (stage 2) is
 // auto-cancelled after this long, so a buyer's cash isn't held hostage by an unresponsive seller.

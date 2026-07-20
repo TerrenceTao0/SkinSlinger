@@ -27,6 +27,7 @@ export async function POST(request: Request) {
             return Response.json({ error: "Enter a real email address." }, { status: 400 });
         }
 
+        // The attempt cap in confirm/route.ts limits guessing to 5 tries per email sent.
         const code = String(randomInt(1000, 10000));
 
         await prisma.user.update({
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
                 pendingEmail: email,
                 emailCode: code,
                 emailCodeExpires: new Date(Date.now() + CODE_TTL_MS),
+                emailCodeAttempts: 0,
             },
         });
 

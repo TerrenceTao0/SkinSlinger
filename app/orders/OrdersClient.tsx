@@ -99,7 +99,7 @@ function formatDate(d: Date) {
     return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-const HOLD_MS = 7 * 24 * 60 * 60 * 1000;
+const HOLD_MS = 8 * 24 * 60 * 60 * 1000;
 
 //
 
@@ -122,7 +122,7 @@ function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loadin
                 </p>
 
                 <p className="text-sm opacity-60">
-                    If the trade has already gone through, and has passed the 7 day verification window, it will be detected and marked complete instead.
+                    If the trade has already gone through, and has passed the 8 day verification window, it will be detected and marked complete instead.
                 </p>
 
                 {tradeOfferSent && (
@@ -289,19 +289,19 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
             "Payment held in escrow",
             `${counterpartyName} sends a trade offer`,
             "You accept the offer",
-            "Waiting out Steam's 7-day trade-reversal window",
+            "Waiting out the 8-day clearing hold",
             "Complete",
         ]
         : [
             "Buyer's payment held in escrow",
             `Send a trade offer to ${counterpartyName}`,
             `Wait for ${counterpartyName} to accept the offer`,
-            "Waiting out Steam's 7-day trade-reversal window",
+            "Waiting out the 8-day clearing hold",
             "Complete",
         ];
 
 
-    // "pending" is awaiting the trade; "holding" means delivered and clearing (waiting out the 7-day window).
+    // "pending" is awaiting the trade; "holding" means delivered and clearing (waiting out the 8-day window).
     const isHolding = group.status === "holding";
     const currentStep = isHolding ? 3 : group.tradeOfferSentAt ? 2 : 1;
     const releaseText = group.deliveredAt
@@ -323,7 +323,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                     </button>
                     {showHoldInfo && (
                         <p className="text-xs text-gray-500">
-                            Steam allows a trade to be reversed for up to 7 days after it&apos;s accepted. We hold {role === "seller" ? "your payout" : "this order"} until that window passes to protect against reversed/scammed trades.
+                            Steam allows a trade to be reversed for up to 7 days after it&apos;s accepted. We hold {role === "seller" ? "your payout" : "this order"} for 8 days to protect against reversed/scammed trades.
                         </p>
                     )}
                 </div>
@@ -780,7 +780,7 @@ export default function OrdersClient({ purchases, currentUserId, notificationEma
                 </section>
 
 
-                {/* Clearing: delivered, inside the 7-day reversal hold */}
+                {/* Clearing: delivered, inside the 8-day reversal hold */}
                 {clearing.length > 0 && (
                     <section className="flex flex-col gap-3">
                         <h2 className="text-lg font-semibold">

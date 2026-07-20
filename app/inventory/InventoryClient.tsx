@@ -305,17 +305,46 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                 const decoder = new TextDecoder();
                 let buffer = '';
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop()!;
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        const { market_name, price } = JSON.parse(line);
-                        setLivePrices(prev => new Map(prev).set(market_name, price));
+                // Batch streamed prices into one state flush per interval — a setState
+                // per NDJSON line re-renders the whole grid for every single item.
+                let pending = new Map<string, number>();
+                let flushTimer: ReturnType<typeof setTimeout> | null = null;
+                const flush = () => {
+                    if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+                    if (pending.size === 0) return;
+                    const updates = pending;
+                    pending = new Map();
+                    setLivePrices(prev => {
+                        const next = new Map(prev);
+                        for (const [name, price] of updates) next.set(name, price);
+                        return next;
+                    });
+                };
+
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop()!;
+                        for (const line of lines) {
+                            if (!line.trim()) continue;
+                            // Per-line guard: one malformed line shouldn't drop the batch
+                            // or kill the rest of the stream.
+                            try {
+                                const { market_name, price } = JSON.parse(line);
+                                pending.set(market_name, price);
+                            } catch { }
+                        }
+                        // Timer (not chunk-arrival) drives the flush, so prices parsed just
+                        // before a slow upstream item don't sit unrendered until the next chunk.
+                        if (pending.size > 0 && !flushTimer) {
+                            flushTimer = setTimeout(flush, 150);
+                        }
                     }
+                } finally {
+                    flush();
                 }
             } catch (e) {
                 if ((e as Error).name === 'AbortError') return;
@@ -394,6 +423,15 @@ const basePrice = priceState ?? 0;
                 }, 0)
                 : 0;
             const price = basePrice + stickerValue;
+
+            // Hide junk: items worth <= $0.10, but only once every price component has
+            // resolved (base + each sticker). Unresolved components keep the item visible,
+            // so sticker value arriving late (or a failed stream) can't hide a skin whose
+            // stickers carry its real value.
+            const stickersResolved = !item.stickers
+                || item.stickers.every(s => typeof livePrices.get(`Sticker | ${s.name}`) === "number");
+            if (typeof priceState === "number" && stickersResolved && price <= 0.10) continue;
+
             const itemWithPrice = { ...item, price };
 
             if (item.commodity) {
@@ -509,7 +547,6 @@ const basePrice = priceState ?? 0;
                                             key={item.assetId}
                                             item={item}
                                             quantity={remaining}
-                                            selling={selling}
                                             setSelling={setSelling}
                                             hexColor={item.hexColor}
                                             loading={livePrices.get(item.market_name) === null}
@@ -582,7 +619,6 @@ const basePrice = priceState ?? 0;
                                             key={item.assetId}
                                             item={item}
                                             quantity={remaining}
-                                            selling={selling}
                                             setSelling={setSelling}
                                             hexColor={item.hexColor}
                                             loading={livePrices.get(item.market_name) === null}

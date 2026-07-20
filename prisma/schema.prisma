@@ -26,6 +26,7 @@ model user {
   pendingEmail String?
   emailCode String?
   emailCodeExpires DateTime?
+  emailCodeAttempts Int @default(0)
 
   accounts account[]
   sessions session[]

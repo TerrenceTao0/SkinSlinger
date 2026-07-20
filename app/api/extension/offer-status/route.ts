@@ -10,7 +10,7 @@ import { sendTradeOfferSentEmail } from "@/lib/tradeNotifications";
 // the browser, which the send hook never sees); "gone" means an offer we recorded was
 // cancelled/declined/deleted, so the "trade sent" flag is rolled back and the buyer
 // stops waiting on a dead offer; "accepted" means Steam shows the recorded offer as
-// accepted, so delivery is confirmed and the 7-day escrow hold starts (same transition
+// accepted, so delivery is confirmed and the 8-day escrow hold starts (same transition
 // as trade-status). "cancelledOfferIds" lists queued offers the extension has now
 // cancelled on Steam, clearing them from cancelled_trade_offer. Payout itself still
 // only ever advances on real inventory checks (see cron/process-purchases).

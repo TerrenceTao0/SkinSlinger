@@ -1,7 +1,7 @@
 import { prisma } from '../db'
 import { getDepositAddress, getPublicClient } from './account'
 import { sweepUSDC } from './sweep'
-import { parseAbiItem, parseUnits } from 'viem'
+import { formatUnits, parseAbiItem, parseUnits } from 'viem'
 
 //
 
@@ -105,7 +105,8 @@ export async function processDeposits(
                     data: { status: 'swept', txHash: sweepTx },
                 })
 
-                await onCredit(deposit.userId, deposit.amountUsdc)
+                // Credit what was actually swept, not the requested amount
+                await onCredit(deposit.userId, Number(formatUnits(balance, USDC_DECIMALS)))
 
                 processed++
             }
@@ -155,7 +156,10 @@ export async function processDeposits(
                         data: { status: 'swept', txHash: sweepTx },
                     })
 
-                    await onCredit(deposit.userId, deposit.amountUsdc)
+                    // Credit what actually arrived: an underpayment inside the 1% tolerance
+                    // no longer credits the full requested amount, and an overpayment (which
+                    // the sweep takes in full) is no longer silently kept.
+                    await onCredit(deposit.userId, Number(formatUnits(received, USDC_DECIMALS)))
                     processed++
                 } catch (err) {
                     console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)

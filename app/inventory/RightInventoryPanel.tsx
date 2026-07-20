@@ -10,14 +10,16 @@ const discounts = [0, 5, 15, 20];
 
 //
 
-function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
+function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt, error, submitting }: {
     totalValue: number
     itemCount: number
     onConfirm: () => void
     setShowPrompt: (value: boolean) => void
+    error: string
+    submitting: boolean
 }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPrompt(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { if (!submitting) setShowPrompt(false); }}>
             <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
                 <p className="text-lg font-medium">Confirm listing</p>
 
@@ -38,11 +40,13 @@ function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt }: {
 
                 <p className="text-xs opacity-40">Only a 2% fee applies on withdrawals.</p>
 
+                {error && <p className="text-red-500 text-xs">{error}</p>}
+
                 <div className="flex gap-3">
-                    <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm}>
-                        Confirm
+                    <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm} disabled={submitting}>
+                        {submitting ? "Listing..." : "Confirm"}
                     </button>
-                    <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)}>
+                    <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)} disabled={submitting}>
                         Cancel
                     </button>
                 </div>
@@ -59,6 +63,8 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
     inventoryToken: string,
 }) {
     const [showPrompt, setShowPrompt] = useState(false);
+    const [listError, setListError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
     const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
     const [priceMap, setPriceMap] = useState<Record<string, string>>({});
     const [bidMap, setBidMap] = useState<Record<string, number | null>>({});
@@ -77,7 +83,9 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
         const items = stackedQueue.map(item => ({
             assetId: item.assetId,
             marketName: item.market_name,
-            price: parseFloat(priceMap[item.market_name] ?? item.price.toFixed(2)),
+            // Same source as the displayed price — item.price is a stale snapshot
+            // that can be 0 if the live price hadn't resolved when the item was queued.
+            price: parseFloat(priceMap[item.market_name] ?? defaultPrice(item)),
             game: item.game,
             commodity: item.commodity,
             quantity: item.quantity,
@@ -85,26 +93,42 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
             hexColor: item.hexColor,
         }));
 
-        const queued = selling;
-        const ids = queued.map(i => i.assetId);
-        setSelling([]);
-        setShowPrompt(false);
+        // The server rejects the whole batch on any invalid price — catch it here
+        // so the user sees why instead of a silent no-op.
+        if (items.some(i => !Number.isFinite(i.price) || i.price <= 0)) {
+            setListError("Every item needs a price above $0.00.");
+            return;
+        }
+
+        const ids = selling.map(i => i.assetId);
+        setListError("");
+        setSubmitting(true);
 
         // Wait for the listing to be persisted before refreshing. The optimistic hide
         // only knows each stack's representative assetId, but the server lists every
         // individual one (commodity stacks resolve N distinct assetIds). Refreshing
         // after the POST commits lets the server-side filter remove them all.
-        const response = await fetch("/api/listings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items, inventoryToken }),
-        });
+        try {
+            const response = await fetch("/api/listings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items, inventoryToken }),
+            });
 
-        if (!response.ok) {
-            setSelling(queued);
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                setListError(data?.error ?? "Listing failed — please try again.");
+                return;
+            }
+        } catch {
+            setListError("Network error — please try again.");
             return;
+        } finally {
+            setSubmitting(false);
         }
 
+        setSelling([]);
+        setShowPrompt(false);
         onListed(ids);
     }
 
@@ -174,7 +198,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
     return (
         <>
             {showPrompt && (
-                <ListPrompt totalValue={totalValue} itemCount={totalItems} onConfirm={listItems} setShowPrompt={setShowPrompt} />
+                <ListPrompt totalValue={totalValue} itemCount={totalItems} onConfirm={listItems} setShowPrompt={setShowPrompt} error={listError} submitting={submitting} />
             )}
 
             {/* Mobile: full-screen queue modal */}
@@ -255,7 +279,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
 
                         <button
                             className="bg-special h-12 flex-1 rounded-sm button font-medium"
-                            onClick={() => { setMobileQueueOpen(false); setShowPrompt(true); }}
+                            onClick={() => { setMobileQueueOpen(false); setListError(""); setShowPrompt(true); }}
                         >
                             SELL ITEMS
                         </button>
@@ -275,7 +299,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                         Adjust
                     </button>
 
-                    <button onClick={() => setShowPrompt(true)} className="bg-special px-4 h-10 rounded-sm button text-sm font-medium shrink-0">
+                    <button onClick={() => { setListError(""); setShowPrompt(true); }} className="bg-special px-4 h-10 rounded-sm button text-sm font-medium shrink-0">
                         Sell Items
                     </button>
                 </div>
@@ -357,7 +381,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
 
                 <button
                     className={`mt-210 rounded-sm transition-all overflow-y-auto h-20 w-95 ${stackedQueue.length > 0 ? "bg-special" : "bg-accent"} absolute flex justify-center items-center cursor-pointer`}
-                    onClick={() => setShowPrompt(true)}
+                    onClick={() => { setListError(""); setShowPrompt(true); }}
                 >
                     SELL ITEMS
                 </button>

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function Finance() {
     const session = await getServerSession(authOptions)
 
-    // Funds from sales still inside their 7-day clearing window — held, not yet spendable.
+    // Funds from sales still inside their 8-day clearing window — held, not yet spendable.
     let pendingBalance = 0
     // Funds already spent on purchases that haven't completed yet (pending or clearing) —
     // already deducted from cash, so not part of the available balance.

@@ -1,19 +1,19 @@
 import Image from 'next/image'
+import { memo } from 'react'
 import { SteamItem } from '@/lib/steam'
 import FloatBar from '@/app/components/FloatBar'
 
 //
 
-export default function InventoryItemCard({ item, quantity, selling, setSelling, hexColor, loading = false }: {
+function InventoryItemCard({ item, quantity, setSelling, hexColor, loading = false }: {
     item: SteamItem,
     quantity: number,
-    selling: SteamItem[],
     setSelling: React.Dispatch<React.SetStateAction<SteamItem[]>>,
     hexColor: string,
     loading?: boolean
 }) {
     function add() {
-        setSelling([...selling, item])
+        setSelling(prev => [...prev, item])
     }
 
 
@@ -85,4 +85,14 @@ export default function InventoryItemCard({ item, quantity, selling, setSelling,
         </div>
     )
 }
+
+// The parent rebuilds item objects every render; compare the fields that actually
+// affect output so price streaming only re-renders the cards that changed.
+export default memo(InventoryItemCard, (prev, next) =>
+    prev.item.assetId === next.item.assetId &&
+    prev.item.price === next.item.price &&
+    prev.quantity === next.quantity &&
+    prev.hexColor === next.hexColor &&
+    prev.loading === next.loading
+)
 

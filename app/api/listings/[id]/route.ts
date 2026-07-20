@@ -60,17 +60,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
         await prisma.item_listing.delete({ where: { id } });
 
-        // If no listings remain for this item, refund and delete all buy orders
-        const remaining = await prisma.item_listing.count({ where: { marketName: listing.marketName } });
-        if (remaining === 0) {
-            const orders = await prisma.buy_order.findMany({ where: { marketName: listing.marketName } });
-            if (orders.length > 0) {
-                await prisma.$transaction([
-                    prisma.buy_order.deleteMany({ where: { marketName: listing.marketName } }),
-                    ...orders.map(o => prisma.user.update({ where: { id: o.userId }, data: { cash: { increment: o.price * o.quantity } } })),
-                ]);
-            }
-        }
+        // Buy orders are a standing order book — they persist independently of listings
+        // (the old "refund all buy orders when listings hit 0" cleanup let any seller
+        // wipe the book, and its stale read could double-refund against a live match).
 
         return Response.json(null, { status: 200 });
     } catch (error) {
