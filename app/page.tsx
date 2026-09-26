@@ -382,14 +382,6 @@ function Footer() {
                 </div>
 
                 <div className="flex gap-6">
-                    <Link href="/tos" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                        Terms of Service
-                    </Link>
-
-                    <Link href="/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                        Privacy Policy
-                    </Link>
-
                     <a href="mailto:support@skinslinger.com" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
                         Support
                     </a>

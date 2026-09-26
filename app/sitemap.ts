@@ -3,7 +3,11 @@ import { prisma } from '@/lib/db';
 import { posts } from './blog/posts';
 import { toSlug, getBaseUrl } from './lib/site';
 
+//
+
 const base = getBaseUrl();
+
+//
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // One item type page per unique market name (these are the indexed pages)
