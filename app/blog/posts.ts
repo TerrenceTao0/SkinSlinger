@@ -23,14 +23,14 @@ export const posts: Post[] = [
         date: 'June 5, 2026',
         summary: 'Steam takes 15% and locks your money as Wallet credit. Here is how to sell CS2 skins peer-to-peer, keep 100% of the sale price, and receive USDC in minutes.',
         image: `${CDN}/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttyVfPaERSR0Wqmu7LAocGIGz3UqlXOLrxM-vMGmW8VNxu5Dx60noTyLwiYbf_jdk7uW-V6V-Kf2cGFiYxO9gqa9sSS_mwR4h4D6Az9ardyqQa1NyDpIkTOBb5ES7wYDiMOyz4lPf2YsX02yg2Ubsh123`,
-        tldr: 'Selling CS2 skins on the Steam Community Market costs 15% and permanently locks proceeds as Steam Wallet credit. SkinSlinger charges 0% on sales, pays in USDC, and the full process from listing to spendable crypto takes under 20 minutes. You need Steam Guard Mobile Authenticator active for at least 7 days before listing or Steam will hold your trades.',
+        tldr: 'Selling CS2 skins on the Steam Community Market costs 15% and permanently locks proceeds as Steam Wallet credit. SkinSlinger charges 0% on sales, and pays in USDC once the item is delivered and an 8-day trade-reversal hold has passed. You need Steam Guard Mobile Authenticator active for at least 7 days before listing or Steam will hold your trades.',
         body: [
             {
                 text: 'Steam\'s Community Market charges a flat 15% on every CS2 skin sale, split as 10% to Valve as the CS2 publisher and 5% to Valve as the platform operator. Since Valve owns both, the full 15% stays with them. More importantly, the proceeds land in your Steam Wallet as credit that can only be spent back on Steam. Sell $500 of CS2 skins through the Steam Market and you net $425 you can never convert to real money. That structural lock-in is more costly than the fee percentage alone suggests.',
             },
             {
                 heading: 'Why Peer-to-Peer CS2 Selling Changes the Math',
-                text: 'SkinSlinger is a peer-to-peer CS2 marketplace where the seller sets the price and receives 100% of it in USDC. USDC is a stablecoin pegged to the US dollar, issued by Circle and settled on the Polygon network. There are no platform fees deducted at sale and no lock-in. A seller listing an AWP at $180 receives $180 in USDC when it sells, withdrawable to any Polygon-compatible wallet and exchangeable for local currency on any major exchange. The total round-trip from listing to spendable cash is typically under 20 minutes.',
+                text: 'SkinSlinger is a peer-to-peer CS2 marketplace where the seller sets the price and receives 100% of it in USDC. USDC is a stablecoin pegged to the US dollar, issued by Circle and settled on the Polygon network. There are no platform fees deducted at sale and no lock-in. A seller listing an AWP at $180 receives $180 in USDC when it sells, withdrawable to any Polygon-compatible wallet and exchangeable for local currency on any major exchange. Funds are released 8 days after delivery, once Steam\'s trade-reversal window has closed.',
             },
             {
                 heading: 'Step 1: Enable Steam Guard Before You List Anything',
@@ -46,7 +46,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Step 4: Send the Trade Offer When a Sale Triggers',
-                text: 'When a buyer purchases your listing you receive an email notification. Go to your Orders page and send the Steam trade offer to the buyer\'s trade URL. SkinSlinger then monitors the buyer\'s Steam inventory for the item. When it appears, your USDC balance is credited. Slow sellers frustrate buyers and hurt reputation on any platform, so treat trade offer delivery as time-sensitive.',
+                text: 'When a buyer purchases your listing you receive an email notification. Go to your Orders page and send the Steam trade offer to the buyer\'s trade URL. SkinSlinger then confirms the item reached the buyer\'s Steam inventory and holds the payment for 8 days, covering Steam\'s trade-reversal window. If the item is still with the buyer after the hold, your USDC balance is credited. Slow sellers frustrate buyers and hurt reputation on any platform, so treat trade offer delivery as time-sensitive.',
             },
             {
                 heading: 'Which CS2 Skins Sell Fastest',
@@ -54,7 +54,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'FAQ',
-                text: 'Do I need to verify my identity to sell CS2 skins on SkinSlinger? No. An email address and a connected Steam account are the only requirements. How quickly does USDC credit after a sale? Typically within 5 to 10 minutes of SkinSlinger confirming the item in the buyer\'s inventory. Can I sell Dota 2, Rust, and TF2 skins too? Yes, SkinSlinger supports all four major Steam games under the same account with the same 0% sales fee.',
+                text: 'Do I need to verify my identity to sell CS2 skins on SkinSlinger? No. An email address and a connected Steam account are the only requirements. How quickly does USDC credit after a sale? 8 days after SkinSlinger confirms delivery. The hold covers Steam\'s trade-reversal window, so a buyer cannot receive an item, reverse the trade, and keep the money. Can I sell Dota 2, Rust, and TF2 skins too? Yes, SkinSlinger supports all four major Steam games under the same account with the same 0% sales fee.',
             },
         ],
         authorPerspective: 'The Steam Wallet lock-in is a bigger problem than the 15% fee itself, and most sellers do not fully register this until they have accumulated a balance they cannot spend. I have spoken to players sitting on $300 of Steam credit from past sales who cannot use it for anything because they do not play any Steam games regularly. The fee is visible and annoying. The lock-in is silent and permanent. Any serious volume of CS2 trading should happen on a peer-to-peer platform that pays in real currency, not Steam credit.',
@@ -201,7 +201,7 @@ export const posts: Post[] = [
         date: 'June 8, 2026',
         summary: 'Steam charges Dota 2 buyers a 5% fee on top of every listing price, on top of the 15% seller fee. Here is how buying with crypto on a third-party marketplace eliminates both.',
         image: `${CDN}/i0CoZ81Ui0m-9KwlBY1L_18myuGuq1wfhWSaZgMttydbPaERSR0Wqmu7LAocGIyi3kajH_jR1c-zOHSF4Blm_Ibw5U7hSBj_mqnk-C9U4c2rabBoMr6SC2KVkLgl5OA-TC21lxx-sGuGwtz6eS2ROw92CcBxRLEIshHrkNDkKaq8sPDxdt5E`,
-        tldr: 'Steam does not accept crypto and adds a 5% buyer fee on top of every Dota 2 listing price. Third-party crypto marketplaces like SkinSlinger charge 0% on sales and show all-in prices. For Dota 2 items above $20, the fee savings are substantial. Use USDC or USDT rather than Bitcoin for deposits under $500 to avoid network fees and price volatility.',
+        tldr: 'Steam does not accept crypto and adds a 5% buyer fee on top of every Dota 2 listing price. Third-party crypto marketplaces like SkinSlinger charge 0% on sales and show all-in prices. For Dota 2 items above $20, the fee savings are substantial. Deposits are in USDC on Polygon, which avoids Bitcoin network fees and price volatility.',
         body: [
             {
                 text: 'Buying Dota 2 skins on the Steam Community Market has a fee structure most players do not notice until they see the checkout total. The displayed listing price is what the seller receives after the 10% Dota 2 game fee and 5% Steam platform fee are deducted from the seller\'s proceeds. As a buyer, you pay the listed price plus a separate 5% buyer fee added at checkout. A Dota 2 Arcana listed at $30 costs the buyer $31.50 and nets the seller $25.50. Third-party marketplaces that accept crypto display all-in prices: what you see is what you pay.',
@@ -212,7 +212,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'How to Buy Dota 2 Skins With Crypto on SkinSlinger',
-                text: 'Deposit USDC, ETH, or BTC to your SkinSlinger wallet. Deposits in USDC on Polygon confirm in under 2 minutes. ETH on Ethereum mainnet typically confirms in 5 to 15 minutes. BTC takes 10 to 30 minutes depending on mempool congestion. Browse the Dota 2 listings and purchase the item you want. SkinSlinger notifies the seller, who sends a Steam trade offer to your account. You accept in the Steam client and the item appears in your inventory. SkinSlinger charges 0% on Dota 2 purchases, compared to the 5% buyer fee on Steam.',
+                text: 'Deposit USDC on Polygon to your SkinSlinger balance. Deposits typically confirm in under 2 minutes. Browse the Dota 2 listings and purchase the item you want. SkinSlinger notifies the seller, who sends a Steam trade offer to your account. You accept in the Steam client and the item appears in your inventory. SkinSlinger charges 0% on Dota 2 purchases, compared to the 5% buyer fee on Steam.',
             },
             {
                 heading: 'Which Dota 2 Items Are Worth Buying Through a Crypto Marketplace',
@@ -224,7 +224,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Stablecoins vs BTC for Dota 2 Purchases',
-                text: 'For purchases under $500, USDC or USDT is the better deposit option over Bitcoin for two reasons. Stablecoins are price-stable: the amount you deposit is the amount that credits, with no volatility between initiation and confirmation. Polygon network fees for USDC are under $0.01, compared to Bitcoin network fees that range from $1 to $30 depending on congestion. Bitcoin makes more sense for large deposits where the proportional fee impact is smaller and you already hold BTC rather than converting.',
+                text: 'SkinSlinger takes deposits in USDC rather than Bitcoin for two reasons. Stablecoins are price-stable: the amount you deposit is the amount that credits, with no volatility between initiation and confirmation. Polygon network fees for USDC are under $0.01, compared to Bitcoin network fees that range from $1 to $30 depending on congestion. If you hold BTC or ETH, swap it to USDC on Polygon on any major exchange before depositing.',
             },
             {
                 heading: 'FAQ',
@@ -313,11 +313,11 @@ export const posts: Post[] = [
             },
             {
                 heading: 'How Settlement Works on a No-KYC Marketplace',
-                text: 'When a buyer purchases your Dota 2, Rust, or TF2 item on SkinSlinger, you receive an email and a notification on your Orders page. You send the Steam trade offer to the buyer\'s trade URL. SkinSlinger checks the buyer\'s Steam inventory for the specific asset ID of the item every 5 minutes. Once it appears, your USDC balance is credited automatically. If the buyer\'s inventory is private, the trade is treated as complete after a standard timeout. The full process from accepted trade to credited USDC is typically under 10 minutes.',
+                text: 'When a buyer purchases your Dota 2, Rust, or TF2 item on SkinSlinger, you receive an email and a notification on your Orders page. You send the Steam trade offer to the buyer\'s trade URL. SkinSlinger checks the buyer\'s Steam inventory for the item every 5 minutes. Once delivery is confirmed, the payment is held for 8 days to cover Steam\'s trade-reversal window, then credited to your USDC balance automatically.',
             },
             {
                 heading: 'FAQ',
-                text: 'What is a no-KYC skins marketplace? A platform that allows buying and selling of game cosmetics without requiring government ID. These platforms settle payments in crypto, which removes the regulatory obligation for identity verification that applies to fiat-processing platforms. Can I sell all four games on one SkinSlinger account? Yes. One account covers CS2, Dota 2, Rust, and TF2 with the same trade URL and USDC wallet. What are the seller fees on SkinSlinger? 0% sales fee and 0% deposit fee. Withdrawal carries a 2% fee that scales down to 0.5% at higher lifetime volumes.',
+                text: 'What is a no-KYC skins marketplace? A platform that allows buying and selling of game cosmetics without requiring government ID. These platforms settle payments in crypto, which removes the regulatory obligation for identity verification that applies to fiat-processing platforms. Can I sell all four games on one SkinSlinger account? Yes. One account covers CS2, Dota 2, Rust, and TF2 with the same trade URL and USDC wallet. What are the seller fees on SkinSlinger? 0% sales fee and 0% deposit fee. Withdrawal carries a flat 2% fee.',
             },
         ],
         authorPerspective: 'TF2 is the one game on this list where I would recommend a different strategy depending on item value. For Cosmetics under $30 and Strange weapons, a general skin marketplace like SkinSlinger works well: the buyer pool is large enough and the price is low enough that competitive pricing produces a fast sale. For Unusuals above $100, the dedicated TF2 trading community on backpack.tf and trading servers finds buyers faster because that is where serious TF2 collectors spend their time. The no-KYC settlement advantage still applies if you list on both, and SkinSlinger provides the payout infrastructure, but getting discovery right for high-value TF2 items requires meeting buyers where they already are.',
@@ -342,7 +342,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'SkinSlinger: 0% Sales, 0% Deposit, 2% Withdrawal',
-                text: 'SkinSlinger charges no fee on sales and no fee on deposits. The only charge is a 2% withdrawal fee when moving USDC out of the platform. This fee is tiered: it reduces to 1.5% after $1,000 in lifetime sales or purchases, 1.0% at $5,000, and 0.5% at $25,000. For a seller making $200 per month in CS2 skin sales, the total annual cost at the 2% withdrawal tier is $48 on $2,400 in proceeds. At the 1.5% tier ($1,000 in activity), the same $2,400 annual volume costs $36. Total fee as a percentage of transaction value: 2%, scaling down to 0.5% for high-volume users. Payments are in USDC on Polygon, withdrawable to any compatible wallet.',
+                text: 'SkinSlinger charges no fee on sales and no fee on deposits. The only charge is a 2% withdrawal fee when moving USDC out of the platform. For a seller making $200 per month in CS2 skin sales, the total annual cost is $48 on $2,400 in proceeds. Total fee as a percentage of transaction value: 2%. Payments are in USDC on Polygon, withdrawable to any compatible wallet.',
             },
             {
                 heading: 'CSFloat: 2% Sales, 2.8% Deposit, 0.5% Withdrawal',
@@ -366,7 +366,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'How to Calculate Your Actual Cost Per Trade',
-                text: 'The relevant calculation depends on your use case. Sellers should add sales fee plus withdrawal fee and divide by the gross sale price. On SkinSlinger at the base tier: sell a $100 skin, receive $100 USDC, withdraw and pay $2, net $98 or a 2% total cost. On DMarket: sell a $100 skin, receive $93, withdraw and pay $2.33, net $90.67 or a 9.3% total cost. Buyers should add any deposit fee to the purchase price. On CSFloat: deposit $100, credit $97.20 after the 2.8% fee, spend that on a purchase. The effective item cost is 2.8% higher than the listed price before any other fee.',
+                text: 'The relevant calculation depends on your use case. Sellers should add sales fee plus withdrawal fee and divide by the gross sale price. On SkinSlinger: sell a $100 skin, receive $100 USDC, withdraw and pay $2, net $98 or a 2% total cost. On DMarket: sell a $100 skin, receive $93, withdraw and pay $2.33, net $90.67 or a 9.3% total cost. Buyers should add any deposit fee to the purchase price. On CSFloat: deposit $100, credit $97.20 after the 2.8% fee, spend that on a purchase. The effective item cost is 2.8% higher than the listed price before any other fee.',
             },
             {
                 heading: 'Why Fee Structure Matters More Than Headline Percentage',
@@ -374,7 +374,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'FAQ',
-                text: 'What is the lowest fee skin marketplace in 2026? SkinSlinger charges 2% total (withdrawal only), which scales to 0.5% at $25,000 in lifetime volume. No sales fee, no deposit fee. What does "total fee" mean in this comparison? The combined cost of sales fee, deposit fee, and withdrawal fee as a percentage of transaction value for a typical sell-and-withdraw cycle. Are these fees based on official sources? Fee data is sourced from pricempire.com. Individual platform terms may vary and should be verified directly before trading.',
+                text: 'What is the lowest fee skin marketplace in 2026? SkinSlinger charges 2% total (withdrawal only). No sales fee, no deposit fee. What does "total fee" mean in this comparison? The combined cost of sales fee, deposit fee, and withdrawal fee as a percentage of transaction value for a typical sell-and-withdraw cycle. Are these fees based on official sources? Fee data is sourced from pricempire.com. Individual platform terms may vary and should be verified directly before trading.',
             },
         ],
         authorPerspective: 'The DMarket fee structure is the most misleading in this comparison because the 7% sales fee is competitive and prominently displayed, but the 2.5% withdrawal fee that turns it into 9.3% effective cost is much harder to find in their documentation. I have watched traders choose DMarket over lower-fee alternatives because they compared sales percentages and stopped there. The total-cost calculation is the only number that matters, and platforms that separate fees across multiple line items are almost always doing so because the total looks worse than any individual component.',
@@ -452,7 +452,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'How the Sale and Payout Process Works',
-                text: 'When a TF2 item sells on SkinSlinger, the buyer purchases using their USDC balance. You receive an email notification and a trade request appears in your Orders page. Send the Steam trade offer to the buyer\'s trade URL. SkinSlinger monitors the buyer\'s inventory for the specific item. When confirmed, your USDC balance is credited. The 0% sales fee means the full listing price credits to your balance. Withdraw to any Polygon-compatible wallet. No identity verification is required at any stage: account setup requires only email and Steam login.',
+                text: 'When a TF2 item sells on SkinSlinger, the buyer purchases using their USDC balance. You receive an email notification and a trade request appears in your Orders page. Send the Steam trade offer to the buyer\'s trade URL. SkinSlinger monitors the buyer\'s inventory for the specific item. Once delivery is confirmed, your USDC balance is credited after an 8-day trade-reversal hold. The 0% sales fee means the full listing price credits to your balance. Withdraw to any Polygon-compatible wallet. No identity verification is required at any stage: account setup requires only email and Steam login.',
             },
             {
                 heading: 'TF2 Items That Do Not Sell Well on General Marketplaces',
@@ -476,7 +476,7 @@ export const posts: Post[] = [
         date: 'June 11, 2026',
         summary: 'The Steam Market locks your Rust skin sales into Wallet credit. Here is how to sell Rust skins peer-to-peer for USDC you can actually withdraw, with 0% sales fee and no identity verification.',
         image: `${CDN}/6TMcQ7eX6E0EZl2byXi7vaVKyDk_zQLX05x6eLCFM9neAckxGDf7qU2e2gu64OnAeQ7835FW7GLHfCk4nReh8DEiv5daPqk5pbI2Rf63y6_ODyQ`,
-        tldr: 'You cannot cash out Rust skins through the Steam Community Market - proceeds are locked as Steam Wallet credit after a roughly 15% combined fee. Selling on SkinSlinger is peer-to-peer: you list at your own price, a buyer pays into escrow, you send the Steam trade offer, and the full price is released to you in USDC with a 0% sales fee and no KYC at any volume. The whole flow typically takes under 20 minutes once a buyer orders.',
+        tldr: 'You cannot cash out Rust skins through the Steam Community Market - proceeds are locked as Steam Wallet credit after a roughly 15% combined fee. Selling on SkinSlinger is peer-to-peer: you list at your own price, a buyer pays into escrow, you send the Steam trade offer, and the full price is released to you in USDC with a 0% sales fee and no KYC at any volume. The payment is released 8 days after delivery, once Steam\'s trade-reversal window has closed.',
         body: [
             {
                 text: 'Rust skins come from the item store, weekly drops, and Twitch drops, and many accumulate real market value over time. The catch is that the obvious place to sell them - the Steam Community Market - takes a combined fee of around 15% and pays you in Steam Wallet credit that can never be converted to real money. To actually cash out Rust skins, you need a third-party marketplace, and they differ a lot in fees, custody model, and verification requirements.',
@@ -487,7 +487,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Selling Rust Skins on SkinSlinger Step by Step',
-                text: 'Sign in with Steam and add your Steam trade URL - that is the entire onboarding, with no documents at any point. Open your inventory on SkinSlinger, which loads your tradeable Rust skins with current market reference prices, queue the items you want to sell, and set your prices. When a buyer orders, their payment is escrowed and you get notified. Send the Steam trade offer to the buyer\'s trade URL from your own account, and once the server verifies the item arrived in their inventory - it checks every 5 minutes - the full sale price lands in your USDC balance.',
+                text: 'Sign in with Steam and add your Steam trade URL - that is the entire onboarding, with no documents at any point. Open your inventory on SkinSlinger, which loads your tradeable Rust skins with current market reference prices, queue the items you want to sell, and set your prices. When a buyer orders, their payment is escrowed and you get notified. Send the Steam trade offer to the buyer\'s trade URL from your own account, and once the server verifies the item arrived in their inventory - it checks every 5 minutes - the full sale price lands in your USDC balance after an 8-day trade-reversal hold.',
             },
             {
                 heading: 'Pricing Rust Skins to Actually Sell',
@@ -495,7 +495,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Cashing Out: USDC on Polygon',
-                text: 'Sales are credited in USDC, a dollar-pegged stablecoin, on the Polygon network. Withdrawals go to any Polygon-compatible wallet and typically confirm in under 5 minutes. The withdrawal fee starts at 2% and steps down to 0.5% as your trade volume grows. From a wallet, USDC converts to local currency on any major exchange - which is the step Steam Wallet credit can never make.',
+                text: 'Sales are credited in USDC, a dollar-pegged stablecoin, on the Polygon network. Withdrawals go to any Polygon-compatible wallet and typically confirm in under 5 minutes. The withdrawal fee is a flat 2%. From a wallet, USDC converts to local currency on any major exchange - which is the step Steam Wallet credit can never make.',
             },
             {
                 heading: 'One Prerequisite: Steam Guard',
@@ -529,11 +529,11 @@ export const posts: Post[] = [
             },
             {
                 heading: 'The Escrowed Trade Flow',
-                text: 'When a buyer orders your item on SkinSlinger, their payment is held by the server - the seller does not get paid yet, and the buyer cannot lose money to a no-show. You send a Steam trade offer to the buyer\'s trade URL from your own account; your item never sits on a bot. After the buyer accepts, the server verifies the item in their inventory within about 5 minutes and releases the full sale price to your USDC balance. The sales fee is 0%.',
+                text: 'When a buyer orders your item on SkinSlinger, their payment is held by the server - the seller does not get paid yet, and the buyer cannot lose money to a no-show. You send a Steam trade offer to the buyer\'s trade URL from your own account; your item never sits on a bot. After the buyer accepts, the server verifies the item in their inventory within about 5 minutes, then holds the payment for 8 days to cover Steam\'s trade-reversal window before releasing the full sale price to your USDC balance. The sales fee is 0%.',
             },
             {
                 heading: 'Getting Paid Without KYC',
-                text: 'Withdrawals are in USDC on the Polygon network, to any wallet you control, and confirm in minutes. There is no identity verification at sign-up, while trading, or at withdrawal - at any volume. The withdrawal fee starts at 2% and falls to 0.5% as your cumulative trade volume grows, which for a Dota 2 seller clearing a few high-value items is the only fee in the entire flow.',
+                text: 'Withdrawals are in USDC on the Polygon network, to any wallet you control, and confirm in minutes. There is no identity verification at sign-up, while trading, or at withdrawal - at any volume. The withdrawal fee is a flat 2%, which for a Dota 2 seller clearing a few high-value items is the only fee in the entire flow.',
             },
         ],
         authorPerspective: 'Dota 2 sellers are the most underserved group in the Steam economy: the items are valuable, the marketplaces are few, and instant-buy spreads are brutal. If you own an arcana or immortal you no longer use, pricing it yourself on a P2P market is the single highest-return change you can make to how you sell.',
@@ -563,11 +563,11 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Selling Unusuals Peer-to-Peer on SkinSlinger',
-                text: 'List the unusual from your backpack at your own dollar price - the sales fee is 0%, so the listed price is what you receive. When a buyer orders, their payment is escrowed by the server. You send the Steam trade offer directly to the buyer\'s trade URL; the hat moves from your backpack to theirs without a bot ever holding it. Once the server verifies delivery - it checks the buyer\'s inventory every 5 minutes - the full amount is credited to your balance in USDC.',
+                text: 'List the unusual from your backpack at your own dollar price - the sales fee is 0%, so the listed price is what you receive. When a buyer orders, their payment is escrowed by the server. You send the Steam trade offer directly to the buyer\'s trade URL; the hat moves from your backpack to theirs without a bot ever holding it. Once the server verifies delivery - it checks the buyer\'s inventory every 5 minutes - the full amount is credited to your balance in USDC after an 8-day trade-reversal hold.',
             },
             {
                 heading: 'Cashing Out a High-Value Sale',
-                text: 'USDC withdrawals go to any Polygon wallet and confirm in minutes, with no identity verification at any amount - relevant for unusual sellers specifically, because a single sale can cross the payout thresholds at which other platforms demand documents. The withdrawal fee starts at 2% and drops to 0.5% with volume, so a $500 unusual sale costs at most $10 end to end, against $50 on a 10% platform or $75 in locked credit on Steam.',
+                text: 'USDC withdrawals go to any Polygon wallet and confirm in minutes, with no identity verification at any amount - relevant for unusual sellers specifically, because a single sale can cross the payout thresholds at which other platforms demand documents. The withdrawal fee is a flat 2%, so a $500 unusual sale costs $10 end to end, against $50 on a 10% platform or $75 in locked credit on Steam.',
             },
             {
                 heading: 'Listing Tips for Unusual Sellers',
