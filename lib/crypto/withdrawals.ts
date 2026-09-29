@@ -4,7 +4,6 @@ import { privateKeyToAccount } from 'viem/accounts'
 
 //
 
-const feeRate = 0.02
 const minWithdrawal = 1
 const USDC_DECIMALS = 6
 
@@ -13,6 +12,7 @@ const USDC_DECIMALS = 6
 export async function processWithdrawal(
     amount: number,
     toAddress: string,
+    feeRate: number,
     deductBalance: () => Promise<boolean>,
     refundBalance: () => Promise<void>,
     )
@@ -26,8 +26,7 @@ export async function processWithdrawal(
 
         if (!ok) throw new Error('Insufficient balance')
 
-        const adjustedFeeRate = feeRate
-        const feeAmount = amount * adjustedFeeRate
+        const feeAmount = amount * feeRate
         const netAmount = amount - feeAmount
         const usdcAmount = parseUnits(netAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)
         const usdcFee = parseUnits(feeAmount.toFixed(USDC_DECIMALS), USDC_DECIMALS)

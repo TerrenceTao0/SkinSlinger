@@ -1,4 +1,9 @@
-export const WITHDRAWAL_FEE = 0.02
+// The user's withdrawal fee tier, from lib/fees getWithdrawalFee
+export type WithdrawalFee = {
+    rate: number
+    volume: number
+    next: { minVolume: number; rate: number } | null
+}
 
 // Shape returned by /api/create-deposit (the deposit id is the pay address)
 export type Payment = {
@@ -9,12 +14,14 @@ export type Payment = {
 
 export type PaymentStatus = "waiting" | "confirming" | "confirmed" | "finished" | "failed" | "expired" | "partially_paid"
 
+export const DEPOSIT_STEPS = ["Amount", "Send USDC", "Credited"]
+
 export const STATUS_LABELS: Record<PaymentStatus, string> = {
-    waiting: "Waiting for payment...",
-    confirming: "Transaction detected - confirming...",
-    confirmed: "Confirmed",
+    waiting: "Waiting for payment",
+    confirming: "Payment detected, crediting your balance",
+    confirmed: "Payment confirmed",
     finished: "Complete",
     failed: "Payment failed",
-    expired: "Payment expired",
+    expired: "Address expired",
     partially_paid: "Partially paid — please send the full amount",
 }

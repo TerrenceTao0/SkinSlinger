@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { processWithdrawal } from '@/lib/crypto'
+import { getWithdrawalFee } from '@/lib/fees'
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions)
@@ -19,9 +20,12 @@ export async function POST(req: Request) {
     }
 
     try {
+        const { rate } = await getWithdrawalFee(userId)
+
         const result = await processWithdrawal(
             amount,
             address,
+            rate,
             async () => {
                 const updated = await prisma.user.updateMany({
                     where: { id: userId, cash: { gte: amount } },

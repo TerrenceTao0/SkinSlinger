@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getWithdrawalFee } from '@/lib/fees'
 import FinanceClient from "./FinanceClient"
 import type { Metadata } from 'next'
 
@@ -23,7 +24,6 @@ export default async function Finance() {
     // already deducted from cash, so not part of the available balance.
     let lockedBalance = 0
 
-
     if (session?.user?.id) {
         const held = await prisma.purchase.aggregate({
             where: { sellerId: session.user.id, status: "holding" },
@@ -38,11 +38,13 @@ export default async function Finance() {
             _sum: { price: true },
         })
 
-        
+
         lockedBalance = locked._sum.price ?? 0
     }
 
+    const withdrawalFee = await getWithdrawalFee(session?.user?.id)
 
-    return <Suspense><FinanceClient pendingBalance={pendingBalance} lockedBalance={lockedBalance} /></Suspense>
+
+    return <Suspense><FinanceClient pendingBalance={pendingBalance} lockedBalance={lockedBalance} withdrawalFee={withdrawalFee} /></Suspense>
 }
 

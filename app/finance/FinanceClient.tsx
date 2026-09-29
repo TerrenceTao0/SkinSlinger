@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import type { Payment, PaymentStatus } from './types'
+import type { Payment, PaymentStatus, WithdrawalFee } from './types'
 import MenuView from './MenuView'
 import DepositAmountView from './DepositAmountView'
 import PaymentView from './PaymentView'
@@ -12,14 +12,14 @@ import WithdrawSuccessView from './WithdrawSuccessView'
 
 //
 
-export default function FinanceClient({ pendingBalance, lockedBalance }: { pendingBalance: number; lockedBalance: number }) {
+export default function FinanceClient({ pendingBalance, lockedBalance, withdrawalFee }: { pendingBalance: number; lockedBalance: number; withdrawalFee: WithdrawalFee }) {
     const { data: session } = useSession()
     const [view, setView] = useState<"menu" | "deposit-amount" | "payment" | "deposit-success" | "withdraw" | "withdraw-success">("menu")
     const [amountInput, setAmountInput] = useState("")
     const [address, setAddress] = useState("")
     const [payment, setPayment] = useState<Payment | null>(null)
     const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("waiting")
-    const [withdrawResult, setWithdrawResult] = useState<{ usdcAmount: number } | null>(null)
+    const [withdrawResult, setWithdrawResult] = useState<{ usdcAmount: number; transactionHash?: string } | null>(null)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
     const [copied, setCopied] = useState<"address" | "amount" | null>(null)
@@ -35,6 +35,7 @@ export default function FinanceClient({ pendingBalance, lockedBalance }: { pendi
         }
     }, [])
 
+    
     // The deposit id returned by /api/create-deposit is the pay address itself.
     function startPolling(depositId: string) {
         if (pollRef.current) clearInterval(pollRef.current)
@@ -152,6 +153,10 @@ export default function FinanceClient({ pendingBalance, lockedBalance }: { pendi
 
 
     function reset() {
+        if (pollRef.current) clearInterval(pollRef.current)
+
+        if (timerRef.current) clearInterval(timerRef.current)
+
         setAmountInput("")
         setAddress("")
         setError("")
@@ -159,11 +164,15 @@ export default function FinanceClient({ pendingBalance, lockedBalance }: { pendi
     }
 
 
-    if (view === "deposit-success") return <DepositSuccessView onDone={reset} />
+    let content: React.ReactNode
 
-    if (view === "withdraw-success" && withdrawResult) return <WithdrawSuccessView usdcAmount={withdrawResult.usdcAmount} onDone={reset} />
+    if (view === "deposit-success") content = <DepositSuccessView onDone={reset} />
 
-    if (view === "payment" && payment) return (
+    else if (view === "withdraw-success" && withdrawResult) content = (
+        <WithdrawSuccessView usdcAmount={withdrawResult.usdcAmount} transactionHash={withdrawResult.transactionHash} onDone={reset} />
+    )
+
+    else if (view === "payment" && payment) content = (
         <PaymentView
             payment={payment}
             paymentStatus={paymentStatus}
@@ -171,42 +180,55 @@ export default function FinanceClient({ pendingBalance, lockedBalance }: { pendi
             copied={copied}
             onCopy={copy}
             onRetry={() => { setView("deposit-amount"); setPayment(null) }}
+            onBack={reset}
         />
     )
 
-
-    if (view === "deposit-amount") return (
+    else if (view === "deposit-amount") content = (
         <DepositAmountView
             amountInput={amountInput}
             onAmountChange={setAmountInput}
             error={error}
             loading={loading}
             onSubmit={handleDeposit}
+            onBack={reset}
         />
     )
 
-
-    if (view === "withdraw") return (
+    else if (view === "withdraw") content = (
         <WithdrawView
             amountInput={amountInput}
             onAmountChange={setAmountInput}
             address={address}
             onAddressChange={setAddress}
+            balance={session?.user?.cash ?? 0}
+            feeRate={withdrawalFee.rate}
             error={error}
             loading={loading}
             onSubmit={handleWithdraw}
+            onBack={reset}
         />
     )
 
-
-    return (
+    else content = (
         <MenuView
             balance={session?.user?.cash ?? 0}
             pending={pendingBalance}
             locked={lockedBalance}
+            withdrawalFee={withdrawalFee}
             onDeposit={() => { setAmountInput(""); setError(""); setView("deposit-amount") }}
             onWithdraw={() => { setAmountInput(""); setError(""); setView("withdraw") }}
         />
+    )
+
+
+    // The body doesn't scroll, so the page does; top padding clears the fixed nav
+    return (
+        <div className="flex-1 min-h-0 w-full overflow-y-auto no-scrollbar">
+            <div className="min-h-full flex justify-center items-center px-4 pt-24 pb-10">
+                {content}
+            </div>
+        </div>
     )
 }
 

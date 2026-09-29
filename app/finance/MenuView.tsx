@@ -1,84 +1,92 @@
+import Image from 'next/image'
+import type { WithdrawalFee } from './types'
+import { ArrowDownIcon, ArrowUpIcon, DetailRow, PageHeader } from './ui'
+
+//
+
 export default function MenuView({
     balance,
     pending,
     locked,
+    withdrawalFee,
     onDeposit,
     onWithdraw,
 }: {
     balance: number
     pending: number
     locked: number
+    withdrawalFee: WithdrawalFee
     onDeposit: () => void
     onWithdraw: () => void
 }) {
+    const { rate, volume, next } = withdrawalFee
+
     return (
-        <div className="h-full w-full flex justify-center items-center">
-            <div className="w-full max-w-sm flex flex-col gap-5 justify-center items-center">
-                <div className="bg-secondary rounded-sm px-5 py-4 flex flex-col gap-0.5 w-90 md:w-full">
-                    <span className="text-[11px] uppercase tracking-widest text-gray-500">
-                        Available Balance
+        <div className="w-full max-w-md flex flex-col gap-4">
+            <PageHeader eyebrow="Wallet" title="Your balance" />
+
+            <div className="bg-secondary rounded-sm frame-shadow p-5 flex flex-col gap-5">
+                <div className="flex flex-col gap-1">
+                    <span className="text-sm text-gray-400">
+                        Available to spend
                     </span>
 
-                    <span className="text-3xl font-semibold">
+                    <span className="text-4xl font-bold tracking-tight [font-family:var(--font-display)]">
                         ${balance.toFixed(2)}
                     </span>
 
-                    {pending > 0 && (
-                        <span className="text-sm text-gray-400 mt-1">
-                            + ${pending.toFixed(2)} clearing from recent sales
-                        </span>
-                    )}
+                    <span className="flex items-center gap-1.5 mt-1">
+                        <Image src="/usdc.png" alt="" width={14} height={14} />
 
-                    {locked > 0 && (
-                        <span className="text-sm text-gray-400">
-                            ${locked.toFixed(2)} locked in pending purchases
+                        <span className="text-xs text-gray-500">
+                            Held in USDC on Polygon · 1 USDC = $1.00
                         </span>
-                    )}
+                    </span>
                 </div>
 
-                <div className="flex flex-col gap-5 justify-center items-center w-full">
-                    <button onClick={onDeposit} className="bg-secondary rounded-sm px-5 py-4 flex items-center gap-4 text-left button transition-colors w-90 md:w-full">
-                        <span className="w-9 h-9 rounded-sm bg-special/20 flex items-center justify-center shrink-0 text-special text-xl">
-                            ↓
-                        </span>
-
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-medium">
-                                Deposit
-                            </span>
-
-                            <span className="text-sm text-gray-400">
-                                Add funds via USDC on Polygon
-                            </span>
-                        </div>
-
-                        <span className="ml-auto text-gray-600 text-lg">
-                            {'>'}
-                        </span>
+                <div className="grid grid-cols-2 gap-3">
+                    <button onClick={onDeposit} className="bg-special button h-11 rounded-sm flex items-center justify-center gap-2">
+                        <ArrowDownIcon className="w-4 h-4" />
+                        Deposit
                     </button>
 
-                    <button onClick={onWithdraw} className="bg-secondary rounded-sm px-5 py-4 flex items-center gap-4 text-left button transition-colors w-90 md:w-full">
-                        <span className="w-9 h-9 rounded-sm bg-accent flex items-center justify-center shrink-0 text-lg">
-                            ↑
-                        </span>
-                       
-                        <div className="flex flex-col gap-0.5">
-                            <span className="font-medium">
-                                Withdraw
-                            </span>
-                            
-                            <span className="text-sm text-gray-400">
-                                Send USDC to your wallet
-                            </span>
-                        </div>
-
-                        <span className="ml-auto text-gray-600 text-lg">
-                            {'>'}
-                        </span>
+                    <button onClick={onWithdraw} className="bg-accent button h-11 rounded-sm flex items-center justify-center gap-2 font-medium">
+                        <ArrowUpIcon className="w-4 h-4 text-inherit" />
+                        Withdraw
                     </button>
+                </div>
+
+                <div className="border-t border-edge pt-4 flex flex-col gap-2.5">
+                    <DetailRow label="Clearing from sales" value={`$${pending.toFixed(2)}`} />
+                    <DetailRow label="Locked in open purchases" value={`$${locked.toFixed(2)}`} />
                 </div>
             </div>
+
+            <div className="bg-secondary rounded-sm p-5 flex flex-col gap-2.5">
+                <p className="eyebrow mb-1">
+                    Fees & limits
+                </p>
+
+                <DetailRow label="Deposit fee" value="Free" />
+                <DetailRow label="Withdrawal fee" value={`${rate * 100}%`} />
+
+                {next && (
+                    <p className="text-xs text-gray-500 -mt-1.5">
+                        Buy or sell ${(next.minVolume - volume).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} more to lower it to {next.rate * 100}%
+                    </p>
+                )}
+
+                <DetailRow label="Minimum amount" value="$1.00" />
+                <DetailRow label="Deposit time" value="Usually under 5 minutes" />
+            </div>
+
+            <p className="text-xs text-gray-500 text-center">
+                Need help? 
+
+                <a href="mailto:support@skinslinger.com" className="text-gray-300 hover:text-special transition-colors">
+                    support@skinslinger.com
+                </a>
+            </p>
         </div>
     )
 }
-
