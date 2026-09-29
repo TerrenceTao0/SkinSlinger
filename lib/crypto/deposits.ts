@@ -1,13 +1,14 @@
 import { prisma } from '../db'
 import { getDepositAddress, getPublicClient } from './account'
 import { sweepUSDC } from './sweep'
-import { formatUnits, parseAbiItem } from 'viem'
+import { erc20Abi, formatUnits, parseAbiItem } from 'viem'
 
 //
 
 const USDC_ADDRESS = process.env.USDC_ADDRESS as `0x${string}`
 const USDC_DECIMALS = 6
 const EXPIRY_MINUTES = 30
+const LATE_PAYMENT_DAYS = 7
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
 
 const STATUS_MAP: Record<string, string> = {
@@ -74,6 +75,43 @@ export async function processDeposits(
 
         let processed = 0
 
+        // Money that lands after expiry, or a second transfer after a sweep, is found by balance
+        // and marked confirmed so the retry below sweeps and credits it
+        const recentDeposits = await prisma.crypto_deposit.findMany({
+            where: {
+                status: { in: ['expired', 'swept'] },
+                createdAt: { gt: new Date(Date.now() - LATE_PAYMENT_DAYS * 24 * 60 * 60 * 1000) },
+            },
+        })
+
+
+        if (recentDeposits.length > 0) {
+            const balances = await client.multicall({
+                contracts: recentDeposits.map(d => ({
+                    address: USDC_ADDRESS,
+                    abi: erc20Abi,
+                    functionName: 'balanceOf' as const,
+                    args: [d.address as `0x${string}`] as const,
+                })),
+                allowFailure: false,
+            })
+
+
+            for (const [i, deposit] of recentDeposits.entries()) {
+                if (balances[i] === BigInt(0)) continue
+
+                // Until a sweep is mined the old balance is still visible; don't credit it twice
+                if (deposit.status === 'swept') {
+                    const receipt = await client.getTransactionReceipt({ hash: deposit.txHash as `0x${string}` }).catch(() => null)
+
+                    if (receipt?.status !== 'success') continue
+                }
+
+                await prisma.crypto_deposit.update({ where: { id: deposit.id }, data: { status: 'confirmed' } })
+            }
+        }
+
+
         // Retry any deposits that were confirmed but failed to sweep previously
         const confirmedDeposits = await prisma.crypto_deposit.findMany({
             where: { status: 'confirmed' },
@@ -104,6 +142,7 @@ export async function processDeposits(
                     where: { id: deposit.id },
                     data: { status: 'swept', txHash: sweepTx },
                 })
+
 
                 // Credit what was actually swept, not the requested amount
                 await onCredit(deposit.userId, Number(formatUnits(balance, USDC_DECIMALS)))
@@ -147,6 +186,7 @@ export async function processDeposits(
                     data: { status: 'confirmed', txHash: log.transactionHash },
                 })
 
+
                 try {
                     const sweepTx = await sweepUSDC(deposit.index, received)
 
@@ -155,10 +195,13 @@ export async function processDeposits(
                         data: { status: 'swept', txHash: sweepTx },
                     })
 
+
                     // Credit what actually arrived, whether under or over the requested amount
                     await onCredit(deposit.userId, Number(formatUnits(received, USDC_DECIMALS)))
                     processed++
-                } catch (err) {
+
+                } 
+                catch (err) {
                     console.error(`[deposits] sweep failed for deposit ${deposit.id}:`, err)
                 }
             }
