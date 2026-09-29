@@ -2,6 +2,19 @@ import { QRCodeSVG } from 'qrcode.react'
 import type { Payment, PaymentStatus } from './types'
 import { STATUS_LABELS } from './types'
 
+//
+
+type PaymentViewProps = {
+    payment: Payment
+    paymentStatus: PaymentStatus
+    secondsLeft: number
+    copied: "address" | "amount" | null
+    onCopy: (text: string, type: "address" | "amount") => void
+    onRetry: () => void
+}
+
+//
+
 export default function PaymentView({
     payment,
     paymentStatus,
@@ -9,21 +22,16 @@ export default function PaymentView({
     copied,
     onCopy,
     onRetry,
-}: {
-    payment: Payment
-    paymentStatus: PaymentStatus
-    secondsLeft: number
-    copied: "address" | "amount" | null
-    onCopy: (text: string, type: "address" | "amount") => void
-    onRetry: () => void
-}) {
+}: PaymentViewProps) {
     const isTerminal = paymentStatus === "failed" || paymentStatus === "expired"
     const isDetected = paymentStatus === "confirming" || paymentStatus === "confirmed"
 
     return (
         <div className="h-full w-full flex justify-center items-center">
             <div className="w-100 bg-secondary p-6 frame-shadow rounded-[5px] flex flex-col gap-4">
-                <p className="text-center text-lg font-medium">Send USDC (Polygon)</p>
+                <p className="text-center text-lg font-medium">
+                    Send USDC (Polygon)
+                </p>
 
                 <div className="flex justify-center">
                     <QRCodeSVG value={payment.payAddress} size={160} bgColor="transparent" fgColor="white" />
@@ -31,14 +39,20 @@ export default function PaymentView({
 
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between bg-primary rounded-sm px-3 py-2 gap-2">
-                        <span className="text-xs text-gray-400 truncate">{payment.payAddress}</span>
+                        <span className="text-xs text-gray-400 truncate">
+                            {payment.payAddress}
+                        </span>
+
                         <button onClick={() => onCopy(payment.payAddress, "address")} className="text-xs text-special shrink-0 cursor-pointer">
                             {copied === "address" ? "Copied!" : "Copy"}
                         </button>
                     </div>
 
                     <div className="flex items-center justify-between bg-primary rounded-sm px-3 py-2">
-                        <span className="text-sm">{payment.payAmount} USDC</span>
+                        <span className="text-sm">
+                            {payment.payAmount} USDC
+                        </span>
+
                         <button onClick={() => onCopy(String(payment.payAmount), "amount")} className="text-xs text-special shrink-0 cursor-pointer">
                             {copied === "amount" ? "Copied!" : "Copy"}
                         </button>
@@ -53,10 +67,6 @@ export default function PaymentView({
                     <>
                         <p className={`text-center text-sm font-mono ${secondsLeft < 60 ? "text-red-400" : "text-gray-500"}`}>
                             Expires in {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
-                        </p>
-
-                        <p className="text-xs text-gray-600 text-center">
-                            20 Minutes is more than enough time for payments to be detected and confirmed. If you send the payment after the timer expires, contact support.
                         </p>
                     </>
                 )}

@@ -11,7 +11,7 @@ export default function DepositAmountView({
     onAmountChange: (v: string) => void
     error: string
     loading: boolean
-    onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+    onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void
 }) {
     return (
         <div className="h-full w-full flex justify-center items-center">
@@ -38,7 +38,7 @@ export default function DepositAmountView({
                     </div>
 
                     <p className="text-xs text-yellow-500 text-center">
-                        Only send USDC on the Polygon network. Sending on any other network will result in permanent loss of funds.
+                        Only send USDC on the Polygon network.
                     </p>
 
                     {error && <p className="text-red-400 text-sm">{error}</p>}

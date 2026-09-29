@@ -1,13 +1,13 @@
 import { prisma } from '../db'
 import { getDepositAddress, getPublicClient } from './account'
 import { sweepUSDC } from './sweep'
-import { formatUnits, parseAbiItem, parseUnits } from 'viem'
+import { formatUnits, parseAbiItem } from 'viem'
 
 //
 
 const USDC_ADDRESS = process.env.USDC_ADDRESS as `0x${string}`
 const USDC_DECIMALS = 6
-const EXPIRY_MINUTES = 20
+const EXPIRY_MINUTES = 30
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
 
 const STATUS_MAP: Record<string, string> = {
@@ -138,10 +138,9 @@ export async function processDeposits(
                 if (!deposit) continue
 
                 const received = log.args.value ?? BigInt(0)
-                const expected = parseUnits(String(deposit.amountUsdc), USDC_DECIMALS)
 
-                // Accept if received amount is within 1% of expected
-                if (received < expected * BigInt(99) / BigInt(100)) continue
+                // Any amount is credited; zero-value transfers (address-poisoning spam) are ignored
+                if (received === BigInt(0)) continue
 
                 await prisma.crypto_deposit.update({
                     where: { id: deposit.id },
@@ -156,9 +155,7 @@ export async function processDeposits(
                         data: { status: 'swept', txHash: sweepTx },
                     })
 
-                    // Credit what actually arrived: an underpayment inside the 1% tolerance
-                    // no longer credits the full requested amount, and an overpayment (which
-                    // the sweep takes in full) is no longer silently kept.
+                    // Credit what actually arrived, whether under or over the requested amount
                     await onCredit(deposit.userId, Number(formatUnits(received, USDC_DECIMALS)))
                     processed++
                 } catch (err) {

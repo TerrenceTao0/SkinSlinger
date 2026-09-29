@@ -107,7 +107,7 @@ export default function FinanceClient({ pendingBalance, lockedBalance }: { pendi
 
         setPayment(data)
         setPaymentStatus("waiting")
-        setSecondsLeft(20 * 60)
+        setSecondsLeft(30 * 60)
         setView("payment")
         setLoading(false)
         startPolling(data.depositId)
