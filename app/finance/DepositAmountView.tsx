@@ -1,5 +1,4 @@
-import { DEPOSIT_STEPS } from './types'
-import { AmountInput, DetailRow, PageHeader, Stepper } from './ui'
+import { AmountInput, DetailRow, PageHeader } from './ui'
 
 //
 
@@ -27,8 +26,6 @@ export default function DepositAmountView({
     return (
         <div className="w-full max-w-md flex flex-col gap-4">
             <PageHeader eyebrow="Deposit" title="Add funds" onBack={onBack} />
-
-            <Stepper steps={DEPOSIT_STEPS} current={0} />
 
             <form onSubmit={onSubmit} className="bg-secondary rounded-sm frame-shadow p-5 flex flex-col gap-5">
                 <div className="flex flex-col gap-2">

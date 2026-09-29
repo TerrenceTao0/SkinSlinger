@@ -317,7 +317,7 @@ function ActiveTradeCard({ group, role }: { group: PurchaseGroup; role: "buyer" 
                         type="button"
                         onClick={() => setShowHoldInfo(v => !v)}
                         aria-label="Why is there a waiting period?"
-                        className="w-4 h-4 rounded-full bg-white/10 text-[10px] text-gray-400 flex items-center justify-center hover:bg-white/20 hover:text-gray-200 shrink-0"
+                        className="w-4 h-4 rounded-full bg-white/10 text-[10px] text-gray-400 flex items-center justify-center hover:bg-white/20 hover:text-gray-200 transition-colors shrink-0"
                     >
                         i
                     </button>

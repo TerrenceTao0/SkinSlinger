@@ -1,7 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 import type { Payment, PaymentStatus } from './types'
-import { DEPOSIT_STEPS, STATUS_LABELS } from './types'
-import { CheckIcon, CopyIcon, Notice, PageHeader, Stepper } from './ui'
+import { STATUS_LABELS } from './types'
+import { CheckIcon, CopyIcon, Notice, PageHeader } from './ui'
 
 //
 
@@ -64,8 +64,6 @@ export default function PaymentView({
     return (
         <div className="w-full max-w-md flex flex-col gap-4">
             <PageHeader eyebrow="Deposit" title={`Send ${payment.payAmount} USDC`} onBack={onBack} />
-
-            <Stepper steps={DEPOSIT_STEPS} current={isDetected ? 2 : 1} />
 
             <div className="bg-secondary rounded-sm frame-shadow p-5 flex flex-col gap-5">
                 {!isTerminal && (

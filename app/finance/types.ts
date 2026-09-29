@@ -14,8 +14,6 @@ export type Payment = {
 
 export type PaymentStatus = "waiting" | "confirming" | "confirmed" | "finished" | "failed" | "expired" | "partially_paid"
 
-export const DEPOSIT_STEPS = ["Amount", "Send USDC", "Credited"]
-
 export const STATUS_LABELS: Record<PaymentStatus, string> = {
     waiting: "Waiting for payment",
     confirming: "Payment detected, crediting your balance",

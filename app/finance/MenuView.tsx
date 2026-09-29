@@ -79,14 +79,6 @@ export default function MenuView({
                 <DetailRow label="Minimum amount" value="$1.00" />
                 <DetailRow label="Deposit time" value="Usually under 5 minutes" />
             </div>
-
-            <p className="text-xs text-gray-500 text-center">
-                Need help? 
-
-                <a href="mailto:support@skinslinger.com" className="text-gray-300 hover:text-special transition-colors">
-                    support@skinslinger.com
-                </a>
-            </p>
         </div>
     )
 }

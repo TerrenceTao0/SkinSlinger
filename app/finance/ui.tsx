@@ -43,29 +43,6 @@ export function PageHeader({ eyebrow, title, onBack }: { eyebrow: string; title:
 }
 
 
-export function Stepper({ steps, current }: { steps: string[]; current: number }) {
-    return (
-        <ol className="flex items-center gap-2">
-            {steps.map((label, i) => (
-                <li key={label} className="flex items-center gap-2 flex-1 last:flex-none">
-                    <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold
-                        ${i < current ? "bg-special" : i === current ? "ring-1 ring-special text-special" : "bg-white/5 text-gray-500"}`}
-                    >
-                        {i < current ? <CheckIcon className="w-3 h-3" /> : i + 1}
-                    </span>
-
-                    <span className={`text-xs whitespace-nowrap ${i === current ? "font-medium" : "text-gray-500"}`}>
-                        {label}
-                    </span>
-
-                    {i < steps.length - 1 && <span className={`h-px flex-1 min-w-3 ${i < current ? "bg-special/50" : "bg-gray-700/60"}`} />}
-                </li>
-            ))}
-        </ol>
-    )
-}
-
-
 export function DetailRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
     return (
         <div className="flex items-center justify-between gap-4">
