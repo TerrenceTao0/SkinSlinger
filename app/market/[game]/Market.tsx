@@ -45,6 +45,7 @@ function hasActiveFilters(f: Filters): boolean {
     return !!(f.search || f.minPrice || f.maxPrice || f.wear || f.minFloat || f.maxFloat);
 }
 
+
 function filterParams(f: Filters): URLSearchParams {
     const p = new URLSearchParams();
 
@@ -57,6 +58,7 @@ function filterParams(f: Filters): URLSearchParams {
 
     return p;
 }
+
 
 function buildQueryString(f: Filters, hasStickers: boolean): string {
     const p = filterParams(f);
@@ -90,8 +92,10 @@ export default function HomeClient(
     const pathname = usePathname();
     const router = useRouter();
 
+
     // Game is fixed per page (/market/cs2 etc.) — switching games navigates and remounts.
     const game: GameFilter = initialGame ?? "all";
+
 
     // All filters live in one object, initialised from the URL so filtered views
     // survive refresh, can be shared, and work with the back button.
@@ -103,6 +107,7 @@ export default function HomeClient(
         minFloat: searchParams.get("minFloat") ?? "",
         maxFloat: searchParams.get("maxFloat") ?? "",
     }));
+
     const [hasStickers, setHasStickers] = useState(searchParams.get("stickers") !== "0");
 
     const [listings, setListings] = useState<ListingCard[]>(initialListings);
@@ -116,12 +121,15 @@ export default function HomeClient(
     const sentinelRef = useRef<HTMLDivElement>(null);
     const mobileSentinelRef = useRef<HTMLDivElement>(null);
 
+
     // ListingCard is memoized and may hold a stale onBuy closure, so handleBuy must
     // read basket/session through refs to always act on current state.
     const basketRef = useRef(basket);
     useEffect(() => { basketRef.current = basket; }, [basket]);
+
     const sessionRef = useRef(session);
     useEffect(() => { sessionRef.current = session; }, [session]);
+
 
     // Single ref mirror so the infinite-scroll observer always reads current filters
     // without being recreated on every keystroke.
@@ -131,6 +139,7 @@ export default function HomeClient(
     const setFilter = useCallback(<K extends keyof Filters>(key: K, value: Filters[K]) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     }, []);
+
 
     const load = useCallback(async (cur: string | null, reset: boolean) => {
         if (loadingRef.current) return;
@@ -153,9 +162,11 @@ export default function HomeClient(
                 setListings(prev => [...prev, ...(data.listings ?? [])]);
             }
 
+
             setCursor(data.nextCursor);
             setHasMore(data.nextCursor !== null);
-        } finally {
+        } 
+        finally {
             loadingRef.current = false;
         }
     }, [game]);
@@ -165,6 +176,7 @@ export default function HomeClient(
     // On first mount the server has already rendered *unfiltered* data, so only
     // fetch if the URL carried filters; otherwise skip.
     const isFirstRender = useRef(true);
+
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -174,6 +186,7 @@ export default function HomeClient(
             return;
         }
 
+        
         const id = setTimeout(() => {
             router.replace(`${pathname}${buildQueryString(filters, hasStickers)}`, { scroll: false });
             load(null, true);
@@ -206,13 +219,16 @@ export default function HomeClient(
             }
         }, { threshold: 0.1 });
 
+
         if (sentinelRef.current) {
             observer.observe(sentinelRef.current);
         }
 
+
         if (mobileSentinelRef.current) {
             observer.observe(mobileSentinelRef.current);
         }
+
 
         return () => observer.disconnect();
     }, [hasMore, cursor, load]);
@@ -225,9 +241,11 @@ export default function HomeClient(
             return;
         }
 
+
         if (!item.commodity && item.sellerId === currentUserId) {
             return;
         }
+
 
         if (hasPendingPurchase) {
             setPendingNotice(true);
@@ -350,7 +368,7 @@ export default function HomeClient(
 
             {/* Mobile layout */}
             <div className="md:hidden flex flex-col flex-1 min-h-0 px-[2.5%]">
-                <div className="bg-secondary h-14 flex items-center px-4 shrink-0 rounded-sm">
+                <div className="border border-gray-800 frame-shadow h-14 flex items-center px-4 shrink-0 rounded-sm">
                     <input
                         type="text"
                         placeholder="Search items..."
@@ -360,7 +378,7 @@ export default function HomeClient(
                     />
                 </div>
 
-                <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm flex flex-col">
+                <div className="overflow-y-auto flex-1 border border-gray-800 frame-shadow mt-2 p-3 rounded-sm flex flex-col">
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
                         {displayListings.map(listing => (
                             <ListingCard
@@ -380,7 +398,7 @@ export default function HomeClient(
             {/* Desktop layout */}
             <div className="hidden md:flex flex-1 min-h-0 mt-20 mb-4 mr-[2.5%] ml-[calc(2.5%+11.5rem)]">
                 <div className="flex-1 flex flex-col gap-2 min-h-0">
-                    <div className="bg-secondary w-full h-13 flex items-center px-4 rounded-sm shrink-0">
+                    <div className="border border-gray-800 frame-shadow w-full h-13 flex items-center px-4 rounded-sm shrink-0">
                         <input
                             type="text"
                             placeholder="Search items..."
@@ -390,7 +408,7 @@ export default function HomeClient(
                         />
                     </div>
 
-                    <div className="bg-secondary w-full overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
+                    <div className="border border-gray-800 frame-shadow w-full overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
                         <div className="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 justify-start content-start gap-2">
                             {displayListings.map(listing => (
                                 <ListingCard

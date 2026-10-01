@@ -76,7 +76,7 @@ export default function LeftPanel({
         <>
             {/* Desktop filters */}
             <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 w-43 h-[52.75rem]">
-                <div className="bg-secondary rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
+                <div className="border border-gray-800 frame-shadow rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
                     {/* Games */}
                     <div className="px-3 pt-3 pb-1">
@@ -99,6 +99,7 @@ export default function LeftPanel({
                         </div>
                     </div>
 
+
                     {/* Price Range */}
                     <div className="px-3 py-3 mt-1 border-t border-gray-700/60">
                         <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-3">
@@ -109,10 +110,12 @@ export default function LeftPanel({
                         {/* Dual-thumb slider */}
                         <div className="relative h-4 mx-1 mb-3">
                             <div className="absolute top-1.5 left-0 right-0 h-1 bg-accent rounded-full" />
+                          
                             <div
                                 className="absolute top-1.5 h-1 bg-special rounded-full"
                                 style={{ left: `${fillLeft}%`, right: `${fillRight}%` }}
                             />
+
                             <input
                                 type="range" min={0} max={SLIDER_MAX} step={1} value={minVal}
                                 onChange={e => {
@@ -121,6 +124,7 @@ export default function LeftPanel({
                                 }}
                                 className={thumbClass}
                             />
+
                             <input
                                 type="range" min={0} max={SLIDER_MAX} step={1} value={maxVal}
                                 onChange={e => {
@@ -151,7 +155,10 @@ export default function LeftPanel({
                             </span>
 
                             <div className="flex-1 flex items-center bg-accent rounded-sm px-2 h-7 gap-1">
-                                <span className="text-[11px] text-gray-500">$</span>
+                                <span className="text-[11px] text-gray-500">
+                                    $
+                                </span>
+
                                 <input
                                     type="number" min={0} step={0.01} placeholder="All" value={maxPrice}
                                     onChange={e => setMaxPrice(e.target.value)}
@@ -173,10 +180,12 @@ export default function LeftPanel({
                             {/* Dual-thumb slider */}
                             <div className="relative h-4 mx-1 mb-3">
                                 <div className="absolute top-1.5 left-0 right-0 h-1 bg-accent rounded-full" />
+
                                 <div
                                     className="absolute top-1.5 h-1 bg-special rounded-full"
                                     style={{ left: `${floatFillLeft}%`, right: `${floatFillRight}%` }}
                                 />
+
                                 <input
                                     type="range" min={0} max={FLOAT_MAX} step={0.001} value={minFloatVal}
                                     onChange={e => {
@@ -185,6 +194,7 @@ export default function LeftPanel({
                                     }}
                                     className={thumbClass}
                                 />
+
                                 <input
                                     type="range" min={0} max={FLOAT_MAX} step={0.001} value={maxFloatVal}
                                     onChange={e => {
@@ -239,12 +249,14 @@ export default function LeftPanel({
                         </div>
                     )}
 
+
                     {/* CS2 Stickers */}
                     {currentGame === "CS2" && (
                         <div className="px-3 py-3 border-t border-gray-700/60">
                             <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">
                                 Stickers
                             </p>
+
                             <label className="flex items-center gap-2.5 cursor-pointer select-none">
                                 <input
                                     type="checkbox"
@@ -252,7 +264,10 @@ export default function LeftPanel({
                                     onChange={e => setHasStickers(e.target.checked)}
                                     className="w-4 h-4 rounded-sm accent-special cursor-pointer"
                                 />
-                                <span className="text-xs">Include stickers</span>
+
+                                <span className="text-xs">
+                                    Include stickers
+                                </span>
                             </label>
                         </div>
                     )}
@@ -263,7 +278,7 @@ export default function LeftPanel({
             {/* Mobile filters */}
             <div className="md:hidden mt-16 flex flex-col gap-2 px-[2.5%] py-2">
                 {/* Game links */}
-                <div className="flex justify-center bg-secondary rounded-sm px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">
+                <div className="flex justify-center border border-gray-800 frame-shadow rounded-sm px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar">
                     {gameOptions.map(({ label, value, href, icon }) => (
                         <Link
                             key={value}
@@ -278,22 +293,32 @@ export default function LeftPanel({
                     ))}
                 </div>
 
+
                 {/* Price */}
-                <div className="flex items-center justify-center gap-2 bg-secondary rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
-                    <span className="text-[11px] text-gray-500 shrink-0">Price</span>
+                <div className="flex items-center justify-center gap-2 border border-gray-800 frame-shadow rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
                     <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">$</span>
+                        <span className="text-[11px] text-gray-500">
+                            $
+                        </span>
+
                         <input
-                            type="number" min={0} step={0.01} placeholder="Min" value={minPrice}
+                            type="number" min={0} step={0.01} placeholder="0" value={minPrice}
                             onChange={e => setMinPrice(e.target.value)}
                             className="bg-transparent text-xs w-full outline-none"
                         />
                     </div>
-                    <span className="text-gray-600 text-xs shrink-0">–</span>
+
+                    <span className="text-gray-600 text-xs shrink-0">
+                        –
+                    </span>
+
                     <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">$</span>
+                        <span className="text-[11px] text-gray-500">
+                            $
+                        </span>
+
                         <input
-                            type="number" min={0} step={0.01} placeholder="∞" value={maxPrice}
+                            type="number" min={0} step={0.01} placeholder="All" value={maxPrice}
                             onChange={e => setMaxPrice(e.target.value)}
                             className="bg-transparent text-xs w-full outline-none"
                         />

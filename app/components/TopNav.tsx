@@ -47,7 +47,7 @@ export default function TopNav() {
     return (
         <>
             <nav className="fixed top-2 h-14 w-[95%] left-[2.5%] z-50 flex">
-                <div className="w-43 h-full flex justify-center items-center bg-secondary rounded-sm shrink-0 frame-shadow">
+                <div className="w-43 h-full flex justify-center items-center border border-gray-800 rounded-sm shrink-0 frame-shadow">
                     <Link href="/">
                         <p className="transition-all cursor-pointer text-xl font-bold tracking-wide [font-family:var(--font-display)] group">
                             Skin<span className="text-special">Slinger</span>
@@ -57,7 +57,7 @@ export default function TopNav() {
 
 
                 {/* Desktop nav */}
-                <div className="flex-1 h-full hidden md:flex justify-between items-center bg-secondary ml-3 rounded-sm pl-3 pr-3 frame-shadow">
+                <div className="flex-1 h-full hidden md:flex justify-between items-center border border-gray-800 ml-3 rounded-sm pl-3 pr-3 frame-shadow">
                     <div className="flex h-full items-center gap-3">
                         <Link href="/market" className="right-nav-link button">
                             Market
@@ -96,7 +96,7 @@ export default function TopNav() {
                                     Inventory
                                 </Link>
 
-                                <Link href="/profile" className="cursor-pointer ring-2 ring-special rounded-sm p-0.5">
+                                <Link href="/profile" className="cursor-pointer ring-1 ring-special rounded-sm p-0.5">
                                     <Image src={session.user.image!} alt="Profile" width={40} height={40} className="rounded-[4px]" />
                                 </Link>
                             </>
@@ -114,7 +114,7 @@ export default function TopNav() {
 
 
                 {/* Mobile nav */}
-                <div className="flex-1 h-full md:hidden flex justify-end items-center bg-secondary ml-3 rounded-sm px-3 gap-3 w-[20%]">
+                <div className="flex-1 h-full md:hidden flex justify-end items-center border border-gray-800 frame-shadow ml-3 rounded-sm px-3 gap-3 w-[20%]">
                     {status !== "loading" && session ? (
                         <>
                             <Link href="/finance">
@@ -123,7 +123,7 @@ export default function TopNav() {
                                 </button>
                             </Link>
 
-                            <Link href="/profile" className="cursor-pointer ring-2 ring-special rounded-sm p-0.5">
+                            <Link href="/profile" className="cursor-pointer ring-1 ring-special rounded-sm p-0.5">
                                 <Image src={session.user.image!} alt="Profile" width={40} height={40} className="rounded-[4px]" />
                             </Link>
                         </>
