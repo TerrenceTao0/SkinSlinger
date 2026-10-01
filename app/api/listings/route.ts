@@ -1,65 +1,97 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { verifyInventoryToken } from "@/lib/inventoryToken";
 import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/emails/PurchaseNotificationEmail";
-import { countInventoryItem } from "@/lib/steam";
+import { countInventoryItem, SteamItem } from "@/lib/steam";
+import { maxListingPrice, minListingPrice, stickerMarketName, Sticker } from "@/lib/pricing";
 
 //
 
 const resend = new Resend(process.env.RESEND_API);
 
 const PAGE_SIZE = 30;
+const MAX_PRICE = 1_000_000;
+
+//
+
+// One item in the body of a "list these items" request
+type ListingRequest = { assetId: string, marketName: string, price: number, commodity: boolean, quantity: number };
+
+// An item the signed inventory token says the seller owns
+type TokenItem = { assetId: string, marketName: string };
+
+type NewListing = { userId: string, assetId: string, marketName: string, price: number, game: string, icon: string, hexColor: string, commodity: boolean };
+type MatchedSale = { buyerTradeUrl: string, marketName: string, price: number };
+
+//
+// GET: browse the market
+//
+
+// Asset ids whose float is inside the requested range, or null when no range was asked for
+async function assetIdsInFloatRange(minFloat: string | null, maxFloat: string | null): Promise<string[] | null> {
+    if (!minFloat && !maxFloat) return null;
+
+    const floatValue: { gte?: number, lte?: number } = {};
+
+    if (minFloat) floatValue.gte = parseFloat(minFloat);
+    if (maxFloat) floatValue.lte = parseFloat(maxFloat);
+
+    const rows = await prisma.item_float.findMany({ where: { floatValue }, select: { assetId: true } });
+
+    return rows.map(row => row.assetId);
+}
+
+
+// Turns the market page's query string into a database filter
+async function listingFilter(searchParams: URLSearchParams): Promise<Prisma.item_listingWhereInput> {
+    const game = searchParams.get("game");
+    const search = searchParams.get("search");
+    const wear = searchParams.get("wear");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+
+    const where: Prisma.item_listingWhereInput = {};
+
+    if (game) where.game = game;
+
+    // Wear is part of the item name, e.g. "AK-47 | Redline (Field-Tested)"
+    const nameFilters: Prisma.item_listingWhereInput[] = [];
+
+    if (search) nameFilters.push({ marketName: { contains: search, mode: "insensitive" } });
+    if (wear) nameFilters.push({ marketName: { contains: `(${wear})`, mode: "insensitive" } });
+    if (nameFilters.length > 0) where.AND = nameFilters;
+
+    if (minPrice || maxPrice) {
+        const price: { gte?: number, lte?: number } = {};
+
+        if (minPrice) price.gte = parseFloat(minPrice);
+        if (maxPrice) price.lte = parseFloat(maxPrice);
+
+        where.price = price;
+    }
+
+    const floatAssetIds = await assetIdsInFloatRange(searchParams.get("minFloat"), searchParams.get("maxFloat"));
+
+    if (floatAssetIds !== null) where.assetId = { in: floatAssetIds };
+
+    return where;
+}
+
 
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const cursor = searchParams.get("cursor");
-        const game = searchParams.get("game");
-        const search = searchParams.get("search");
-        const minPrice = searchParams.get("minPrice");
-        const maxPrice = searchParams.get("maxPrice");
-        const wear = searchParams.get("wear");
-        const minFloat = searchParams.get("minFloat");
-        const maxFloat = searchParams.get("maxFloat");
 
-        // If float range specified, pre-fetch matching assetIds from item_float
-        let floatAssetIds: string[] | null = null;
-        if (minFloat || maxFloat) {
-            const floatMatches = await prisma.item_float.findMany({
-                where: {
-                    ...(minFloat ? { floatValue: { gte: parseFloat(minFloat) } } : {}),
-                    ...(maxFloat ? { floatValue: { lte: parseFloat(maxFloat) } } : {}),
-                },
-                select: { assetId: true },
-            });
-            floatAssetIds = floatMatches.map(f => f.assetId);
-        }
-
-        const andFilters: object[] = [];
-        if (search) {
-            andFilters.push({ marketName: { contains: search, mode: 'insensitive' as const } });
-        }
-
-        if (wear) {
-            andFilters.push({ marketName: { contains: `(${wear})`, mode: 'insensitive' as const } });
-        }
-
-        const where = {
-            ...(game ? { game } : {}),
-            ...(andFilters.length > 0 ? { AND: andFilters } : {}),
-            ...((minPrice || maxPrice) ? { price: {
-                ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
-                ...(maxPrice ? { lte: parseFloat(maxPrice) } : {}),
-            }} : {}),
-            ...(floatAssetIds !== null ? { assetId: { in: floatAssetIds } } : {}),
-        };
-
+        // One row more than a page, to know whether another page follows
         const rows = await prisma.item_listing.findMany({
             take: PAGE_SIZE + 1,
-            ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-            where,
+            cursor: cursor ? { id: cursor } : undefined,
+            skip: cursor ? 1 : 0,
+            where: await listingFilter(searchParams),
             // Must match the initial server render in market/[game]/page.tsx — the
             // client feeds the last id of that page in as the cursor here.
             orderBy: [{ price: "desc" }, { id: "asc" }],
@@ -68,25 +100,28 @@ export async function GET(request: Request) {
         const page = rows.slice(0, PAGE_SIZE);
         const nextCursor = rows.length > PAGE_SIZE ? page[page.length - 1].id : null;
 
-        const assetIds = page.map(l => l.assetId);
-        const floatItems = await prisma.item_float.findMany({ where: { assetId: { in: assetIds } } });
-        const floatMap = new Map(floatItems.map(f => [f.assetId, f]));
+        const floatRows = await prisma.item_float.findMany({ where: { assetId: { in: page.map(listing => listing.assetId) } } });
+        const floatByAssetId = new Map(floatRows.map(row => [row.assetId, row]));
 
         const listings = page
-            .filter(l => l.icon)
-            .map(l => ({
-                id: l.id,
-                marketName: l.marketName,
-                price: l.price,
-                icon: l.icon!,
-                hexColor: l.hexColor!,
-                game: l.game ?? '',
-                commodity: l.commodity,
-                sellerId: l.userId,
-                floatValue: floatMap.get(l.assetId)?.floatValue ?? null,
-                paintSeed: floatMap.get(l.assetId)?.paintSeed ?? null,
-                stickers: floatMap.get(l.assetId)?.stickers ?? null,
-            }));
+            .filter(listing => listing.icon)
+            .map(listing => {
+                const float = floatByAssetId.get(listing.assetId);
+
+                return {
+                    id: listing.id,
+                    marketName: listing.marketName,
+                    price: listing.price,
+                    icon: listing.icon!,
+                    hexColor: listing.hexColor!,
+                    game: listing.game ?? '',
+                    commodity: listing.commodity,
+                    sellerId: listing.userId,
+                    floatValue: float?.floatValue ?? null,
+                    paintSeed: float?.paintSeed ?? null,
+                    stickers: float?.stickers ?? null,
+                };
+            });
 
         return Response.json({ listings, nextCursor });
     }
@@ -95,6 +130,10 @@ export async function GET(request: Request) {
         return Response.json({ error: "Server error" }, { status: 500 });
     }
 }
+
+//
+// DELETE: remove your own listings
+//
 
 export async function DELETE(request: Request) {
     try {
@@ -128,6 +167,223 @@ export async function DELETE(request: Request) {
     }
 }
 
+//
+// POST: list items for sale
+//
+
+// The first badly formed price, as an error message; null when they are all fine.
+// A negative price would flip checkout's cash deduction into a credit, minting money for
+// the buyer. Prices must also be whole cents, at least $0.01.
+function findPriceFormatError(items: ListingRequest[]): string | null {
+    for (const item of items) {
+        if (typeof item.price !== "number" || !Number.isFinite(item.price) || item.price < 0.01 || item.price > MAX_PRICE) {
+            return "Invalid price";
+        }
+
+        if (Math.abs(item.price * 100 - Math.round(item.price * 100)) > 1e-6) {
+            return "Prices can't have more than two decimal places.";
+        }
+    }
+
+    return null;
+}
+
+
+// A stack is identified by its name. A unique item's name comes from our own snapshot of the
+// seller's inventory, so the request can't claim to be a different item.
+function trustedMarketName(item: ListingRequest, ownedItems: Map<string, SteamItem>): string {
+    if (item.commodity) return item.marketName;
+
+    return ownedItems.get(item.assetId)?.market_name ?? "";
+}
+
+
+// The first price outside the allowed range around its item's market value, as an error
+// message; null when they are all in range.
+async function findPriceLimitError(items: ListingRequest[], ownedItems: Map<string, SteamItem>): Promise<string | null> {
+    // Stickers add to a skin's value, so load them for the items being listed
+    const floatRows = await prisma.item_float.findMany({
+        where: { assetId: { in: items.map(item => item.assetId) } },
+        select: { assetId: true, stickers: true },
+    });
+    const stickersByAssetId = new Map<string, Sticker[]>();
+
+    for (const row of floatRows) {
+        stickersByAssetId.set(row.assetId, (row.stickers ?? []) as Sticker[]);
+    }
+
+    // Market prices for the items and for every sticker on them
+    const itemNames = items.map(item => trustedMarketName(item, ownedItems));
+    const stickerNames = [...stickersByAssetId.values()].flat().map(sticker => stickerMarketName(sticker.name));
+    const priceRows = await prisma.item.findMany({
+        where: { marketName: { in: [...itemNames, ...stickerNames] } },
+        select: { marketName: true, price: true },
+    });
+    const marketPrices = new Map(priceRows.map(row => [row.marketName, row.price]));
+    const priceOf = (marketName: string) => marketPrices.get(marketName) ?? 0;
+
+    for (const item of items) {
+        const name = trustedMarketName(item, ownedItems);
+        const marketPrice = priceOf(name);
+        const stickers = item.commodity ? null : stickersByAssetId.get(item.assetId);
+
+        const maxPrice = maxListingPrice(marketPrice, stickers, priceOf);
+
+        if (maxPrice !== null && item.price > maxPrice) {
+            return `${name} can't be listed above $${maxPrice.toFixed(2)}.`;
+        }
+
+        const minPrice = minListingPrice(marketPrice);
+
+        if (minPrice !== null && item.price < minPrice) {
+            return `${name} can't be listed below $${minPrice.toFixed(2)}.`;
+        }
+    }
+
+    return null;
+}
+
+
+// The seller's assets to list for one request item. An asset qualifies when it is in the
+// signed token, still in our inventory snapshot, and not already listed. A stack takes up
+// to `quantity` qualifying assets with its name; a unique item takes only itself.
+function assetIdsToList(item: ListingRequest, tokenItems: TokenItem[], ownedItems: Map<string, SteamItem>, alreadyListed: Set<string>): string[] {
+    const qualifying = tokenItems.filter(tokenItem => ownedItems.has(tokenItem.assetId) && !alreadyListed.has(tokenItem.assetId));
+
+    if (!item.commodity) {
+        return qualifying.filter(tokenItem => tokenItem.assetId === item.assetId).map(tokenItem => tokenItem.assetId);
+    }
+
+    return qualifying
+        .filter(tokenItem => tokenItem.marketName === item.marketName)
+        .slice(0, Math.max(0, item.quantity))
+        .map(tokenItem => tokenItem.assetId);
+}
+
+
+// Turns the request into listing rows. Only the price comes from the request; every other
+// detail is read from our inventory snapshot.
+function buildListings(items: ListingRequest[], userId: string, tokenItems: TokenItem[], ownedItems: Map<string, SteamItem>, alreadyListed: Set<string>): NewListing[] {
+    const listings: NewListing[] = [];
+    const listed = new Set(alreadyListed);
+
+    for (const item of items) {
+        for (const assetId of assetIdsToList(item, tokenItems, ownedItems, listed)) {
+            const owned = ownedItems.get(assetId)!;
+
+            listings.push({
+                userId,
+                assetId,
+                marketName: owned.market_name,
+                price: item.price,
+                game: owned.game,
+                icon: owned.icon,
+                hexColor: owned.hexColor,
+                commodity: owned.commodity,
+            });
+            listed.add(assetId);
+        }
+    }
+
+    return listings;
+}
+
+
+// Sells a freshly listed item to the best standing buy order, if one covers its price.
+// The best bid is the highest price, then the oldest, from a buyer who can receive trades.
+// The trade clears at the listed price and the buyer is refunded the difference.
+// Returns null when nothing matched.
+async function matchBuyOrder(assetId: string, sellerId: string): Promise<MatchedSale | null> {
+    return prisma.$transaction(async (tx) => {
+        const listing = await tx.item_listing.findUnique({ where: { assetId } });
+
+        if (!listing || listing.userId !== sellerId) return null;
+
+        const order = await tx.buy_order.findFirst({
+            where: {
+                marketName: listing.marketName,
+                price: { gte: listing.price },
+                quantity: { gt: 0 },
+                userId: { not: sellerId },
+                user: { steam_id: { not: null }, steam_trade_url: { not: null } },
+            },
+            orderBy: [{ price: "desc" }, { createdAt: "asc" }],
+            include: { user: { select: { steam_id: true, steam_trade_url: true } } },
+        });
+
+        if (!order) return null;
+
+        // Consume the listing; bail (rolls back) if it was bought concurrently.
+        const deletedListing = await tx.item_listing.deleteMany({ where: { id: listing.id } });
+
+        if (deletedListing.count === 0) return null;
+
+        // Consume one unit of the buy order; if it raced to zero, roll the whole match back.
+        const consumedOrder = await tx.buy_order.updateMany({
+            where: { id: order.id, quantity: { gt: 0 } },
+            data: { quantity: { decrement: 1 } },
+        });
+
+        if (consumedOrder.count === 0) throw new Error("buy order race");
+
+        await tx.buy_order.deleteMany({ where: { id: order.id, quantity: { lte: 0 } } });
+
+        // Snapshot how many of this commodity the buyer already holds, so the cron can
+        // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
+        const buyerPreCount = listing.commodity && order.user.steam_id
+            ? await countInventoryItem(order.user.steam_id, listing.game, listing.marketName)
+            : null;
+
+        await tx.purchase.create({
+            data: {
+                price: listing.price,
+                assetId: listing.assetId,
+                marketName: listing.marketName,
+                game: listing.game,
+                icon: listing.icon,
+                hexColor: listing.hexColor,
+                commodity: listing.commodity,
+                buyerTradeUrl: order.user.steam_trade_url,
+                buyerPreCount,
+                buyerId: order.userId,
+                sellerId,
+            },
+        });
+
+        // The buyer held their bid; the trade clears at the listed (lower-or-equal) price.
+        const refund = order.price - listing.price;
+
+        if (refund > 0.001) {
+            await tx.user.update({ where: { id: order.userId }, data: { cash: { increment: refund } } });
+        }
+
+        return { buyerTradeUrl: order.user.steam_trade_url!, marketName: listing.marketName, price: listing.price };
+    }).catch(() => null);
+}
+
+
+// Emails the seller to send their instantly-sold items, one email per buyer
+async function notifySeller(email: string, sales: MatchedSale[]) {
+    const salesByBuyer = new Map<string, { marketName: string, price: number }[]>();
+
+    for (const sale of sales) {
+        const buyerSales = salesByBuyer.get(sale.buyerTradeUrl) ?? [];
+
+        buyerSales.push({ marketName: sale.marketName, price: sale.price });
+        salesByBuyer.set(sale.buyerTradeUrl, buyerSales);
+    }
+
+    for (const [buyerTradeUrl, buyerSales] of salesByBuyer) {
+        await resend.emails.send({
+            from: "SkinSlinger <onboarding@skinslinger.com>",
+            to: [email],
+            subject: `New sale — send your item${buyerSales.length > 1 ? "s" : ""}`,
+            react: PurchaseNotificationEmail({ buyerTradeUrl, buyerName: "Buyer", items: buyerSales }),
+        });
+    }
+}
+
+
 export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -148,155 +404,48 @@ export async function POST(request: Request) {
             return Response.json({ error: "No items provided" }, { status: 400 });
         }
 
-        // Verify inventory ownership token
+        // The token proves which items were in the seller's inventory when they opened the page
         const tokenItems = await verifyInventoryToken(inventoryToken, user.id);
+
         if (!tokenItems) {
             return Response.json({ error: "Inventory session expired. Please refresh the page." }, { status: 401 });
         }
 
-        // Build lookup structures from token
-        const tokenAssetIds = new Set(tokenItems.map(i => i.assetId));
-        const tokenByMarketName = new Map<string, string[]>();
-        for (const ti of tokenItems) {
-            const existing = tokenByMarketName.get(ti.marketName);
-            if (existing) {
-                existing.push(ti.assetId);
-            } else {
-                tokenByMarketName.set(ti.marketName, [ti.assetId]);
-            }
+        // Item details come from our own snapshot of the seller's inventory, never from the
+        // request, so an item can't be listed under another item's name, icon or game.
+        const ownedItems = new Map(((user.inventoryCache ?? []) as SteamItem[]).map(item => [item.assetId, item]));
+
+        const formatError = findPriceFormatError(items);
+
+        if (formatError) {
+            return Response.json({ error: formatError }, { status: 400 });
         }
 
-        // Track assetIds already listed to avoid duplicates
-        const existingListings = await prisma.item_listing.findMany({
-            where: { userId: user.id },
-            select: { assetId: true },
-        });
-        const listedAssetIds = new Set(existingListings.map(l => l.assetId));
+        const limitError = await findPriceLimitError(items, ownedItems);
 
-        type ListingInput = { assetId: string, marketName: string, price: number, game: string, commodity: boolean, quantity: number, icon: string, hexColor: string };
-
-        // Reject non-positive/insane prices: a negative price flips checkout's cash
-        // deduction into a credit, minting money for the buyer and driving the seller negative.
-        const MAX_PRICE = 1_000_000;
-        for (const item of items as ListingInput[]) {
-            if (typeof item.price !== "number" || !Number.isFinite(item.price) || item.price <= 0 || item.price > MAX_PRICE) {
-                return Response.json({ error: "Invalid price" }, { status: 400 });
-            }
+        if (limitError) {
+            return Response.json({ error: limitError }, { status: 400 });
         }
 
-        const toCreate: { userId: string, assetId: string, marketName: string, price: number, game: string, icon: string, hexColor: string, commodity: boolean }[] = [];
+        const existingListings = await prisma.item_listing.findMany({ where: { userId: user.id }, select: { assetId: true } });
+        const alreadyListed = new Set(existingListings.map(listing => listing.assetId));
+        const newListings = buildListings(items, user.id, tokenItems, ownedItems, alreadyListed);
 
-        for (const item of items as ListingInput[]) {
-            if (item.commodity) {
-                const availableAssetIds = (tokenByMarketName.get(item.marketName) ?? [])
-                    .filter(assetId => !listedAssetIds.has(assetId));
-
-                const take = Math.min(item.quantity, availableAssetIds.length);
-                for (let i = 0; i < take; i++) {
-                    const assetId = availableAssetIds[i];
-                    toCreate.push({ userId: user.id, assetId, marketName: item.marketName, price: item.price, game: item.game, icon: item.icon, hexColor: item.hexColor, commodity: true });
-                    listedAssetIds.add(assetId);
-                }
-            } else {
-                if (!tokenAssetIds.has(item.assetId) || listedAssetIds.has(item.assetId)) {
-                    continue;
-                }
-
-                toCreate.push({ userId: user.id, assetId: item.assetId, marketName: item.marketName, price: item.price, game: item.game, icon: item.icon, hexColor: item.hexColor, commodity: false });
-                listedAssetIds.add(item.assetId);
-            }
+        if (newListings.length > 0) {
+            await prisma.item_listing.createMany({ data: newListings, skipDuplicates: true });
         }
 
-        if (toCreate.length > 0) {
-            await prisma.item_listing.createMany({ data: toCreate, skipDuplicates: true });
+        // A new listing that meets a standing buy order sells straight away
+        const instantSales: MatchedSale[] = [];
+
+        for (const listing of newListings) {
+            const sale = await matchBuyOrder(listing.assetId, user.id);
+
+            if (sale) instantSales.push(sale);
         }
 
-        // Fill standing buy orders with the freshly listed items (order-book matching).
-        // Each listing matches the best bid (highest price, then oldest) from a deliverable
-        // buyer; the trade clears at the listed price and the buyer is refunded the difference.
-        const matchedSales: { buyerTradeUrl: string; marketName: string; price: number }[] = [];
-
-        for (const listed of toCreate) {
-            const sale = await prisma.$transaction(async (tx) => {
-                const live = await tx.item_listing.findUnique({ where: { assetId: listed.assetId } });
-                if (!live || live.userId !== user.id) return null;
-
-                const order = await tx.buy_order.findFirst({
-                    where: {
-                        marketName: live.marketName,
-                        price: { gte: live.price },
-                        quantity: { gt: 0 },
-                        userId: { not: user.id },
-                        user: { steam_id: { not: null }, steam_trade_url: { not: null } },
-                    },
-                    orderBy: [{ price: "desc" }, { createdAt: "asc" }],
-                    include: { user: { select: { steam_id: true, steam_trade_url: true } } },
-                });
-                if (!order) return null;
-
-                // Consume the listing; bail (rolls back) if it was bought concurrently.
-                const delListing = await tx.item_listing.deleteMany({ where: { id: live.id } });
-                if (delListing.count === 0) return null;
-
-                // Consume one unit of the buy order; if it raced to zero, roll the whole match back.
-                const consumed = await tx.buy_order.updateMany({
-                    where: { id: order.id, quantity: { gt: 0 } },
-                    data: { quantity: { decrement: 1 } },
-                });
-                if (consumed.count === 0) throw new Error("buy order race");
-                await tx.buy_order.deleteMany({ where: { id: order.id, quantity: { lte: 0 } } });
-
-                // Snapshot how many of this commodity the buyer already holds, so the cron can
-                // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
-                const buyerPreCount = live.commodity && order.user.steam_id
-                    ? await countInventoryItem(order.user.steam_id, live.game, live.marketName)
-                    : null;
-
-                await tx.purchase.create({
-                    data: {
-                        price: live.price,
-                        assetId: live.assetId,
-                        marketName: live.marketName,
-                        game: live.game,
-                        icon: live.icon,
-                        hexColor: live.hexColor,
-                        commodity: live.commodity,
-                        buyerTradeUrl: order.user.steam_trade_url,
-                        buyerPreCount,
-                        buyerId: order.userId,
-                        sellerId: user.id,
-                    },
-                });
-
-                // The buyer held their bid; the trade clears at the listed (lower-or-equal) price.
-                const diff = order.price - live.price;
-                if (diff > 0.001) {
-                    await tx.user.update({ where: { id: order.userId }, data: { cash: { increment: diff } } });
-                }
-
-                return { buyerTradeUrl: order.user.steam_trade_url!, marketName: live.marketName, price: live.price };
-            }).catch(() => null);
-
-            if (sale) matchedSales.push(sale);
-        }
-
-        // Notify the seller to send any instantly-sold items, grouped by buyer trade URL.
-        const notifyTo = user.notificationEmail;
-        if (matchedSales.length > 0 && notifyTo) {
-            const byBuyer = new Map<string, { marketName: string; price: number }[]>();
-            for (const s of matchedSales) {
-                const items = byBuyer.get(s.buyerTradeUrl) ?? [];
-                items.push({ marketName: s.marketName, price: s.price });
-                byBuyer.set(s.buyerTradeUrl, items);
-            }
-            for (const [buyerTradeUrl, items] of byBuyer) {
-                await resend.emails.send({
-                    from: "SkinSlinger <onboarding@skinslinger.com>",
-                    to: [notifyTo],
-                    subject: `New sale — send your item${items.length > 1 ? "s" : ""}`,
-                    react: PurchaseNotificationEmail({ buyerTradeUrl, buyerName: "Buyer", items }),
-                });
-            }
+        if (user.notificationEmail) {
+            await notifySeller(user.notificationEmail, instantSales);
         }
 
         return Response.json(null, { status: 200 });

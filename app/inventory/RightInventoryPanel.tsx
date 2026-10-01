@@ -1,6 +1,7 @@
 "use client"
 
 import { SteamItem } from '@/lib/steam';
+import { maxListingPrice, minListingPrice } from '@/lib/pricing';
 import { useState, useEffect, useRef } from 'react';
 import SellItemCard from './SellItemCard';
 import { Prompt } from '@/app/components/Prompt';
@@ -23,27 +24,51 @@ function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt, error, su
         <Prompt title="Confirm listing" onClose={() => { if (!submitting) setShowPrompt(false); }}>
             <div className="flex flex-col gap-2 text-sm">
                 <div className="flex justify-between">
-                    <span className="opacity-60">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-                    <span>${totalValue.toFixed(2)}</span>
+                    <span className="opacity-60">
+                        {itemCount} item{itemCount !== 1 ? 's' : ''}
+                    </span>
+
+                    <span>
+                        ${totalValue.toFixed(2)}
+                    </span>
                 </div>
+
                 <div className="flex justify-between">
-                    <span className="opacity-60">Listing fee</span>
-                    <span className="text-special">0%</span>
+                    <span className="opacity-60">
+                        Listing fee
+                    </span>
+
+                    <span className="text-special">
+                        0%
+                    </span>
                 </div>
+
                 <div className="flex justify-between border-t border-gray-700 pt-2 mt-1 font-medium">
-                    <span>Total earnings</span>
-                    <span>${totalValue.toFixed(2)}</span>
+                    <span>
+                        Total earnings
+                    </span>
+
+                    <span>
+                        ${totalValue.toFixed(2)}
+                    </span>
                 </div>
             </div>
 
-            <p className="text-xs opacity-40">Only a 2.5% → 0.5% fee applies on withdrawals.</p>
+            <span className="text-xs opacity-40">
+                Only a 2.5% → 0.5% fee applies on withdrawals.
+            </span>
 
-            {error && <p className="text-red-500 text-xs">{error}</p>}
+            {error && (
+                <p className="text-red-500 text-xs">
+                    {error}
+                </p>
+            )}
 
             <div className="flex gap-3">
                 <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm} disabled={submitting}>
                     {submitting ? "Listing..." : "Confirm"}
                 </button>
+
                 <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)} disabled={submitting}>
                     Cancel
                 </button>
@@ -180,6 +205,18 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
         }
     }, [stackedQueue]);
 
+    // Highest price the server accepts for an item, or null when it has no market price yet
+    function maxPrice(item: SteamItem): number | null {
+        const priceOf = (name: string) => livePrices.get(name) ?? 0;
+
+        return maxListingPrice(priceOf(item.market_name), item.stickers, priceOf);
+    }
+
+    // Lowest price the server accepts for an item, or null when it has no market price yet
+    function minPrice(item: SteamItem): number | null {
+        return minListingPrice(livePrices.get(item.market_name) ?? 0);
+    }
+
     function defaultPrice(item: SteamItem & { quantity: number }): string {
         const livePrice = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
         return livePrice.toFixed(2);
@@ -197,6 +234,7 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
             {showPrompt && (
                 <ListPrompt totalValue={totalValue} itemCount={totalItems} onConfirm={listItems} setShowPrompt={setShowPrompt} error={listError} submitting={submitting} />
             )}
+
 
             {/* Mobile: full-screen queue modal */}
             {mobileQueueOpen && (
@@ -263,6 +301,8 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                                 priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
                                 marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
+                                minPrice={minPrice(item)}
+                                maxPrice={maxPrice(item)}
                                 bidPrice={bidMap[item.market_name] ?? null}
                                 remove={() => remove(item.market_name)}
                             />
@@ -284,12 +324,18 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                 </div>
             )}
 
+
             {/* Mobile bottom bar shown when items queued */}
             {selling.length > 0 && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-secondary border-t border-gray-700 flex items-center px-4 py-3 gap-3">
                     <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-xs text-gray-400">{totalItems} item{totalItems !== 1 ? 's' : ''}</span>
-                        <span className="text-base font-semibold">${totalValue.toFixed(2)}</span>
+                        <span className="text-xs text-gray-400">
+                            {totalItems} item{totalItems !== 1 ? 's' : ''}
+                        </span>
+
+                        <span className="text-base font-semibold">
+                            ${totalValue.toFixed(2)}
+                        </span>
                     </div>
 
                     <button onClick={() => setMobileQueueOpen(true)} className="bg-accent px-4 h-10 rounded-sm button text-sm shrink-0">
@@ -302,19 +348,22 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                 </div>
             )}
 
+
             {/* Desktop: right sidebar */}
             <div className="hidden md:flex fixed w-[95%] left-[2.5%] justify-end">
-                <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 bg-secondary absolute rounded-sm">
+                <div className="mt-20 overflow-y-auto overflow-x-hidden h-185 w-95 border border-gray-800 frame-shadow absolute rounded-sm">
                     {stackedQueue.length > 0 && (
                         <>
                             <div className="w-full flex ml-2 mt-2">
-                                <p className="text-3xl">
+                                <span className="text-3xl">
                                     {totalItems} Items: ${totalValue.toFixed(2)}
-                                </p>
+                                </span>
                             </div>
 
                             <div className="mx-2 mt-3 mb-1 bg-accent rounded-sm p-3 flex flex-col gap-2">
-                                <p className="text-xs opacity-40">Global discount modifiers</p>
+                                <span className="text-xs opacity-40">
+                                    Global discount modifiers
+                                </span>
 
                                 <div className="flex gap-1">
                                     {discounts.map(d => (
@@ -369,6 +418,8 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                                 priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
                                 setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
                                 marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
+                                minPrice={minPrice(item)}
+                                maxPrice={maxPrice(item)}
                                 bidPrice={bidMap[item.market_name] ?? null}
                                 remove={() => remove(item.market_name)}
                             />

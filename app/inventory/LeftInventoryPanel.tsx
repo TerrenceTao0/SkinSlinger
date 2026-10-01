@@ -2,6 +2,8 @@
 
 type GameFilter = "CS2" | "Dota2" | "Rust" | "TF2"
 
+//
+
 export default function LeftInventoryPanel({
     gameFilter,
     setGameFilter,
@@ -11,8 +13,11 @@ export default function LeftInventoryPanel({
 }) {
     return (
         <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 w-43">
-            <div className="bg-secondary rounded-sm px-3 py-3">
-                <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1.5">Games</p>
+            <div className="border border-gray-800 frame-shadow rounded-sm px-3 py-3">
+                <span className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1.5">
+                    Games
+                </span>
+
                 <div className="flex flex-col gap-0.5">
                     {(["CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
                         <button

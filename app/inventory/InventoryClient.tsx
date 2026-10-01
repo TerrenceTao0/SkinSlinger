@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SteamItem } from '@/lib/steam';
+import { stickerValue } from '@/lib/pricing';
 import InventoryItemCard from './InventoryItemCard';
 import RightPanel from './RightInventoryPanel';
 import LeftInventoryPanel from './LeftInventoryPanel';
@@ -14,10 +15,15 @@ import { useEmailVerification } from '@/app/components/useEmailVerification';
 
 function timeAgo(date: Date): string {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
     if (seconds < 60) return "just now";
+
     const minutes = Math.floor(seconds / 60);
+
     if (minutes < 60) return `${minutes}m ago`;
+
     const hours = Math.floor(minutes / 60);
+
     return `${hours}h ago`;
 }
 
@@ -294,13 +300,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
             const priceState = livePrices.get(item.market_name);
 
             const basePrice = priceState ?? 0;
-            const stickerValue = item.stickers
-                ? item.stickers.reduce((sum, s) => {
-                    const sp = livePrices.get(`Sticker | ${s.name}`) ?? 0;
-                    return sum + sp * (1 - (s.wear ?? 0)) * 0.15;
-                }, 0)
-                : 0;
-            const price = basePrice + stickerValue;
+            const price = basePrice + stickerValue(item.stickers, name => livePrices.get(name) ?? 0);
 
 
             // Hide junk: items worth <= $0.10, but only once every price component has
@@ -381,7 +381,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                 ) : (
                     <div className={`flex flex-col flex-1 overflow-hidden${selling.length > 0 ? ' pb-16' : ''}`}>
                         {/* Info bar */}
-                        <div className="bg-secondary flex items-center px-4 py-3 rounded-sm shrink-0 gap-6">
+                        <div className="border border-gray-800 frame-shadow flex items-center px-4 py-3 rounded-sm shrink-0 gap-6">
                             <div className="flex flex-col items-center">
                                 <span className="text-[11px] uppercase tracking-widest opacity-50">
                                     Items
@@ -413,8 +413,9 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                             </div>
                         </div>
 
+
                         {/* Grid */}
-                        <div className="overflow-y-auto flex-1 bg-secondary mt-2 p-3 rounded-sm">
+                        <div className="overflow-y-auto flex-1 border border-gray-800 frame-shadow mt-2 p-3 rounded-sm">
                             <div className="grid grid-cols-2 gap-2 justify-start content-start">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
@@ -443,6 +444,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
             {/* Desktop layout */}
             <div className="hidden md:flex h-230 ml-12 w-457">
                 <div className="w-43 shrink-0" />
+
                 <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (
                         <div className="flex items-center justify-center flex-1">
@@ -451,7 +453,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                     ) : (
                         <>
                             {/* Top info bar */}
-                            <div className="bg-secondary h-18 flex items-center px-6 rounded-sm shrink-0">
+                            <div className="border border-gray-800 frame-shadow h-18 flex items-center px-6 rounded-sm shrink-0">
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-center">
                                         <span className="text-[11px] uppercase tracking-widest opacity-50">
@@ -487,7 +489,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
 
 
                             {/* Item display */}
-                            <div className="bg-secondary overflow-y-auto flex-1 min-h-0 grid grid-cols-5 justify-start content-start gap-2 p-3 rounded-sm">
+                            <div className="border border-gray-800 frame-shadow overflow-y-auto flex-1 min-h-0 grid grid-cols-5 justify-start content-start gap-2 p-3 rounded-sm">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
                                     const remaining = item.quantity - currentAmount;

@@ -77,7 +77,7 @@ function InventoryItemCard({ item, quantity, setSelling, hexColor, loading = fal
                 <button
                     onClick={add}
                     disabled={loading}
-                    className="bg-less-special button rounded-sm px-3 h-7 text-xs"
+                    className="bg-secondary button rounded-sm px-3 h-7 text-xs"
                 >
                     SELL
                 </button>
