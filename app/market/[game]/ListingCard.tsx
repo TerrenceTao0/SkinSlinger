@@ -45,6 +45,7 @@ function ListingCard(
                 >
                     {marketName}
                 </Link>
+
                 {quantity > 1 && (
                     <span className="text-[10px] leading-tight shrink-0">[x{quantity}]</span>
                 )}
@@ -99,7 +100,7 @@ function ListingCard(
                     <button
                         onClick={onBuy}
                         disabled={isOwned}
-                        className={`rounded-sm px-3 h-7 text-xs ${isOwned ? 'opacity-40 cursor-default' : 'bg-less-special button'}`}
+                        className={`rounded-sm px-3 h-7 text-xs ${isOwned ? 'opacity-40 cursor-default' : 'bg-secondary button'}`}
                         style={!isOwned && hexColor !== 'b0c3d9' ? { borderTop: `2px solid #${hexColor}` } : {}}
                     >
                         {isOwned ? 'OWNED' : 'BUY'}
@@ -120,3 +121,4 @@ export default memo(ListingCard, (prev, next) =>
     prev.currentUserId === next.currentUserId &&
     prev.hexColor === next.hexColor
 )
+

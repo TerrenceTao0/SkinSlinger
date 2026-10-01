@@ -204,9 +204,9 @@ function Features() {
         <div className="flex flex-col items-center gap-6 px-4 pt-10">
             <div
                 className="w-full max-w-sm rounded-sm px-6 py-6 flex flex-col items-center gap-2 bg-secondary relative overflow-hidden"
-                style={{ boxShadow: "0 0 48px rgba(108, 163, 42, 0.18), inset 0 1px 0 rgba(169, 209, 76, 0.25)" }}
+                style={{ boxShadow: "0 0 48px rgba(0, 194, 255, 0.18), inset 0 1px 0 rgba(0, 194, 255, 0.25)" }}
             >
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#A9D14C] to-transparent" />
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-special to-transparent" />
 
                 <h2 className="text-special text-3xl font-bold tracking-wide">
                     NO KYC

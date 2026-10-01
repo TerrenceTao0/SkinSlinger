@@ -6,6 +6,9 @@ import { SteamItem } from '@/lib/steam';
 import InventoryItemCard from './InventoryItemCard';
 import RightPanel from './RightInventoryPanel';
 import LeftInventoryPanel from './LeftInventoryPanel';
+import SteamUrlPrompt from '@/app/components/SteamUrlPrompt';
+import { FormPrompt } from '@/app/components/Prompt';
+import { useEmailVerification } from '@/app/components/useEmailVerification';
 
 //
 
@@ -18,225 +21,101 @@ function timeAgo(date: Date): string {
     return `${hours}h ago`;
 }
 
-const url_start = "https://steamcommunity.com/tradeoffer/new/?partner="
-
 //
 
-function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
-    onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void,
-    checkUrl: (event: React.ChangeEvent<HTMLInputElement>) => void,
-    error: string,
-    waiting: boolean,
-    url: string
-}) {
-    return (
-        <>
-            {/* Blur background */}
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" />
-
-            {/* Modal */}
-            <div className="fixed inset-0 z-6 flex items-center justify-center">
-                <form
-                    className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4"
-                    onSubmit={onSubmit}
-                >
-                    <div className="flex flex-col gap-1">
-                        <p className="text-xl font-semibold">Steam Trade URL required</p>
-                        <p className="text-sm text-gray-400">We need your trade URL so buyers can send you items directly.</p>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                        <input
-                            id="url"
-                            className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
-                            placeholder="https://steamcommunity.com/tradeoffer/new/?partner=..."
-                            required
-                            onChange={checkUrl}
-                        />
-                        {error === "Invalid url" && (
-                            <p className="text-red-500 text-xs">Invalid trade URL.</p>
-                        )}
-                    </div>
-
-                    <a
-                        href="https://steamcommunity.com/my/tradeoffers/privacy"
-                        target="_blank"
-                        className="text-special text-sm hover:underline"
-                    >
-                        Where do I find my trade URL? →
-                    </a>
-
-                    <button
-                        disabled={waiting}
-                        type="submit"
-                        className="rounded-sm button bg-special h-10 text-sm font-medium"
-                    >
-                        {waiting ? "Saving..." : "Save Trade URL"}
-                    </button>
-                </form>
-            </div>
-        </>
-    )
-}
-
-
 function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
-    const [step, setStep] = useState<"idle" | "code" | "done">("idle");
-    const [email, setEmail] = useState("");
-    const [code, setCode] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    async function sendCode() {
-        setLoading(true);
-        setError("");
-        try {
-            const res = await fetch("/api/notification-email/start", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim() }),
-            });
-            if (!res.ok) {
-                const d = await res.json();
-                setError(d.error ?? "Something went wrong");
-                return;
-            }
-            setCode("");
-            setStep("code");
-        } catch {
-            setError("Network error");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function confirm() {
-        setLoading(true);
-        setError("");
-        try {
-            const res = await fetch("/api/notification-email/confirm", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: code.trim() }),
-            });
-            const d = await res.json();
-            if (!res.ok) {
-                setError(d.error ?? "Something went wrong");
-                return;
-            }
-            setStep("done");
-        } catch {
-            setError("Network error");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { step, email, setEmail, code, setCode, loading, error, sendCode, confirm } = useEmailVerification();
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" onClick={onDone} />
-
-            <div className="fixed inset-0 z-6 flex items-center justify-center">
-                <div className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-xl font-semibold">
-                            Want email notifications?
-                        </p>
-
-                        <p className="text-sm text-gray-400">
-                            {step === "done"
-                                ? "You're all set — we'll email you about sales and trades."
-                                : "Get notified when you make a sale or need to send a trade offer. Completely optional."}
-                        </p>
-                    </div>
-
-                    {step === "idle" && (
-                        <>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
-                            />
-                            {error && <p className="text-red-500 text-xs">{error}</p>}
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={onDone}
-                                    className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
-                                >
-                                    Skip
-                                </button>
-                                <button
-                                    onClick={sendCode}
-                                    disabled={loading || email.trim().length === 0}
-                                    className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
-                                >
-                                    {loading ? "..." : "Send code"}
-                                </button>
-                            </div>
-                        </>
-                    )}
-
-                    {step === "code" && (
-                        <>
-                            <p className="text-sm text-gray-400">
-                                Enter the code sent to <span className="text-white break-all">{email}</span>.
-                            </p>
-
-                            <input
-                                value={code}
-                                onChange={e => setCode(e.target.value)}
-                                inputMode="numeric"
-                                placeholder="1234"
-                                className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm tracking-widest"
-                            />
-
-                            {error && (
-                                <p className="text-red-500 text-xs">
-                                    {error}
-                                </p>
-                            )}
-                           
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={onDone}
-                                    className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
-                                >
-                                    Skip
-                                </button>
-
-                                <button
-                                    onClick={confirm}
-                                    disabled={loading || code.trim().length === 0}
-                                    className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
-                                >
-                                    {loading ? "..." : "Confirm"}
-                                </button>
-                            </div>
-                        </>
-                    )}
-
-                    {step === "done" && (
+        <FormPrompt
+            title="Want email notifications?"
+            description={step === "done"
+                ? "You're all set — we'll email you about sales and trades."
+                : "Get notified when you make a sale or need to send a trade offer. Completely optional."}
+            onClose={onDone}
+        >
+            {step === "idle" && (
+                <>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
+                    />
+                    {error && <p className="text-red-500 text-xs">{error}</p>}
+                    <div className="flex gap-2">
                         <button
                             onClick={onDone}
-                            className="rounded-sm button bg-special h-10 text-sm font-medium"
+                            className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
                         >
-                            Done
+                            Skip
                         </button>
+                        <button
+                            onClick={sendCode}
+                            disabled={loading || email.trim().length === 0}
+                            className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
+                        >
+                            {loading ? "..." : "Send code"}
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {step === "code" && (
+                <>
+                    <p className="text-sm text-gray-400">
+                        Enter the code sent to <span className="text-white break-all">{email}</span>.
+                    </p>
+
+                    <input
+                        value={code}
+                        onChange={e => setCode(e.target.value)}
+                        inputMode="numeric"
+                        placeholder="1234"
+                        className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm tracking-widest"
+                    />
+
+                    {error && (
+                        <p className="text-red-500 text-xs">
+                            {error}
+                        </p>
                     )}
-                </div>
-            </div>
-        </>
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onDone}
+                            className="flex-1 rounded-sm button bg-accent h-10 text-sm font-medium"
+                        >
+                            Skip
+                        </button>
+
+                        <button
+                            onClick={confirm}
+                            disabled={loading || code.trim().length === 0}
+                            className="flex-1 rounded-sm button bg-special h-10 text-sm font-medium"
+                        >
+                            {loading ? "..." : "Confirm"}
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {step === "done" && (
+                <button
+                    onClick={onDone}
+                    className="rounded-sm button bg-special h-10 text-sm font-medium"
+                >
+                    Done
+                </button>
+            )}
+        </FormPrompt>
     )
 }
 
 
 export default function InventoryClient({ isSteamLinked, hasNotificationEmail, inventory, lastRefresh, inventoryToken }: { isSteamLinked: boolean, hasNotificationEmail: boolean, inventory: SteamItem[], lastRefresh: Date, inventoryToken: string }) {
     const router = useRouter();
-    const [error, setError] = useState("");
-    const [url, setUrl] = useState("");
-    const [waiting, setWaiting] = useState(false);
     const [showEmailPrompt, setShowEmailPrompt] = useState(false);
     const [selling, setSelling] = useState<SteamItem[]>([])
     const [listedAssetIds, setListedAssetIds] = useState(new Set<string>())
@@ -312,7 +191,9 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
         }
 
 
-        if (unpriced.length === 0 && stickerItems.length === 0) return;
+        if (unpriced.length === 0 && stickerItems.length === 0) {
+            return;
+        }
 
         const controller = new AbortController();
 
@@ -342,7 +223,11 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
                 const flush = () => {
-                    if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+                    if (flushTimer) {
+                        clearTimeout(flushTimer);
+                        flushTimer = null;
+                    }
+
                     if (pending.size === 0) return;
 
                     const updates = pending;
@@ -393,53 +278,9 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
     }, []);
 
 
-    function checkUrl(event: React.ChangeEvent<HTMLInputElement>) {
-        const url = event.target.value;
-        setUrl(url);
-
-        if (!url.includes(url_start) && url.length > 0) {
-            setError("Invalid url");
-        }
-        else {
-            setError("");
-        }
-    }
-
-
-    async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
-        event.preventDefault();
-
-        if (error != "") {
-            return;
-        }
-
-
-        setWaiting(true);
-
-        try {
-            const response = await fetch("/api/trade-link", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
-            });
-
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.error) router.push(`/status?message=${data.error}`);
-            }
-            else {
-                if (!hasNotificationEmail) setShowEmailPrompt(true);
-                router.refresh();
-            }
-        }
-        catch {
-            setError("Network error");
-        }
-        finally {
-            setWaiting(false);
-        }
+    function onTradeUrlLinked() {
+        if (!hasNotificationEmail) setShowEmailPrompt(true);
+        router.refresh();
     }
 
 
@@ -452,7 +293,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
         for (const item of filtered) {
             const priceState = livePrices.get(item.market_name);
 
-const basePrice = priceState ?? 0;
+            const basePrice = priceState ?? 0;
             const stickerValue = item.stickers
                 ? item.stickers.reduce((sum, s) => {
                     const sp = livePrices.get(`Sticker | ${s.name}`) ?? 0;
@@ -461,13 +302,15 @@ const basePrice = priceState ?? 0;
                 : 0;
             const price = basePrice + stickerValue;
 
+
             // Hide junk: items worth <= $0.10, but only once every price component has
             // resolved (base + each sticker). Unresolved components keep the item visible,
-            // so sticker value arriving late (or a failed stream) can't hide a skin whose
-            // stickers carry its real value.
+            // so sticker value arriving late (or a failed stream) can't hide a skin whose stickers carry its real value.
             const stickersResolved = !item.stickers
                 || item.stickers.every(s => typeof livePrices.get(`Sticker | ${s.name}`) === "number");
-            if (typeof priceState === "number" && stickersResolved && price <= 0.10) continue;
+            if (typeof priceState === "number" && stickersResolved && price <= 0.10) {
+                continue;
+            }
 
             const itemWithPrice = { ...item, price };
 
@@ -533,7 +376,7 @@ const basePrice = priceState ?? 0;
 
                 {!isSteamLinked ? (
                     <div className="flex items-center justify-center flex-1">
-                        <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
+                        <SteamUrlPrompt onLinked={onTradeUrlLinked} />
                     </div>
                 ) : (
                     <div className={`flex flex-col flex-1 overflow-hidden${selling.length > 0 ? ' pb-16' : ''}`}>
@@ -603,7 +446,7 @@ const basePrice = priceState ?? 0;
                 <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
                     {!isSteamLinked ? (
                         <div className="flex items-center justify-center flex-1">
-                            <PromptSteamUrl onSubmit={onSubmit} checkUrl={checkUrl} waiting={waiting} error={error} url={url} />
+                            <SteamUrlPrompt onLinked={onTradeUrlLinked} />
                         </div>
                     ) : (
                         <>

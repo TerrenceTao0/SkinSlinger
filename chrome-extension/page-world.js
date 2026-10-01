@@ -41,6 +41,7 @@ window.addEventListener("skinslinger-select-inventory", (event) => {
         if (isSendUrl(url)) {
             promise.then((res) => res.clone().text().then(reportTradeOfferId)).catch(() => {});
         }
+
         return promise;
     };
 
@@ -56,6 +57,7 @@ window.addEventListener("skinslinger-select-inventory", (event) => {
         if (this.__skinslingerIsSend) {
             this.addEventListener("load", () => reportTradeOfferId(this.responseText));
         }
+
         return originalSend.apply(this, args);
     };
 })();

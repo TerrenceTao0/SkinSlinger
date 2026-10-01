@@ -3,6 +3,7 @@
 import { SteamItem } from '@/lib/steam';
 import { useState, useEffect, useRef } from 'react';
 import SellItemCard from './SellItemCard';
+import { Prompt } from '@/app/components/Prompt';
 
 //
 
@@ -19,39 +20,35 @@ function ListPrompt({ totalValue, itemCount, onConfirm, setShowPrompt, error, su
     submitting: boolean
 }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { if (!submitting) setShowPrompt(false); }}>
-            <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                <p className="text-lg font-medium">Confirm listing</p>
-
-                <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="opacity-60">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-                        <span>${totalValue.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="opacity-60">Listing fee</span>
-                        <span className="text-special">0%</span>
-                    </div>
-                    <div className="flex justify-between border-t border-gray-700 pt-2 mt-1 font-medium">
-                        <span>Total earnings</span>
-                        <span>${totalValue.toFixed(2)}</span>
-                    </div>
+        <Prompt title="Confirm listing" onClose={() => { if (!submitting) setShowPrompt(false); }}>
+            <div className="flex flex-col gap-2 text-sm">
+                <div className="flex justify-between">
+                    <span className="opacity-60">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+                    <span>${totalValue.toFixed(2)}</span>
                 </div>
-
-                <p className="text-xs opacity-40">Only a 2% fee applies on withdrawals.</p>
-
-                {error && <p className="text-red-500 text-xs">{error}</p>}
-
-                <div className="flex gap-3">
-                    <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm} disabled={submitting}>
-                        {submitting ? "Listing..." : "Confirm"}
-                    </button>
-                    <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)} disabled={submitting}>
-                        Cancel
-                    </button>
+                <div className="flex justify-between">
+                    <span className="opacity-60">Listing fee</span>
+                    <span className="text-special">0%</span>
+                </div>
+                <div className="flex justify-between border-t border-gray-700 pt-2 mt-1 font-medium">
+                    <span>Total earnings</span>
+                    <span>${totalValue.toFixed(2)}</span>
                 </div>
             </div>
-        </div>
+
+            <p className="text-xs opacity-40">Only a 2.5% → 0.5% fee applies on withdrawals.</p>
+
+            {error && <p className="text-red-500 text-xs">{error}</p>}
+
+            <div className="flex gap-3">
+                <button className="bg-special button flex-1 h-10 rounded-sm" onClick={onConfirm} disabled={submitting}>
+                    {submitting ? "Listing..." : "Confirm"}
+                </button>
+                <button className="bg-accent button flex-1 h-10 rounded-sm" onClick={() => setShowPrompt(false)} disabled={submitting}>
+                    Cancel
+                </button>
+            </div>
+        </Prompt>
     )
 }
 

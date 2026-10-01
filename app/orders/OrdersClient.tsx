@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useEmailVerification } from "@/app/components/useEmailVerification";
+import { Prompt } from "@/app/components/Prompt";
 
 //
 
@@ -111,37 +113,31 @@ function CancelModal({ refundMessage, tradeOfferSent, onConfirm, onClose, loadin
     loading: boolean
 }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                <p className="text-lg font-medium">
-                    Cancel order?
+        <Prompt title="Cancel order?" onClose={onClose}>
+            <p className="text-sm opacity-60">
+                {refundMessage}
+            </p>
+
+            <p className="text-sm opacity-60">
+                If the trade has already gone through, and has passed the 8 day verification window, it will be detected and marked complete instead.
+            </p>
+
+            {tradeOfferSent && (
+                <p className="text-sm bg-primary/60 rounded-sm p-3">
+                    A Steam trade offer was already sent for this order. The extension will cancel it on Steam automatically.
                 </p>
+            )}
 
-                <p className="text-sm opacity-60">
-                    {refundMessage}
-                </p>
+            <div className="flex gap-3">
+                <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-negative button flex-1">
+                    {loading ? "..." : "Yes, cancel"}
+                </button>
 
-                <p className="text-sm opacity-60">
-                    If the trade has already gone through, and has passed the 8 day verification window, it will be detected and marked complete instead.
-                </p>
-
-                {tradeOfferSent && (
-                    <p className="text-sm bg-primary/60 rounded-sm p-3">
-                        A Steam trade offer was already sent for this order. The extension will cancel it on Steam automatically.
-                    </p>
-                )}
-
-                <div className="flex gap-3">
-                    <button onClick={onConfirm} disabled={loading} className="h-9 px-4 rounded-sm bg-negative button flex-1">
-                        {loading ? "..." : "Yes, cancel"}
-                    </button>
-
-                    <button onClick={onClose} disabled={loading} className="h-9 px-4 rounded-sm bg-accent button flex-1">
-                        Go back
-                    </button>
-                </div>
+                <button onClick={onClose} disabled={loading} className="h-9 px-4 rounded-sm bg-accent button flex-1">
+                    Go back
+                </button>
             </div>
-        </div>
+        </Prompt>
     )
 }
 
@@ -195,8 +191,13 @@ function ExpiryTimer({ createdAt }: { createdAt: Date }) {
         return () => clearInterval(id);
     }, [createdAt]);
 
-    if (msLeft === null) return <span className="font-mono text-gray-300">...</span>;
-    if (msLeft <= 0) return <span className="font-mono text-gray-300">any moment now</span>;
+    if (msLeft === null) {
+        return <span className="font-mono text-gray-300">...</span>;
+    }
+
+    if (msLeft <= 0) {
+        return <span className="font-mono text-gray-300">any moment now</span>;
+    }
 
     const d = Math.floor(msLeft / 86400000);
     const h = Math.floor(msLeft / 3600000) % 24;
@@ -216,6 +217,7 @@ function Avatar({ image, name }: { image: string | null; name: string }) {
     if (image) {
         return <Image src={image} alt={name} width={36} height={36} className="rounded-[4px] shrink-0" />;
     }
+
     return (
         <span className="w-9 h-9 rounded-[4px] bg-accent flex items-center justify-center text-sm font-semibold shrink-0">
             {name.charAt(0).toUpperCase()}
@@ -518,61 +520,13 @@ function maskEmail(email: string) {
 }
 
 function EmailNotificationCard({ notificationEmail, pendingEmail }: { notificationEmail: string | null; pendingEmail: string | null }) {
-    const [step, setStep] = useState<"idle" | "code" | "done">(
-        notificationEmail ? "done" : pendingEmail ? "code" : "idle"
-    );
-    const [email, setEmail] = useState(notificationEmail ?? pendingEmail ?? "");
     const [confirmedEmail, setConfirmedEmail] = useState(notificationEmail ?? "");
-    const [code, setCode] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
     const [revealed, setRevealed] = useState(false);
-
-    async function sendCode() {
-        setLoading(true);
-        setError("");
-        try {
-            const res = await fetch("/api/notification-email/start", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim() }),
-            });
-            if (!res.ok) {
-                const d = await res.json();
-                setError(d.error ?? "Something went wrong");
-                return;
-            }
-            setCode("");
-            setStep("code");
-        } catch {
-            setError("Network error");
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function confirm() {
-        setLoading(true);
-        setError("");
-        try {
-            const res = await fetch("/api/notification-email/confirm", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: code.trim() }),
-            });
-            const d = await res.json();
-            if (!res.ok) {
-                setError(d.error ?? "Something went wrong");
-                return;
-            }
-            setConfirmedEmail(d.email);
-            setStep("done");
-        } catch {
-            setError("Network error");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { step, setStep, email, setEmail, code, setCode, loading, error, setError, sendCode, confirm } = useEmailVerification(
+        notificationEmail ? "done" : pendingEmail ? "code" : "idle",
+        notificationEmail ?? pendingEmail ?? "",
+        setConfirmedEmail,
+    );
 
     return (
         <section className="bg-secondary rounded-sm p-5 flex flex-col gap-3">

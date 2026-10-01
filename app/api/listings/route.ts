@@ -38,8 +38,13 @@ export async function GET(request: Request) {
         }
 
         const andFilters: object[] = [];
-        if (search) andFilters.push({ marketName: { contains: search, mode: 'insensitive' as const } });
-        if (wear) andFilters.push({ marketName: { contains: `(${wear})`, mode: 'insensitive' as const } });
+        if (search) {
+            andFilters.push({ marketName: { contains: search, mode: 'insensitive' as const } });
+        }
+
+        if (wear) {
+            andFilters.push({ marketName: { contains: `(${wear})`, mode: 'insensitive' as const } });
+        }
 
         const where = {
             ...(game ? { game } : {}),
@@ -94,17 +99,23 @@ export async function GET(request: Request) {
 export async function DELETE(request: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session?.user?.id) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
         const { ids } = await request.json();
-        if (!Array.isArray(ids) || ids.length === 0) return Response.json({ error: "No ids provided" }, { status: 400 });
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return Response.json({ error: "No ids provided" }, { status: 400 });
+        }
 
         const listings = await prisma.item_listing.findMany({
             where: { id: { in: ids }, userId: session.user.id },
             select: { id: true, marketName: true },
         });
 
-        if (listings.length === 0) return Response.json(null, { status: 200 });
+        if (listings.length === 0) {
+            return Response.json(null, { status: 200 });
+        }
 
         const idsToDelete = listings.map(l => l.id);
 
@@ -148,8 +159,11 @@ export async function POST(request: Request) {
         const tokenByMarketName = new Map<string, string[]>();
         for (const ti of tokenItems) {
             const existing = tokenByMarketName.get(ti.marketName);
-            if (existing) existing.push(ti.assetId);
-            else tokenByMarketName.set(ti.marketName, [ti.assetId]);
+            if (existing) {
+                existing.push(ti.assetId);
+            } else {
+                tokenByMarketName.set(ti.marketName, [ti.assetId]);
+            }
         }
 
         // Track assetIds already listed to avoid duplicates
@@ -184,7 +198,9 @@ export async function POST(request: Request) {
                     listedAssetIds.add(assetId);
                 }
             } else {
-                if (!tokenAssetIds.has(item.assetId) || listedAssetIds.has(item.assetId)) continue;
+                if (!tokenAssetIds.has(item.assetId) || listedAssetIds.has(item.assetId)) {
+                    continue;
+                }
 
                 toCreate.push({ userId: user.id, assetId: item.assetId, marketName: item.marketName, price: item.price, game: item.game, icon: item.icon, hexColor: item.hexColor, commodity: false });
                 listedAssetIds.add(item.assetId);

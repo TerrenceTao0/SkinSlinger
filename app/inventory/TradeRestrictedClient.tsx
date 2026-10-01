@@ -1,55 +1,18 @@
 "use client";
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
-const url_start = "https://steamcommunity.com/tradeoffer/new/?partner=";
+import { useTradeUrlForm } from '@/app/components/SteamUrlPrompt';
 
 export default function TradeRestrictedClient({ reason }: { reason: string | null }) {
     const router = useRouter();
-    const [url, setUrl] = useState("");
-    const [urlError, setUrlError] = useState("");
-    const [waiting, setWaiting] = useState(false);
+    const { url, error: urlError, waiting, checkUrl, onSubmit } = useTradeUrlForm(() => router.refresh());
 
     const isCorruptUrl = reason === "corrupt_url";
 
     const displayReason = isCorruptUrl
         ? "Your saved trade URL is malformed. Please enter a valid one to continue."
         : (reason ?? "Your Steam account cannot trade at this time.");
-
-    function checkUrl(event: React.ChangeEvent<HTMLInputElement>) {
-        const val = event.target.value;
-        setUrl(val);
-        if (val.length > 0 && !val.includes(url_start)) {
-            setUrlError("Invalid Trade URL.");
-        } else {
-            setUrlError("");
-        }
-    }
-
-    async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        if (urlError || !url) return;
-        setWaiting(true);
-        try {
-            const response = await fetch("/api/trade-link", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                if (data.error) router.push(`/status?message=${data.error}`);
-            } else {
-                router.refresh();
-            }
-        } catch {
-            setUrlError("Network error.");
-        } finally {
-            setWaiting(false);
-        }
-    }
 
     return (
         <div className="flex items-center justify-center h-full px-4">

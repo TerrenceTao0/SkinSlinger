@@ -7,7 +7,9 @@ import { getWithdrawalFee } from '@/lib/fees'
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { amount, address } = await req.json()
     const userId = session.user.id
@@ -15,6 +17,7 @@ export async function POST(req: Request) {
     if (typeof amount !== "number" || !Number.isFinite(amount)) {
         return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
     }
+
     if (typeof address !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
         return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 })
     }

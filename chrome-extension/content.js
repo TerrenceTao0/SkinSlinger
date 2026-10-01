@@ -30,6 +30,7 @@
             ].join(";");
             document.body.appendChild(banner);
         }
+
         banner.style.background = isError ? "#9C4A44" : "#6CA32A";
         banner.textContent = text;
     }
@@ -40,7 +41,10 @@
             const poll = () => {
                 const result = check();
                 if (result) return resolve(result);
-                if (Date.now() - start > timeoutMs) return reject(new Error(`Timed out waiting for: ${label}`));
+                if (Date.now() - start > timeoutMs) {
+                    return reject(new Error(`Timed out waiting for: ${label}`));
+                }
+
                 setTimeout(poll, 250);
             };
             poll();

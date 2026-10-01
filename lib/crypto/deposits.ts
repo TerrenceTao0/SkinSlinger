@@ -21,7 +21,9 @@ const STATUS_MAP: Record<string, string> = {
 //
 
 export async function createDeposit(userId: string, amount: number) {
-    if (!amount || amount < 1) throw new Error('Minimum deposit is $1.00')
+    if (!amount || amount < 1) {
+        throw new Error('Minimum deposit is $1.00')
+    }
 
     const counter = await prisma.deposit_counter.upsert({
         where: { id: 'global' },

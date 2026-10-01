@@ -20,9 +20,11 @@ export default function TopNav() {
     for (let i = 0; i < basket.length; i++) {
         const item = basket[i];
 
-        if ("quantity" in item) basketCount += item.quantity;
-
-        else basketCount += 1;
+        if ("quantity" in item) {
+            basketCount += item.quantity;
+        } else {
+            basketCount += 1;
+        }
     }
 
     useEffect(() => {

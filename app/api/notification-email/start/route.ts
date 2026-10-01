@@ -15,13 +15,16 @@ const CODE_TTL_MS = 15 * 60 * 1000;
 export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session?.user?.id) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
         const { email } = await request.json();
 
         if (typeof email !== "string" || !EMAIL_RE.test(email) || email.length > 254) {
             return Response.json({ error: "Enter a valid email address." }, { status: 400 });
         }
+
         // The Steam pseudo-domain is the placeholder we're trying to replace.
         if (email.toLowerCase().endsWith("@steamcommunity.com")) {
             return Response.json({ error: "Enter a real email address." }, { status: 400 });

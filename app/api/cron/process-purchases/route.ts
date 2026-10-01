@@ -125,7 +125,9 @@ export async function GET(req: Request) {
             const buyerTradeUrl = p.buyerTradeUrl ?? p.buyer.steam_trade_url;
             const result = await verifyBuyerHasItem(p.buyer.steam_id, p.game, p.marketName, float, buyerTradeUrl, p.buyerPreCount);
 
-            if (result === "error") continue; // Steam unreachable — retry next run
+            if (result === "error") {
+                continue; // Steam unreachable — retry next run
+            }
 
             if (p.status === "pending") {
                 // Awaiting delivery. has_item or private => delivered; start the hold.
@@ -147,16 +149,20 @@ export async function GET(req: Request) {
                 // Holding and matured. Item still there (or hidden) => pay seller; gone => reversal.
                 if (result === "has_item" || result === "private") {
                     const ok = await completePurchase(p.id, p.sellerId, p.price);
-                    if (ok) completedTrades.push({
-                        marketName: p.marketName, price: p.price,
-                        buyerEmail: p.buyer.notificationEmail, sellerEmail: p.seller.notificationEmail,
-                    });
+                    if (ok) {
+                        completedTrades.push({
+                            marketName: p.marketName, price: p.price,
+                            buyerEmail: p.buyer.notificationEmail, sellerEmail: p.seller.notificationEmail,
+                        });
+                    }
                 }
                 else {
                     const ok = await refundReversal(p.id, p.buyerId, p.price);
-                    if (ok) reversedTrades.push({
-                        marketName: p.marketName, price: p.price, buyerEmail: p.buyer.notificationEmail,
-                    });
+                    if (ok) {
+                        reversedTrades.push({
+                            marketName: p.marketName, price: p.price, buyerEmail: p.buyer.notificationEmail,
+                        });
+                    }
                 }
             }
         }

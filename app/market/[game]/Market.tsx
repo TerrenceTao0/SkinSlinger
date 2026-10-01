@@ -8,6 +8,7 @@ import { useBasket } from "@/app/components/BasketProvider";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toSlug } from "@/app/lib/site";
+import { Prompt } from "@/app/components/Prompt";
 
 //
 
@@ -44,7 +45,7 @@ function hasActiveFilters(f: Filters): boolean {
     return !!(f.search || f.minPrice || f.maxPrice || f.wear || f.minFloat || f.maxFloat);
 }
 
-function buildQueryString(f: Filters, hasStickers: boolean): string {
+function filterParams(f: Filters): URLSearchParams {
     const p = new URLSearchParams();
 
     if (f.search) p.set("search", f.search);
@@ -53,6 +54,13 @@ function buildQueryString(f: Filters, hasStickers: boolean): string {
     if (f.wear) p.set("wear", f.wear);
     if (f.minFloat) p.set("minFloat", f.minFloat);
     if (f.maxFloat) p.set("maxFloat", f.maxFloat);
+
+    return p;
+}
+
+function buildQueryString(f: Filters, hasStickers: boolean): string {
+    const p = filterParams(f);
+
     if (!hasStickers) p.set("stickers", "0");
 
     const s = p.toString();
@@ -130,17 +138,10 @@ export default function HomeClient(
         loadingRef.current = true;
 
         try {
-            const f = filtersRef.current;
-            const params = new URLSearchParams();
+            const params = filterParams(filtersRef.current);
 
             if (game !== "all") params.set("game", game);
             if (cur) params.set("cursor", cur);
-            if (f.search) params.set("search", f.search);
-            if (f.minPrice) params.set("minPrice", f.minPrice);
-            if (f.maxPrice) params.set("maxPrice", f.maxPrice);
-            if (f.wear) params.set("wear", f.wear);
-            if (f.minFloat) params.set("minFloat", f.minFloat);
-            if (f.maxFloat) params.set("maxFloat", f.maxFloat);
 
             const res = await fetch(`/api/listings?${params}`);
             const data = await res.json();
@@ -205,8 +206,13 @@ export default function HomeClient(
             }
         }, { threshold: 0.1 });
 
-        if (sentinelRef.current) observer.observe(sentinelRef.current);
-        if (mobileSentinelRef.current) observer.observe(mobileSentinelRef.current);
+        if (sentinelRef.current) {
+            observer.observe(sentinelRef.current);
+        }
+
+        if (mobileSentinelRef.current) {
+            observer.observe(mobileSentinelRef.current);
+        }
 
         return () => observer.disconnect();
     }, [hasMore, cursor, load]);
@@ -219,7 +225,9 @@ export default function HomeClient(
             return;
         }
 
-        if (!item.commodity && item.sellerId === currentUserId) return;
+        if (!item.commodity && item.sellerId === currentUserId) {
+            return;
+        }
 
         if (hasPendingPurchase) {
             setPendingNotice(true);
@@ -269,7 +277,9 @@ export default function HomeClient(
                 if (existing) {
                     existing.quantity += 1;
 
-                    if (listing.price < existing.price) existing.price = listing.price;
+                    if (listing.price < existing.price) {
+                        existing.price = listing.price;
+                    }
                 }
                 else {
                     const entry: DisplayCard = { ...listing, quantity: 1 };
@@ -326,24 +336,15 @@ export default function HomeClient(
             />
 
             {pendingNotice && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                    onClick={() => setPendingNotice(false)}
-                >
-                    <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <p className="text-lg font-medium">
-                            Pending order
-                        </p>
+                <Prompt title="Pending order" onClose={() => setPendingNotice(false)}>
+                    <p className="opacity-60 text-sm">
+                        You have an active purchase in progress. You cannot add items to your basket until it is completed or cancelled.
+                    </p>
 
-                        <p className="opacity-60 text-sm">
-                            You have an active purchase in progress. You cannot add items to your basket until it is completed or cancelled.
-                        </p>
-
-                        <button onClick={() => setPendingNotice(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">
-                            Dismiss
-                        </button>
-                    </div>
-                </div>
+                    <button onClick={() => setPendingNotice(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">
+                        Dismiss
+                    </button>
+                </Prompt>
             )}
 
 

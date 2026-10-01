@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/next"
 import Providers from "./components/Providers"
 import TopNav from "./components/TopNav"
@@ -11,6 +11,12 @@ import { getBaseUrl } from "./lib/site"
 const inter = Inter({
     subsets: ['latin'],
     variable: '--font-inter',
+})
+
+// Display font for headings, prices and the logo
+const spaceGrotesk = Space_Grotesk({
+    subsets: ['latin'],
+    variable: '--font-space-grotesk',
 })
 
 //
@@ -64,7 +70,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en" className={`${inter.variable} font-sans`}>
+        <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
             <body className="h-dvh mx-auto flex flex-col overflow-hidden">
                 <Providers>
                     <TopNav />

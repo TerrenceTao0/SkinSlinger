@@ -42,11 +42,6 @@ export const STEAM_APP_IDS: Record<string, number> = {
 
 //
 
-export function getStacked(inventory: SteamItem[]) {
-    return inventory.map(item => ({ ...item, quantity: 1 }));
-}
-
-
 const tradeCache = new Map<string, { allowed: boolean; reason: string | null; at: number }>();
 const TRADE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 const TRADE_URL_PATTERN = /^https:\/\/steamcommunity\.com\/tradeoffer\/new\/\?partner=(\d+)&token=[a-zA-Z0-9_-]+$/;
@@ -71,7 +66,9 @@ export async function checkCanTrade(
     };
 
 
-    if (!tradeUrl) return store({ allowed: true, reason: null });
+    if (!tradeUrl) {
+        return store({ allowed: true, reason: null });
+    }
 
     if (!TRADE_URL_PATTERN.test(tradeUrl)) {
         return store({ allowed: false, reason: "corrupt_url" });
@@ -85,7 +82,9 @@ export async function checkCanTrade(
 
         const res = await fetch(url.toString());
 
-        if (!res.ok) return { allowed: true, reason: null }; // Fail open.
+        if (!res.ok) {
+            return { allowed: true, reason: null }; // Fail open.
+        }
 
         const data = await res.json();
 
@@ -175,37 +174,6 @@ export async function fetchItemPrice(market_hash_name: string, game: string): Pr
 }
 
 
-// Fetches float, pattern, and sticker data for a CS2 item via its inspect link.
-export async function fetchItemFloat(inspectLink: string): Promise<{ floatValue: number | null; paintSeed: number | null; stickers: SteamSticker[] } | null> {
-    try {
-        const url = new URL(`${base_url}/steam/api/float`);
-        url.searchParams.set("key", api_key);
-        url.searchParams.set("url", inspectLink);
-
-        const res = await fetch(url.toString());
-
-        if (!res.ok) return null;
-
-        const data = await res.json();
-
-        return {
-            floatValue: data.float ?? null,
-            paintSeed: data.paintseed ?? null,
-            stickers: (data.stickers ?? []).map((s: any) => ({
-                stickerId: s.stickerId,
-                slot: s.slot,
-                name: s.name,
-                image: s.image,
-                wear: s.wear ?? null,
-            })),
-        };
-    } 
-    catch {
-        return null;
-    }
-}
-
-
 // Fetches a player's inventory for any supported game from steamwebapi.
 // Returns tradable items with price set to 0 (prices are looked up separately from our DB).
 async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
@@ -226,7 +194,9 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
             url.searchParams.set("limit", String(PAGE_SIZE));
             url.searchParams.set("no_cache", "1");
 
-            if (startAssetId) url.searchParams.set("start_assetid", startAssetId);
+            if (startAssetId) {
+                url.searchParams.set("start_assetid", startAssetId);
+            }
 
             const response = await fetch(url.toString());
 
@@ -269,14 +239,6 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
     catch {
         return [];
     }
-}
-
-
-// Fetches inventory for a specific subset of games (used for targeted verification).
-export async function fetchInventoryForGames(steam_id: string, games: string[]): Promise<SteamItem[]> {
-    const results = await Promise.all(games.map(game => fetchGameInventory(steam_id, game)));
-    
-    return results.flat();
 }
 
 
@@ -352,7 +314,9 @@ export async function verifyBuyerHasItem(
         url.searchParams.set("game", slug);
         url.searchParams.set("with_no_tradable", "1");
         url.searchParams.set("no_cache", "1");
-        if (buyerTradeUrl) url.searchParams.set("trade_url", buyerTradeUrl);
+        if (buyerTradeUrl) {
+            url.searchParams.set("trade_url", buyerTradeUrl);
+        }
 
         let res = await fetch(url.toString());
 
@@ -368,7 +332,10 @@ export async function verifyBuyerHasItem(
         }
 
         if (res.status === 403) return "private";
-        if (res.status === 410 || res.status === 411) return "no_item"; // accessible, no such item
+        if (res.status === 410 || res.status === 411) {
+            return "no_item"; // accessible, no such item
+        }
+
         if (!res.ok) return "error";
 
         const items = await res.json();
@@ -401,8 +368,13 @@ export async function verifyBuyerHasItem(
             const hit = matches.some((i: { float?: { floatvalue?: number; paintseed?: number } }) => {
                 const fv = i.float?.floatvalue;
 
-                if (typeof fv !== "number" || Math.abs(fv - target) > 1e-7) return false;
-                if (float.paintSeed != null && i.float?.paintseed !== float.paintSeed) return false;
+                if (typeof fv !== "number" || Math.abs(fv - target) > 1e-7) {
+                    return false;
+                }
+
+                if (float.paintSeed != null && i.float?.paintseed !== float.paintSeed) {
+                    return false;
+                }
 
                 return true;
             });

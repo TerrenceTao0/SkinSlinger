@@ -7,6 +7,7 @@ import { useBasket } from "@/app/components/BasketProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import SteamUrlPrompt from "@/app/components/SteamUrlPrompt";
+import { Prompt } from "@/app/components/Prompt";
 
 //
 
@@ -81,25 +82,19 @@ export default function BasketClient({ hasPendingPurchase }: { hasPendingPurchas
                 />
             )}
             {inventoryPrompt && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                    onClick={() => setInventoryPrompt(false)}
-                >
-                    <div className="bg-secondary rounded-sm p-8 flex flex-col gap-4 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <p className="text-lg font-medium">Inventory must be public</p>
-                        <p className="opacity-60 text-sm">Your Steam inventory must be set to public before making purchases.</p>
-                        {session?.user?.steam_id && (
-                            <a
-                                href={`https://steamcommunity.com/profiles/${session.user.steam_id}/edit/settings/`}
-                                target="_blank"
-                                className="text-special text-sm"
-                            >
-                                Open Steam privacy settings
-                            </a>
-                        )}
-                        <button onClick={() => setInventoryPrompt(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">Dismiss</button>
-                    </div>
-                </div>
+                <Prompt title="Inventory must be public" onClose={() => setInventoryPrompt(false)}>
+                    <p className="opacity-60 text-sm">Your Steam inventory must be set to public before making purchases.</p>
+                    {session?.user?.steam_id && (
+                        <a
+                            href={`https://steamcommunity.com/profiles/${session.user.steam_id}/edit/settings/`}
+                            target="_blank"
+                            className="text-special text-sm"
+                        >
+                            Open Steam privacy settings
+                        </a>
+                    )}
+                    <button onClick={() => setInventoryPrompt(false)} className="h-9 px-4 rounded-sm bg-accent button w-fit">Dismiss</button>
+                </Prompt>
             )}
             <div className="flex mt-14 w-310 h-210 gap-3">
                 {/* Item list */}

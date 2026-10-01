@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FormPrompt } from "./Prompt";
 
 //
 
@@ -8,10 +9,8 @@ const url_start = "https://steamcommunity.com/tradeoffer/new/?partner=";
 
 //
 
-export default function SteamUrlPrompt({ onLinked, onClose }: {
-    onLinked: () => void,
-    onClose?: () => void,
-}) {
+// Trade URL validation and saving, shared by the modal below and the trade-restricted page.
+export function useTradeUrlForm(onSaved: () => void) {
     const [url, setUrl] = useState("");
     const [error, setError] = useState("");
     const [waiting, setWaiting] = useState(false);
@@ -21,7 +20,7 @@ export default function SteamUrlPrompt({ onLinked, onClose }: {
         setUrl(val);
 
         if (!val.includes(url_start) && val.length > 0) {
-            setError("Invalid url");
+            setError("Invalid trade URL.");
         }
         else {
             setError("");
@@ -50,7 +49,7 @@ export default function SteamUrlPrompt({ onLinked, onClose }: {
                 setError(data.error ?? "Failed to save trade URL");
             }
             else {
-                onLinked();
+                onSaved();
             }
         }
         catch {
@@ -61,62 +60,55 @@ export default function SteamUrlPrompt({ onLinked, onClose }: {
         }
     }
 
+    return { url, error, waiting, checkUrl, onSubmit };
+}
+
+//
+
+export default function SteamUrlPrompt({ onLinked, onClose }: {
+    onLinked: () => void,
+    onClose?: () => void,
+}) {
+    const { error, waiting, checkUrl, onSubmit } = useTradeUrlForm(onLinked);
+
     return (
-        <>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-5" onClick={onClose} />
+        <FormPrompt
+            title="Steam Trade URL required"
+            description="We need your trade URL so buyers can send you items directly."
+            onClose={onClose}
+        >
+            <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+                <div className="flex flex-col gap-1">
+                    <input
+                        id="url"
+                        className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
+                        placeholder="https://steamcommunity.com/tradeoffer/new/?partner=..."
+                        required
+                        onChange={checkUrl}
+                    />
+                    {error && (
+                        <p className="text-red-500 text-xs">
+                            {error}
+                        </p>
+                    )}
+                </div>
 
-            <div className="fixed inset-0 z-6 flex items-center justify-center">
-                <form
-                    className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4"
-                    onSubmit={onSubmit}
+                <a
+                    href="https://steamcommunity.com/my/tradeoffers/privacy"
+                    target="_blank"
+                    className="text-special text-sm hover:underline"
                 >
-                    <div className="flex flex-col gap-1">
-                        <p className="text-xl font-semibold">
-                            Steam Trade URL required
-                        </p>
+                    Where do I find my trade URL? →
+                </a>
 
-                        <p className="text-sm text-gray-400">
-                            We need your trade URL so buyers can send you items directly.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                        <input
-                            id="url"
-                            className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm"
-                            placeholder="https://steamcommunity.com/tradeoffer/new/?partner=..."
-                            required
-                            onChange={checkUrl}
-                        />
-                        {error === "Invalid url" && (
-                            <p className="text-red-500 text-xs">
-                                Invalid trade URL.
-                            </p>
-                        )}
-                        {error && error !== "Invalid url" && (
-                            <p className="text-red-500 text-xs">
-                                {error}
-                            </p>
-                        )}
-                    </div>
-
-                    <a
-                        href="https://steamcommunity.com/my/tradeoffers/privacy"
-                        target="_blank"
-                        className="text-special text-sm hover:underline"
-                    >
-                        Where do I find my trade URL? →
-                    </a>
-
-                    <button
-                        disabled={waiting}
-                        type="submit"
-                        className="rounded-sm button bg-special h-10 text-sm font-medium"
-                    >
-                        {waiting ? "Saving..." : "Save Trade URL"}
-                    </button>
-                </form>
-            </div>
-        </>
+                <button
+                    disabled={waiting}
+                    type="submit"
+                    className="rounded-sm button bg-special h-10 text-sm font-medium"
+                >
+                    {waiting ? "Saving..." : "Save Trade URL"}
+                </button>
+            </form>
+        </FormPrompt>
     );
 }

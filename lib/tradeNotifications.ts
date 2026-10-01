@@ -33,6 +33,7 @@ export async function sendTradeCompleteEmails(trades: CompletedTrade[]) {
         if (t.buyerEmail) {
             buyerGroups.set(t.buyerEmail, [...(buyerGroups.get(t.buyerEmail) ?? []), item]);
         }
+
         if (t.sellerEmail) {
             sellerGroups.set(t.sellerEmail, [...(sellerGroups.get(t.sellerEmail) ?? []), item]);
         }

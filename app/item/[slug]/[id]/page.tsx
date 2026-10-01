@@ -20,7 +20,9 @@ function wearLabel(f: number): string {
 
 const getListing = cache(async (id: string) => {
     const listing = await prisma.item_listing.findUnique({ where: { id } });
-    if (!listing || !listing.icon || !listing.hexColor || !listing.game) return null;
+    if (!listing || !listing.icon || !listing.hexColor || !listing.game) {
+        return null;
+    }
 
     const [float, commodityCount] = await Promise.all([
         prisma.item_float.findUnique({ where: { assetId: listing.assetId } }),

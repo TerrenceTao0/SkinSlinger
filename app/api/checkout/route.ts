@@ -127,6 +127,7 @@ export async function POST(request: Request) {
             if (invRes.status === 403) {
                 return Response.json({ error: "Your Steam inventory must be set to public before making purchases." }, { status: 400 });
             }
+
             if (invRes.ok) {
                 const invData = await invRes.json();
                 if (invData?.success === false) {
@@ -140,7 +141,10 @@ export async function POST(request: Request) {
         // prove delivery by a count increase rather than mere presence (see verifyBuyerHasItem).
         const preCounts = new Map<string, number | null>();
         for (const listing of toPurchase) {
-            if (!listing.commodity || preCounts.has(listing.marketName)) continue;
+            if (!listing.commodity || preCounts.has(listing.marketName)) {
+                continue;
+            }
+
             preCounts.set(listing.marketName, await countInventoryItem(buyer.steam_id, listing.game, listing.marketName));
         }
 
@@ -150,13 +154,17 @@ export async function POST(request: Request) {
                 where: { id: buyer.id, cash: { gte: total } },
                 data: { cash: { decrement: total } },
             });
-            if (deducted.count === 0) throw new Error("Insufficient balance");
+            if (deducted.count === 0) {
+                throw new Error("Insufficient balance");
+            }
 
             const created = [];
 
             for (const listing of toPurchase) {
                 const deleted = await tx.item_listing.deleteMany({ where: { id: listing.id } });
-                if (deleted.count === 0) throw new Error("Item no longer available");
+                if (deleted.count === 0) {
+                    throw new Error("Item no longer available");
+                }
 
                 const purchase = await tx.purchase.create({
                     data: {
@@ -209,9 +217,11 @@ export async function POST(request: Request) {
         if (error instanceof Error && error.message === "Insufficient balance") {
             return Response.json({ error: "Insufficient balance" }, { status: 402 });
         }
+
         if (error instanceof Error && error.message === "Item no longer available") {
             return Response.json({ error: "One or more items were purchased by someone else. Please refresh." }, { status: 409 });
         }
+
         console.error(error);
         return Response.json({ error: "Server error" }, { status: 500 });
     }

@@ -52,6 +52,7 @@ export const authOptions: NextAuthOptions = {
                     token.steam_id = dbUser.steam_id ?? undefined;
                     token.steam_trade_url = dbUser.steam_trade_url ?? undefined;
                 }
+
                 return token;
             }
 

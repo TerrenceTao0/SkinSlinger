@@ -20,7 +20,9 @@ export async function POST(request: Request) {
         }
 
         const buyer = await prisma.user.findUnique({ where: { id: session.user.id } });
-        if (!buyer) return Response.json({ error: "User not found" }, { status: 404 });
+        if (!buyer) {
+            return Response.json({ error: "User not found" }, { status: 404 });
+        }
 
         // A match creates a deliverable purchase, so the buyer must be able to receive trades.
         if (!buyer.steam_id || !buyer.steam_trade_url) {
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
         if (!marketName || typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
             return Response.json({ error: "Invalid price" }, { status: 400 });
         }
+
         if (!Number.isInteger(quantity) || quantity < 1) {
             return Response.json({ error: "Invalid quantity" }, { status: 400 });
         }
@@ -150,6 +153,7 @@ export async function POST(request: Request) {
             if (insufficient) {
                 return Response.json({ error: "Insufficient balance" }, { status: 400 });
             }
+
             throw error;
         }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import FloatBar from "@/app/components/FloatBar";
+import { Prompt } from "@/app/components/Prompt";
 
 //
 
@@ -205,16 +206,13 @@ export default function ListingsClient({ listings }: { listings: Listing[] }) {
     return (
         <div className="h-full flex flex-col pt-20 px-4 md:px-8">
             {confirmDelistAll && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 px-4">
-                    <div className="bg-secondary rounded-sm flex flex-col gap-4 p-8 max-w-sm w-full frame-shadow">
-                        <p className="font-medium">Delist all {listings.length} listings?</p>
-                        <p className="text-sm text-gray-400">This cannot be undone.</p>
-                        <div className="flex gap-2">
-                            <button onClick={delistAll} className="flex-1 h-10 rounded-sm bg-negative button text-sm">Delist all</button>
-                            <button onClick={() => setConfirmDelistAll(false)} className="flex-1 h-10 rounded-sm bg-accent button text-sm">Cancel</button>
-                        </div>
+                <Prompt title={`Delist all ${listings.length} listings?`}>
+                    <p className="text-sm text-gray-400">This cannot be undone.</p>
+                    <div className="flex gap-2">
+                        <button onClick={delistAll} className="flex-1 h-10 rounded-sm bg-negative button text-sm">Delist all</button>
+                        <button onClick={() => setConfirmDelistAll(false)} className="flex-1 h-10 rounded-sm bg-accent button text-sm">Cancel</button>
                     </div>
-                </div>
+                </Prompt>
             )}
 
             <div className="w-full max-w-7xl mx-auto flex flex-col gap-4 flex-1 min-h-0">

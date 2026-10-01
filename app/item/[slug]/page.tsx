@@ -40,7 +40,10 @@ const getItem = cache(async (slug: string) => {
         }),
     ]);
 
-    if (!listings.length || !listingMeta?.icon || !listingMeta?.hexColor || !listingMeta?.game) return null;
+    if (!listings.length || !listingMeta?.icon || !listingMeta?.hexColor || !listingMeta?.game) {
+        return null;
+    }
+
     const inv = { icon: listingMeta.icon, hexColor: listingMeta.hexColor, game: listingMeta.game };
     return { marketName, listings, inv };
 });

@@ -90,7 +90,10 @@ export default function FinanceClient({ pendingBalance, lockedBalance, withdrawa
 
         const amount = parseFloat(amountInput)
 
-        if (!amount || amount < 1) { setError("Minimum deposit is $1.00"); return }
+        if (!amount || amount < 1) {
+            setError("Minimum deposit is $1.00");
+            return
+        }
 
         setLoading(true)
         setError("")
@@ -104,7 +107,11 @@ export default function FinanceClient({ pendingBalance, lockedBalance, withdrawa
 
         const data = await res.json()
 
-        if (!res.ok) { setError(data.error ?? "Failed to create payment"); setLoading(false); return }
+        if (!res.ok) {
+            setError(data.error ?? "Failed to create payment");
+            setLoading(false);
+            return
+        }
 
         setPayment(data)
         setPaymentStatus("waiting")
@@ -121,9 +128,15 @@ export default function FinanceClient({ pendingBalance, lockedBalance, withdrawa
 
         const amount = parseFloat(amountInput)
 
-        if (!amount || amount < 1) { setError("Minimum withdrawal is $1.00"); return }
+        if (!amount || amount < 1) {
+            setError("Minimum withdrawal is $1.00");
+            return
+        }
 
-        if (!address.trim()) { setError("Wallet address required"); return }
+        if (!address.trim()) {
+            setError("Wallet address required");
+            return
+        }
 
         setLoading(true)
         setError("")
@@ -137,7 +150,11 @@ export default function FinanceClient({ pendingBalance, lockedBalance, withdrawa
 
         const data = await res.json()
 
-        if (!res.ok) { setError(data.error ?? "Withdrawal failed"); setLoading(false); return }
+        if (!res.ok) {
+            setError(data.error ?? "Withdrawal failed");
+            setLoading(false);
+            return
+        }
 
         setWithdrawResult(data)
         setView("withdraw-success")
@@ -166,60 +183,62 @@ export default function FinanceClient({ pendingBalance, lockedBalance, withdrawa
 
     let content: React.ReactNode
 
-    if (view === "deposit-success") content = <DepositSuccessView onDone={reset} />
-
-    else if (view === "withdraw-success" && withdrawResult) content = (
-        <WithdrawSuccessView usdcAmount={withdrawResult.usdcAmount} transactionHash={withdrawResult.transactionHash} onDone={reset} />
-    )
-
-    else if (view === "payment" && payment) content = (
-        <PaymentView
-            payment={payment}
-            paymentStatus={paymentStatus}
-            secondsLeft={secondsLeft}
-            copied={copied}
-            onCopy={copy}
-            onRetry={() => { setView("deposit-amount"); setPayment(null) }}
-            onBack={reset}
-        />
-    )
-
-    else if (view === "deposit-amount") content = (
-        <DepositAmountView
-            amountInput={amountInput}
-            onAmountChange={setAmountInput}
-            error={error}
-            loading={loading}
-            onSubmit={handleDeposit}
-            onBack={reset}
-        />
-    )
-
-    else if (view === "withdraw") content = (
-        <WithdrawView
-            amountInput={amountInput}
-            onAmountChange={setAmountInput}
-            address={address}
-            onAddressChange={setAddress}
-            balance={session?.user?.cash ?? 0}
-            feeRate={withdrawalFee.rate}
-            error={error}
-            loading={loading}
-            onSubmit={handleWithdraw}
-            onBack={reset}
-        />
-    )
-
-    else content = (
-        <MenuView
-            balance={session?.user?.cash ?? 0}
-            pending={pendingBalance}
-            locked={lockedBalance}
-            withdrawalFee={withdrawalFee}
-            onDeposit={() => { setAmountInput(""); setError(""); setView("deposit-amount") }}
-            onWithdraw={() => { setAmountInput(""); setError(""); setView("withdraw") }}
-        />
-    )
+    if (view === "deposit-success") {
+        content = <DepositSuccessView onDone={reset} />
+    } else if (view === "withdraw-success" && withdrawResult) {
+        content = (
+            <WithdrawSuccessView usdcAmount={withdrawResult.usdcAmount} transactionHash={withdrawResult.transactionHash} onDone={reset} />
+        )
+    } else if (view === "payment" && payment) {
+        content = (
+            <PaymentView
+                payment={payment}
+                paymentStatus={paymentStatus}
+                secondsLeft={secondsLeft}
+                copied={copied}
+                onCopy={copy}
+                onRetry={() => { setView("deposit-amount"); setPayment(null) }}
+                onBack={reset}
+            />
+        )
+    } else if (view === "deposit-amount") {
+        content = (
+            <DepositAmountView
+                amountInput={amountInput}
+                onAmountChange={setAmountInput}
+                error={error}
+                loading={loading}
+                onSubmit={handleDeposit}
+                onBack={reset}
+            />
+        )
+    } else if (view === "withdraw") {
+        content = (
+            <WithdrawView
+                amountInput={amountInput}
+                onAmountChange={setAmountInput}
+                address={address}
+                onAddressChange={setAddress}
+                balance={session?.user?.cash ?? 0}
+                feeRate={withdrawalFee.rate}
+                error={error}
+                loading={loading}
+                onSubmit={handleWithdraw}
+                onBack={reset}
+            />
+        )
+    } else {
+        content = (
+            <MenuView
+                balance={session?.user?.cash ?? 0}
+                pending={pendingBalance}
+                locked={lockedBalance}
+                withdrawalFee={withdrawalFee}
+                onDeposit={() => { setAmountInput(""); setError(""); setView("deposit-amount") }}
+                onWithdraw={() => { setAmountInput(""); setError(""); setView("withdraw") }}
+            />
+        )
+    }
 
 
     // The body doesn't scroll, so the page does; top padding clears the fixed nav

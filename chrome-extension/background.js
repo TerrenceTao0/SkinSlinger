@@ -7,7 +7,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "FETCH_PENDING_SALES") {
         fetch("https://skinslinger.com/api/extension/pending-sales", { credentials: "include" })
             .then(res => {
-                if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+                if (!res.ok) {
+                    throw new Error(`Request failed: ${res.status}`);
+                }
+
                 return res.json();
             })
             .then(data => sendResponse({ ok: true, items: data.items }))
@@ -31,7 +34,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Lets skinslinger.com detect that the extension is installed (see
 // externally_connectable in the manifest).
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-    if (message?.type === "PING") sendResponse({ ok: true });
+    if (message?.type === "PING") {
+        sendResponse({ ok: true });
+    }
 });
 
 const STEAMID64_OFFSET = 76561197960265728n;
@@ -45,7 +50,9 @@ async function verifySentOffers() {
     if (!res.ok) return;
 
     const { sellerSteamId, items, cancelOfferIds } = await res.json();
-    if (!sellerSteamId || (items.length === 0 && cancelOfferIds.length === 0)) return;
+    if (!sellerSteamId || (items.length === 0 && cancelOfferIds.length === 0)) {
+        return;
+    }
 
     const pageRes = await fetch(
         `https://steamcommunity.com/profiles/${sellerSteamId}/tradeoffers/sent/?l=english`,
@@ -144,7 +151,9 @@ async function verifySentOffers() {
         }
     }
 
-    if (updates.length === 0 && cancelledOfferIds.length === 0) return;
+    if (updates.length === 0 && cancelledOfferIds.length === 0) {
+        return;
+    }
 
     await fetch("https://skinslinger.com/api/extension/offer-status", {
         method: "POST",

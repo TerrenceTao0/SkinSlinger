@@ -18,9 +18,13 @@ export async function processWithdrawal(
     )
     :
     Promise<{ transactionHash: `0x${string}`; usdcAmount: number }> {
-        if (!amount || amount < minWithdrawal) throw new Error(`Minimum withdrawal is $${minWithdrawal}.00`)
+        if (!amount || amount < minWithdrawal) {
+            throw new Error(`Minimum withdrawal is $${minWithdrawal}.00`)
+        }
             
-        if (!toAddress?.trim()) throw new Error('Wallet address required')
+        if (!toAddress?.trim()) {
+            throw new Error('Wallet address required')
+        }
 
         const ok = await deductBalance()
 

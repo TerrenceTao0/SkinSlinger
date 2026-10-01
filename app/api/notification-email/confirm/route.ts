@@ -9,7 +9,9 @@ const MAX_ATTEMPTS = 5;
 export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.id) return Response.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session?.user?.id) {
+            return Response.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
         const { code } = await request.json();
         if (typeof code !== "string") {
@@ -24,12 +26,15 @@ export async function POST(request: Request) {
         if (!user?.pendingEmail || !user.emailCode || !user.emailCodeExpires) {
             return Response.json({ error: "No pending email to confirm. Request a new code." }, { status: 400 });
         }
+
         if (user.emailCodeExpires.getTime() < Date.now()) {
             return Response.json({ error: "That code has expired. Request a new one." }, { status: 400 });
         }
+
         if (user.emailCodeAttempts >= MAX_ATTEMPTS) {
             return Response.json({ error: "Too many incorrect attempts. Request a new code." }, { status: 429 });
         }
+
         if (code.trim() !== user.emailCode) {
             // Count the failure so the code dies after MAX_ATTEMPTS wrong guesses.
             await prisma.user.update({

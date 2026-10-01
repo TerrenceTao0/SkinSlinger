@@ -31,9 +31,9 @@
     --color-secondary: #1C212B;
     --color-accent: #29303D;
 
-    --color-special: #A9D14C;
-    --color-special-fill: #6CA32A;
-    --color-less-special: #46562E;
+    --color-special: #00C2FF;
+    --color-special-fill: #21acd6;
+    --color-less-special: #00a2ff;
 
     --color-negative: #E08074;
     --color-negative-fill: #9C4A44;
@@ -43,6 +43,7 @@
     --radius-sm: 6px;
 
     --font-sans: var(--font-inter);
+    --font-display: var(--font-space-grotesk);
 }
 
 body {

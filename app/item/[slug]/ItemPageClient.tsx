@@ -112,6 +112,7 @@ export default function ItemPageClient({
             setBidQtyStr("1")
             await refreshOrderBook()
         }
+
         setPlacingBid(false)
     }
 
@@ -127,7 +128,10 @@ export default function ItemPageClient({
             router.push("/sign-up")
             return
         }
-        if (hasPendingPurchase || !selectedSellLevel || selectedSellPrice === null) return
+
+        if (hasPendingPurchase || !selectedSellLevel || selectedSellPrice === null) {
+            return
+        }
 
         const existing = basket.find(b => b.marketName === marketName && b.commodity)
         let updated: BasketItem[]
@@ -149,6 +153,7 @@ export default function ItemPageClient({
                 maxQuantity: selectedSellLevel.quantity,
             } as BasketItem]
         }
+
         setBasket(updated)
         router.push("/basket")
     }

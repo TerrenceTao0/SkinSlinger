@@ -333,16 +333,16 @@ export const posts: Post[] = [
         slug: 'lowest-fee-skins-marketplace',
         title: 'Lowest Fee Skins Marketplace in 2026: Full Fee Comparison',
         date: 'June 9, 2026',
-        summary: 'SkinSlinger (2% total), CSFloat (5.3%), CS.Money (7%), Skinport (8%), DMarket (9.5%), Steam Market (15%+): here is what each fee covers, where platforms hide costs, and how to calculate your actual cost per trade.',
+        summary: 'SkinSlinger (2.5% total), CSFloat (5.3%), CS.Money (7%), Skinport (8%), DMarket (9.5%), Steam Market (15%+): here is what each fee covers, where platforms hide costs, and how to calculate your actual cost per trade.',
         image: '/logo.png',
-        tldr: 'Total fee comparisons across the six major skin marketplaces in 2026: SkinSlinger 2%, CSFloat 5.3%, CS.Money 7%, Skinport 8%, DMarket 9.5%, Steam Market 15%+. The headline sales fee is rarely the complete picture. CSFloat\'s 2.8% deposit fee, DMarket\'s 2.5% withdrawal fee, and Steam\'s permanent fund lock-in add costs that the sales percentage alone does not capture. Fee data sourced from pricempire.com.',
+        tldr: 'Total fee comparisons across the six major skin marketplaces in 2026: SkinSlinger 2.5%, CSFloat 5.3%, CS.Money 7%, Skinport 8%, DMarket 9.5%, Steam Market 15%+. The headline sales fee is rarely the complete picture. CSFloat\'s 2.8% deposit fee, DMarket\'s 2.5% withdrawal fee, and Steam\'s permanent fund lock-in add costs that the sales percentage alone does not capture. Fee data sourced from pricempire.com.',
         body: [
             {
                 text: 'Most skin marketplace fee comparisons show only the sales percentage. That number is the most visible cost but often not the largest one. A platform advertising a 2% sales fee may charge 2.8% to deposit funds, recovering more than the savings on sales. A 0% withdrawal fee is meaningless if proceeds are permanently locked as platform credit. This guide uses real fee data from pricempire.com to compare six platforms across all three fee types: sales, deposit, and withdrawal.',
             },
             {
-                heading: 'SkinSlinger: 0% Sales, 0% Deposit, 2% Withdrawal',
-                text: 'SkinSlinger charges no fee on sales and no fee on deposits. The only charge is a 2% withdrawal fee when moving USDC out of the platform. For a seller making $200 per month in CS2 skin sales, the total annual cost is $48 on $2,400 in proceeds. Total fee as a percentage of transaction value: 2%. Payments are in USDC on Polygon, withdrawable to any compatible wallet.',
+                heading: 'SkinSlinger: 0% Sales, 0% Deposit, 2.5% Withdrawal',
+                text: 'SkinSlinger charges no fee on sales and no fee on deposits. The only charge is a withdrawal fee when moving USDC out of the platform: 2.5%, falling to 0.5% as your trade volume grows. For a seller making $200 per month in CS2 skin sales, the total annual cost is at most $60 on $2,400 in proceeds. Total fee as a percentage of transaction value: 2.5% or less. Payments are in USDC on Polygon, withdrawable to any compatible wallet.',
             },
             {
                 heading: 'CSFloat: 2% Sales, 2.8% Deposit, 0.5% Withdrawal',
@@ -366,15 +366,15 @@ export const posts: Post[] = [
             },
             {
                 heading: 'How to Calculate Your Actual Cost Per Trade',
-                text: 'The relevant calculation depends on your use case. Sellers should add sales fee plus withdrawal fee and divide by the gross sale price. On SkinSlinger: sell a $100 skin, receive $100 USDC, withdraw and pay $2, net $98 or a 2% total cost. On DMarket: sell a $100 skin, receive $93, withdraw and pay $2.33, net $90.67 or a 9.3% total cost. Buyers should add any deposit fee to the purchase price. On CSFloat: deposit $100, credit $97.20 after the 2.8% fee, spend that on a purchase. The effective item cost is 2.8% higher than the listed price before any other fee.',
+                text: 'The relevant calculation depends on your use case. Sellers should add sales fee plus withdrawal fee and divide by the gross sale price. On SkinSlinger: sell a $100 skin, receive $100 USDC, withdraw and pay $2.50, net $97.50 or a 2.5% total cost. On DMarket: sell a $100 skin, receive $93, withdraw and pay $2.33, net $90.67 or a 9.3% total cost. Buyers should add any deposit fee to the purchase price. On CSFloat: deposit $100, credit $97.20 after the 2.8% fee, spend that on a purchase. The effective item cost is 2.8% higher than the listed price before any other fee.',
             },
             {
                 heading: 'Why Fee Structure Matters More Than Headline Percentage',
-                text: 'Platform fee structures are designed to make the most-visible number look competitive while recovering margin elsewhere. CSFloat\'s 2% sales fee is the lowest sales rate in this comparison, but its 2.8% deposit fee makes it the second-most-expensive total for an active buyer-seller. DMarket\'s 7% sales fee matches CS.Money, but the additional 2.5% withdrawal fee makes it the second-most-expensive for sellers who actually want to extract money. The only platform in this comparison where the visible fee is also the complete cost is SkinSlinger, where the 2% withdrawal fee is the only fee charged. Everything else is zero.',
+                text: 'Platform fee structures are designed to make the most-visible number look competitive while recovering margin elsewhere. CSFloat\'s 2% sales fee is the lowest sales rate in this comparison, but its 2.8% deposit fee makes it the second-most-expensive total for an active buyer-seller. DMarket\'s 7% sales fee matches CS.Money, but the additional 2.5% withdrawal fee makes it the second-most-expensive for sellers who actually want to extract money. The only platform in this comparison where the visible fee is also the complete cost is SkinSlinger, where the 2.5% withdrawal fee is the only fee charged. Everything else is zero.',
             },
             {
                 heading: 'FAQ',
-                text: 'What is the lowest fee skin marketplace in 2026? SkinSlinger charges 2% total (withdrawal only). No sales fee, no deposit fee. What does "total fee" mean in this comparison? The combined cost of sales fee, deposit fee, and withdrawal fee as a percentage of transaction value for a typical sell-and-withdraw cycle. Are these fees based on official sources? Fee data is sourced from pricempire.com. Individual platform terms may vary and should be verified directly before trading.',
+                text: 'What is the lowest fee skin marketplace in 2026? SkinSlinger charges 2.5% total (withdrawal only). No sales fee, no deposit fee. What does "total fee" mean in this comparison? The combined cost of sales fee, deposit fee, and withdrawal fee as a percentage of transaction value for a typical sell-and-withdraw cycle. Are these fees based on official sources? Fee data is sourced from pricempire.com. Individual platform terms may vary and should be verified directly before trading.',
             },
         ],
         authorPerspective: 'The DMarket fee structure is the most misleading in this comparison because the 7% sales fee is competitive and prominently displayed, but the 2.5% withdrawal fee that turns it into 9.3% effective cost is much harder to find in their documentation. I have watched traders choose DMarket over lower-fee alternatives because they compared sales percentages and stopped there. The total-cost calculation is the only number that matters, and platforms that separate fees across multiple line items are almost always doing so because the total looks worse than any individual component.',
@@ -495,7 +495,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Cashing Out: USDC on Polygon',
-                text: 'Sales are credited in USDC, a dollar-pegged stablecoin, on the Polygon network. Withdrawals go to any Polygon-compatible wallet and typically confirm in under 5 minutes. The withdrawal fee is a flat 2%. From a wallet, USDC converts to local currency on any major exchange - which is the step Steam Wallet credit can never make.',
+                text: 'Sales are credited in USDC, a dollar-pegged stablecoin, on the Polygon network. Withdrawals go to any Polygon-compatible wallet and typically confirm in under 5 minutes. The withdrawal fee starts at 2.5% and falls to 0.5% with trade volume. From a wallet, USDC converts to local currency on any major exchange - which is the step Steam Wallet credit can never make.',
             },
             {
                 heading: 'One Prerequisite: Steam Guard',
@@ -533,7 +533,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Getting Paid Without KYC',
-                text: 'Withdrawals are in USDC on the Polygon network, to any wallet you control, and confirm in minutes. There is no identity verification at sign-up, while trading, or at withdrawal - at any volume. The withdrawal fee is a flat 2%, which for a Dota 2 seller clearing a few high-value items is the only fee in the entire flow.',
+                text: 'Withdrawals are in USDC on the Polygon network, to any wallet you control, and confirm in minutes. There is no identity verification at sign-up, while trading, or at withdrawal - at any volume. The withdrawal fee starts at 2.5% and falls to 0.5% with trade volume, which for a Dota 2 seller clearing a few high-value items is the only fee in the entire flow.',
             },
         ],
         authorPerspective: 'Dota 2 sellers are the most underserved group in the Steam economy: the items are valuable, the marketplaces are few, and instant-buy spreads are brutal. If you own an arcana or immortal you no longer use, pricing it yourself on a P2P market is the single highest-return change you can make to how you sell.',
@@ -567,7 +567,7 @@ export const posts: Post[] = [
             },
             {
                 heading: 'Cashing Out a High-Value Sale',
-                text: 'USDC withdrawals go to any Polygon wallet and confirm in minutes, with no identity verification at any amount - relevant for unusual sellers specifically, because a single sale can cross the payout thresholds at which other platforms demand documents. The withdrawal fee is a flat 2%, so a $500 unusual sale costs $10 end to end, against $50 on a 10% platform or $75 in locked credit on Steam.',
+                text: 'USDC withdrawals go to any Polygon wallet and confirm in minutes, with no identity verification at any amount - relevant for unusual sellers specifically, because a single sale can cross the payout thresholds at which other platforms demand documents. The withdrawal fee starts at 2.5%, so a $500 unusual sale costs at most $12.50 end to end, against $50 on a 10% platform or $75 in locked credit on Steam.',
             },
             {
                 heading: 'Listing Tips for Unusual Sellers',
