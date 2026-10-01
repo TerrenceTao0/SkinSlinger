@@ -23,7 +23,7 @@ const url_start = "https://steamcommunity.com/tradeoffer/new/?partner="
 //
 
 function PromptSteamUrl({ onSubmit, checkUrl, error, waiting, url }: {
-    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void,
+    onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void,
     checkUrl: (event: React.ChangeEvent<HTMLInputElement>) => void,
     error: string,
     waiting: boolean,
@@ -139,7 +139,10 @@ function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
             <div className="fixed inset-0 z-6 flex items-center justify-center">
                 <div className="flex flex-col bg-secondary rounded-sm frame-shadow p-6 gap-4 w-full max-w-md mx-4">
                     <div className="flex flex-col gap-1">
-                        <p className="text-xl font-semibold">Want email notifications?</p>
+                        <p className="text-xl font-semibold">
+                            Want email notifications?
+                        </p>
+
                         <p className="text-sm text-gray-400">
                             {step === "done"
                                 ? "You're all set — we'll email you about sales and trades."
@@ -180,6 +183,7 @@ function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
                             <p className="text-sm text-gray-400">
                                 Enter the code sent to <span className="text-white break-all">{email}</span>.
                             </p>
+
                             <input
                                 value={code}
                                 onChange={e => setCode(e.target.value)}
@@ -187,7 +191,13 @@ function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
                                 placeholder="1234"
                                 className="w-full h-10 bg-accent rounded-sm border border-gray-500 outline-none px-3 text-sm tracking-widest"
                             />
-                            {error && <p className="text-red-500 text-xs">{error}</p>}
+
+                            {error && (
+                                <p className="text-red-500 text-xs">
+                                    {error}
+                                </p>
+                            )}
+                           
                             <div className="flex gap-2">
                                 <button
                                     onClick={onDone}
@@ -195,6 +205,7 @@ function PromptNotificationEmail({ onDone }: { onDone: () => void }) {
                                 >
                                     Skip
                                 </button>
+
                                 <button
                                     onClick={confirm}
                                     disabled={loading || code.trim().length === 0}
@@ -235,53 +246,71 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
     // null = still loading, number = resolved (0 means not found / too cheap)
     const [livePrices, setLivePrices] = useState<Map<string, number | null>>(() => {
         const map = new Map<string, number | null>();
+
         for (const item of inventory) {
             if (!map.has(item.market_name)) {
                 map.set(item.market_name, item.price > 0 ? item.price : null);
             }
         }
+
+
         return map;
     });
 
+
     useEffect(() => {
         setLastRefreshDisplay(timeAgo(lastRefresh));
+
         const id = setInterval(() => setLastRefreshDisplay(timeAgo(lastRefresh)), 10000);
         return () => clearInterval(id);
     }, [lastRefresh]);
 
+
     useEffect(() => {
         setLivePrices(prev => {
             const next = new Map(prev);
+
             for (const item of inventory) {
                 if (!next.has(item.market_name)) {
                     next.set(item.market_name, item.price > 0 ? item.price : null);
                 }
             }
+
+
             return next;
         });
     }, [inventory]);
 
+
     useEffect(() => {
         const seen = new Set<string>();
+
         const unpriced = inventory.filter(i => {
             if (i.price > 0 || seen.has(i.market_name)) return false;
+
             seen.add(i.market_name);
+
             return true;
         });
+
 
         // Collect unique sticker names from items that have stickers
         const stickerSeen = new Set<string>();
         const stickerItems: { market_name: string; market_hash_name: string; game: string }[] = [];
+
         for (const item of inventory) {
             if (!item.stickers) continue;
+
             for (const s of item.stickers) {
                 const name = `Sticker | ${s.name}`;
+
                 if (!stickerSeen.has(name)) {
                     stickerSeen.add(name);
                     stickerItems.push({ market_name: name, market_hash_name: name, game: 'CS2' });
                 }
             }
         }
+
 
         if (unpriced.length === 0 && stickerItems.length === 0) return;
 
@@ -299,24 +328,32 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                     signal: controller.signal
                 });
 
+
                 if (!res.body) return;
 
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
 
+                
                 // Batch streamed prices into one state flush per interval — a setState
                 // per NDJSON line re-renders the whole grid for every single item.
                 let pending = new Map<string, number>();
                 let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
                 const flush = () => {
                     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
                     if (pending.size === 0) return;
+
                     const updates = pending;
                     pending = new Map();
+
                     setLivePrices(prev => {
                         const next = new Map(prev);
-                        for (const [name, price] of updates) next.set(name, price);
+                        for (const [name, price] of updates) {
+                            next.set(name, price);
+                        }
+
                         return next;
                     });
                 };
@@ -369,7 +406,7 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
     }
 
 
-    async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (error != "") {
