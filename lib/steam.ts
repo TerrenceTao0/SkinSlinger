@@ -174,16 +174,16 @@ export async function fetchItemPrice(market_hash_name: string, game: string): Pr
 }
 
 
-// Fetches a player's inventory for any supported game from steamwebapi.
-// Returns tradable items with price set to 0 (prices are looked up separately from our DB).
-async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
+// Pages through a player's raw inventory for one game from steamwebapi. `complete` is false
+// when a page failed, so a failed lookup can't be mistaken for a small or empty inventory.
+async function fetchInventoryPages(steam_id: string, game: string, includeUntradable: boolean): Promise<{ items: { assetid: string }[], complete: boolean }> {
     // Steam caps each request at 2000 items, so larger inventories must be paged using start_assetid (the last_assetid response header).
     const PAGE_SIZE = 2000;
     const MAX_PAGES = 25;
 
     try {
         const slug = game_slugs[game] ?? "cs2";
-        const raw: any[] = [];
+        const items: { assetid: string }[] = [];
         let startAssetId: string | null = null;
 
         for (let page = 0; page < MAX_PAGES; page++) {
@@ -194,28 +194,48 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
             url.searchParams.set("limit", String(PAGE_SIZE));
             url.searchParams.set("no_cache", "1");
 
+            if (includeUntradable) {
+                url.searchParams.set("with_no_tradable", "1");
+            }
+
             if (startAssetId) {
                 url.searchParams.set("start_assetid", startAssetId);
             }
 
             const response = await fetch(url.toString());
 
-            if (!response.ok) break;
+            if (!response.ok) return { items, complete: false };
 
-            const items: any[] = await response.json();
+            const pageItems: { assetid: string }[] = await response.json();
 
-            if (!Array.isArray(items) || items.length === 0) break;
+            if (!Array.isArray(pageItems)) return { items, complete: false };
+            if (pageItems.length === 0) return { items, complete: true };
 
-            raw.push(...items);
+            items.push(...pageItems);
 
             // Last page when the API returns a partial page or stops handing back a cursor.
+            // A full page with no cursor may have more behind it, so it doesn't count as complete.
             const lastAssetId = response.headers.get("last_assetid");
 
-            if (items.length < PAGE_SIZE || !lastAssetId) break;
+            if (pageItems.length < PAGE_SIZE) return { items, complete: true };
+            if (!lastAssetId) return { items, complete: false };
 
             startAssetId = lastAssetId;
         }
 
+        return { items, complete: false };
+    }
+    catch {
+        return { items: [], complete: false };
+    }
+}
+
+
+// Fetches a player's inventory for any supported game from steamwebapi.
+// Returns tradable items with price set to 0 (prices are looked up separately from our DB).
+async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
+    try {
+        const { items: raw } = await fetchInventoryPages(steam_id, game, false);
 
         return raw
             .filter((item: any) => item.tradable)
@@ -253,6 +273,18 @@ export async function getInventory(steam_id: string): Promise<SteamItem[]> {
 
 
     return [...cs2, ...dota2, ...rust, ...tf2];
+}
+
+
+// Every asset a player currently holds in one game, in the `${game}:${assetid}` form listings
+// use. Null when the inventory couldn't be read in full or came back empty, so a caller that
+// removes listings never acts on a failed lookup.
+export async function fetchOwnedAssetIds(steam_id: string, game: string): Promise<Set<string> | null> {
+    const { items, complete } = await fetchInventoryPages(steam_id, game, true);
+
+    if (!complete || items.length === 0) return null;
+
+    return new Set(items.map(item => `${game}:${item.assetid}`));
 }
 
 
