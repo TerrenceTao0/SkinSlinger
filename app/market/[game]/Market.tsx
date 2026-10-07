@@ -5,7 +5,7 @@ import LeftPanel from "./LeftMarketPanel";
 import ListingCard from "./ListingCard";
 import { BasketItem } from "@/lib/basket";
 import { useBasket } from "@/app/components/BasketProvider";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toSlug } from "@/app/lib/site";
 import { Prompt } from "@/app/components/Prompt";
@@ -37,12 +37,14 @@ type Filters = {
     wear: string | null,
     minFloat: string,
     maxFloat: string,
+    type: string | null,
+    rarity: string | null,
 }
 
 //
 
 function hasActiveFilters(f: Filters): boolean {
-    return !!(f.search || f.minPrice || f.maxPrice || f.wear || f.minFloat || f.maxFloat);
+    return !!(f.search || f.minPrice || f.maxPrice || f.wear || f.minFloat || f.maxFloat || f.type || f.rarity);
 }
 
 
@@ -55,6 +57,8 @@ function filterParams(f: Filters): URLSearchParams {
     if (f.wear) p.set("wear", f.wear);
     if (f.minFloat) p.set("minFloat", f.minFloat);
     if (f.maxFloat) p.set("maxFloat", f.maxFloat);
+    if (f.type) p.set("type", f.type);
+    if (f.rarity) p.set("rarity", f.rarity);
 
     return p;
 }
@@ -106,6 +110,8 @@ export default function HomeClient(
         wear: searchParams.get("wear"),
         minFloat: searchParams.get("minFloat") ?? "",
         maxFloat: searchParams.get("maxFloat") ?? "",
+        type: searchParams.get("type"),
+        rarity: searchParams.get("rarity"),
     }));
 
     const [hasStickers, setHasStickers] = useState(searchParams.get("stickers") !== "0");
@@ -119,7 +125,6 @@ export default function HomeClient(
 
     const loadingRef = useRef(false);
     const sentinelRef = useRef<HTMLDivElement>(null);
-    const mobileSentinelRef = useRef<HTMLDivElement>(null);
 
 
     // ListingCard is memoized and may hold a stale onBuy closure, so handleBuy must
@@ -225,18 +230,13 @@ export default function HomeClient(
         }
 
 
-        if (mobileSentinelRef.current) {
-            observer.observe(mobileSentinelRef.current);
-        }
-
-
         return () => observer.disconnect();
     }, [hasMore, cursor, load]);
 
 
     function handleBuy(item: DisplayCard, qty: number = 1) {
         if (sessionRef.current === null) {
-            router.push("/sign-up");
+            signIn("steam");
 
             return;
         }
@@ -350,6 +350,8 @@ export default function HomeClient(
                 wear={filters.wear} setWear={v => setFilter("wear", v)}
                 minFloat={filters.minFloat} setMinFloat={v => setFilter("minFloat", v)}
                 maxFloat={filters.maxFloat} setMaxFloat={v => setFilter("maxFloat", v)}
+                type={filters.type} setType={v => setFilter("type", v)}
+                rarity={filters.rarity} setRarity={v => setFilter("rarity", v)}
                 hasStickers={hasStickers} setHasStickers={setHasStickers}
             />
 
@@ -366,9 +368,9 @@ export default function HomeClient(
             )}
 
 
-            {/* Mobile layout */}
-            <div className="md:hidden flex flex-col flex-1 min-h-0 px-[2.5%]">
-                <div className="border border-gray-800 frame-shadow h-14 flex items-center px-4 shrink-0 rounded-sm">
+            {/* Search + grid */}
+            <div className="flex flex-col gap-2 flex-1 min-h-0 mx-[2.5%] md:mt-20 md:mb-4 md:ml-[calc(2.5%+11.5rem)] 2xl:ml-[calc(2.5%+16.75rem)]">
+                <div className="border border-gray-800 frame-shadow h-14 md:h-13 flex items-center px-4 rounded-sm shrink-0">
                     <input
                         type="text"
                         placeholder="Search items..."
@@ -378,8 +380,8 @@ export default function HomeClient(
                     />
                 </div>
 
-                <div className="overflow-y-auto flex-1 border border-gray-800 frame-shadow mt-2 p-3 rounded-sm flex flex-col">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 justify-start content-start">
+                <div className="border border-gray-800 frame-shadow overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 justify-start content-start gap-2">
                         {displayListings.map(listing => (
                             <ListingCard
                                 key={listing.id} {...listing}
@@ -390,38 +392,7 @@ export default function HomeClient(
                         ))}
                     </div>
 
-                    <div ref={mobileSentinelRef} className="h-1 shrink-0" />
-                </div>
-            </div>
-
-
-            {/* Desktop layout */}
-            <div className="hidden md:flex flex-1 min-h-0 mt-20 mb-4 mr-[2.5%] ml-[calc(2.5%+11.5rem)]">
-                <div className="flex-1 flex flex-col gap-2 min-h-0">
-                    <div className="border border-gray-800 frame-shadow w-full h-13 flex items-center px-4 rounded-sm shrink-0">
-                        <input
-                            type="text"
-                            placeholder="Search items..."
-                            value={filters.search}
-                            onChange={e => setFilter("search", e.target.value)}
-                            className="bg-accent rounded-sm h-9 w-full px-3 outline-none border border-gray-500 text-sm"
-                        />
-                    </div>
-
-                    <div className="border border-gray-800 frame-shadow w-full overflow-y-auto flex-1 min-h-0 p-3 rounded-sm flex flex-col">
-                        <div className="grid grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 justify-start content-start gap-2">
-                            {displayListings.map(listing => (
-                                <ListingCard
-                                    key={listing.id} {...listing}
-                                    currentUserId={currentUserId}
-                                    onBuy={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : handleBuy(listing)}
-                                    onPreview={() => listing.commodity ? router.push(`/item/${toSlug(listing.marketName)}`) : router.push(`/item/${toSlug(listing.marketName)}/${listing.id}`)}
-                                />
-                            ))}
-                        </div>
-
-                        <div ref={sentinelRef} className="h-1 shrink-0" />
-                    </div>
+                    <div ref={sentinelRef} className="h-1 shrink-0" />
                 </div>
             </div>
         </>

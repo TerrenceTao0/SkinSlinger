@@ -4,9 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import ItemPageClient from "./ItemPageClient";
+import PriceHistory from "@/app/components/PriceHistory";
 import { GAME_NAMES, GAME_SLUGS, getBaseUrl, JsonLd } from "@/app/lib/site";
 
 //
@@ -174,7 +175,11 @@ export default async function ItemTypePage({ params }: { params: Promise<{ slug:
                 currentUserId={userId}
                 hasPendingPurchase={pendingCount > 0}
                 initialUserCash={session?.user?.cash ?? 0}
-            />
+            >
+                <Suspense fallback={null}>
+                    <PriceHistory marketName={marketName} game={inv.game} />
+                </Suspense>
+            </ItemPageClient>
             <JsonLd data={jsonLd} />
             <JsonLd data={breadcrumbJsonLd} />
         </>

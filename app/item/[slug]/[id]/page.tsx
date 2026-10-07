@@ -2,11 +2,13 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import BuyButton from "./BuyButton";
 import FloatBar from "@/app/components/FloatBar";
+import PriceHistory from "@/app/components/PriceHistory";
 import { GAME_NAMES, GAME_SLUGS, getBaseUrl, JsonLd } from "@/app/lib/site";
+import { RARITIES, rarityBackground } from "@/lib/rarity";
 
 function wearLabel(f: number): string {
     if (f < 0.07) return 'Factory New';
@@ -24,14 +26,15 @@ const getListing = cache(async (id: string) => {
         return null;
     }
 
-    const [float, commodityCount] = await Promise.all([
+    const [float, commodityCount, seller] = await Promise.all([
         prisma.item_float.findUnique({ where: { assetId: listing.assetId } }),
         listing.commodity
             ? prisma.item_listing.count({ where: { marketName: listing.marketName, commodity: true } })
             : Promise.resolve(1),
+        prisma.user.findUnique({ where: { id: listing.userId }, select: { steam_id: true, name: true, image: true } }),
     ]);
 
-    return { listing, float, commodityCount };
+    return { listing, float, commodityCount, seller };
 });
 
 //
@@ -73,14 +76,16 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
     const data = await getListing(id);
     if (!data) notFound();
 
-    const { listing, float, commodityCount } = data;
+    const { listing, float, commodityCount, seller } = data;
     const gameName = GAME_NAMES[listing.game!] ?? listing.game!;
     const gameSlug = GAME_SLUGS[listing.game!] ?? "cs2";
 
-    const sellerSteamId = from === "profile"
-        ? (await prisma.user.findUnique({ where: { id: listing.userId }, select: { steam_id: true, name: true } }))
-        : null;
+    const sellerSteamId = from === "profile" ? seller : null;
     const stickers = float?.stickers as { stickerId: number; slot: number; name: string; image: string; wear: number | null }[] | null;
+
+    // CS2 commodities reuse these colours under other tier names, so only skins get a label
+    const hasRarityName = !(listing.game === "CS2" && listing.commodity);
+    const rarity = hasRarityName ? RARITIES[listing.game!]?.find(r => r.hex === listing.hexColor!.toLowerCase()) : undefined;
 
     const base = getBaseUrl();
 
@@ -113,8 +118,8 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
     };
 
     return (
-        <div className="overflow-y-auto h-full flex justify-center items-center py-12 px-4">
-            <div className="w-full max-w-sm flex flex-col gap-6">
+        <div className="overflow-y-auto h-full pt-24 pb-12 px-4 flex justify-center">
+            <div className="w-full max-w-4xl flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
                     {sellerSteamId?.steam_id ? (
                         <Link href={`/user/${sellerSteamId.steam_id}`} className="text-sm text-gray-400 hover:text-white transition-colors">
@@ -132,68 +137,117 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                     )}
                 </div>
 
-                <div
-                    className="bg-secondary rounded-sm p-8 flex flex-col items-center gap-4"
-                    style={{ boxShadow: `0 0 40px #${listing.hexColor}33, 0 8px 32px rgba(0,0,0,0.6)` }}
-                >
-                    <div style={{ filter: `drop-shadow(0 0 16px #${listing.hexColor}99)` }}>
-                        <Image src={listing.icon!} alt={listing.marketName} width={220} height={220} style={{ width: 'auto', height: 'auto' }} />
+                <div className="flex flex-col md:flex-row gap-4">
+
+                    {/* Item art */}
+                    <div
+                        className="bg-accent rounded-sm frame-shadow flex-1 min-h-72 md:min-h-112 flex items-center justify-center p-8"
+                        style={{ border: `1px solid #${listing.hexColor}`, background: rarityBackground(listing.hexColor!, 50) }}
+                    >
+                        <Image
+                            src={listing.icon!}
+                            alt={listing.marketName}
+                            width={360}
+                            height={360}
+                            style={{ width: 'auto', height: 'auto', maxHeight: '300px', filter: `drop-shadow(0 12px 24px #${listing.hexColor}66)` }}
+                            priority
+                        />
                     </div>
 
-                    <h1 style={{ color: `#${listing.hexColor}` }} className="text-xl font-semibold text-center">
-                        {listing.marketName}
-                    </h1>
+                    {/* Details and buy */}
+                    <div className="bg-secondary rounded-sm frame-shadow p-6 flex flex-col gap-4 w-full md:w-88 shrink-0">
+                        <div className="flex flex-col gap-2.5">
+                            <h1 style={{ color: `#${listing.hexColor}` }} className="text-xl font-semibold">
+                                {listing.marketName}
+                            </h1>
 
-                    <span className="text-xs text-gray-500 bg-accent px-2 py-1 rounded-sm">{gameName}</span>
+                            <div className="flex flex-wrap gap-1.5 text-xs">
+                                <span className="text-gray-400 bg-accent px-2 py-1 rounded-sm">{gameName}</span>
 
-                    <div className="w-full flex flex-col gap-2.5 text-sm border-t border-gray-700/60 pt-4">
-                        <div className="flex justify-between">
-                            <span className="text-gray-400">Price</span>
-                            <span className="font-semibold">${listing.price.toFixed(2)}</span>
+                                {rarity && (
+                                    <span style={{ color: `#${rarity.hex}` }} className="bg-accent px-2 py-1 rounded-sm">{rarity.label}</span>
+                                )}
+
+                                {float?.floatValue != null && (
+                                    <span className="text-gray-400 bg-accent px-2 py-1 rounded-sm">{wearLabel(float.floatValue)}</span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-baseline justify-between border-t border-gray-700/60 pt-4">
+                            <span className="text-sm text-gray-400">Price</span>
+                            <span className="text-3xl font-semibold [font-family:var(--font-display)]">${listing.price.toFixed(2)}</span>
                         </div>
 
                         {float?.floatValue != null && (
-                            <div className="flex flex-col gap-1.5">
-                                <div className="flex justify-between text-sm">
+                            <div className="flex flex-col gap-1.5 text-sm">
+                                <div className="flex justify-between">
                                     <span className="text-gray-400">Float</span>
-                                    <span className="text-xs text-gray-400">{wearLabel(float.floatValue)}</span>
+                                    <span className="font-mono">{float.floatValue.toFixed(10).replace(/0+$/, '')}</span>
                                 </div>
-                                <FloatBar value={float.floatValue} />
+
+                                <FloatBar value={float.floatValue} showLabels={false} />
                             </div>
                         )}
 
                         {float?.paintSeed != null && (
-                            <div className="flex justify-between">
+                            <div className="flex justify-between text-sm">
                                 <span className="text-gray-400">Pattern</span>
                                 <span>#{float.paintSeed}</span>
                             </div>
                         )}
-                    </div>
 
-                    {stickers && stickers.length > 0 && (
-                        <div className="w-full flex flex-col gap-2">
-                            <span className="text-sm text-gray-400">Stickers</span>
-                            <div className="flex gap-2 flex-wrap">
+                        {stickers && stickers.length > 0 && (
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-sm text-gray-400">Stickers</span>
+
                                 {stickers.map((s, i) => (
-                                    <div key={i} className="flex flex-col items-center gap-0.5" title={s.name}>
-                                        <Image src={s.image} alt={s.name} width={40} height={40} className="h-10 w-auto" />
-                                        <span className="text-[10px] text-gray-500 max-w-10 truncate">{s.name}</span>
+                                    <div key={i} className="flex items-center gap-2.5 bg-accent rounded-sm px-2 py-1.5">
+                                        <Image src={s.image} alt={s.name} width={40} height={40} className="h-8 w-auto shrink-0" />
+                                        <span className="text-xs truncate" title={s.name}>{s.name}</span>
+
+                                        {s.wear ? (
+                                            <span className="text-[11px] text-gray-500 ml-auto shrink-0">{Math.round(s.wear * 100)}% worn</span>
+                                        ) : null}
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    <BuyButton
-                        id={listing.id}
-                        marketName={listing.marketName}
-                        price={listing.price}
-                        icon={listing.icon!}
-                        hexColor={listing.hexColor!}
-                        commodity={listing.commodity}
-                        maxQuantity={commodityCount}
-                    />
+                        <div className="mt-auto pt-2 flex flex-col gap-4">
+                            {seller?.steam_id && (
+                                <div className="flex flex-col gap-1.5">
+                                    <span className="text-sm text-gray-400">Seller</span>
+
+                                    <Link href={`/user/${seller.steam_id}`} className="flex items-center gap-2.5 bg-accent rounded-sm px-2 py-1.5 button">
+                                        {seller.image && (
+                                            <Image src={seller.image} alt="" width={36} height={36} className="rounded-sm shrink-0" />
+                                        )}
+
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-sm truncate">{seller.name ?? "Seller"}</span>
+                                            <span className="text-[11px] text-gray-500">Steam ID <span className="font-mono text-gray-400">{seller.steam_id}</span></span>
+                                        </div>
+                                    </Link>
+                                </div>
+                            )}
+
+                            <BuyButton
+                                id={listing.id}
+                                marketName={listing.marketName}
+                                price={listing.price}
+                                icon={listing.icon!}
+                                hexColor={listing.hexColor!}
+                                commodity={listing.commodity}
+                                maxQuantity={commodityCount}
+                            />
+                        </div>
+                    </div>
                 </div>
+
+                <Suspense fallback={null}>
+                    <PriceHistory marketName={listing.marketName} game={listing.game!} />
+                </Suspense>
             </div>
 
             <JsonLd data={jsonLd} />

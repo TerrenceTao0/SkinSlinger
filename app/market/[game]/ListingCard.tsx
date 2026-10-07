@@ -6,6 +6,7 @@ import { memo } from "react";
 import { DisplayCard } from "./Market";
 import FloatBar from "@/app/components/FloatBar";
 import { toSlug } from "@/app/lib/site";
+import { rarityBackground } from "@/lib/rarity";
 
 
 //
@@ -33,9 +34,12 @@ function ListingCard(
     return (
         <div
             className="bg-accent rounded-sm h-60 overflow-hidden relative w-full transition-all duration-200 hover:scale-[1.04] hover:-translate-y-1 hover:z-10 hover:[box-shadow:0_8px_20px_var(--glow),0_4px_10px_rgba(0,0,0,0.5)]"
-            style={{ '--glow': `#${hexColor}44`, border: `1px solid #${hexColor}` } as React.CSSProperties}
+            style={{
+                '--glow': `#${hexColor}44`,
+                border: `1px solid #${hexColor}`,
+                background: rarityBackground(hexColor, 38),
+            } as React.CSSProperties}
         >
-            <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none z-1" style={{ background: `linear-gradient(to bottom, #${hexColor}88, transparent)` }} />
   
             <div className="absolute top-0 left-0 right-0 px-2 pt-2 z-2 flex items-start justify-between gap-1">
                 <Link
@@ -62,7 +66,7 @@ function ListingCard(
                     alt={marketName}
                     width={100}
                     height={100}
-                    style={{ width: 'auto', height: 'auto', maxHeight: '100px' }}
+                    style={{ width: 'auto', height: 'auto', maxHeight: '100px', filter: `drop-shadow(0 6px 12px #${hexColor}55)` }}
                 />
             </button>
 

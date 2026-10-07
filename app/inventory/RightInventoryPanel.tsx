@@ -229,6 +229,67 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
 
     const totalItems = stackedQueue.reduce((sum, item) => sum + item.quantity, 0);
 
+
+    // Shared by the mobile queue modal and the desktop sidebar
+    const discountButtons = (
+        <div className="flex gap-1">
+            {discounts.map(d => (
+                <button
+                    key={d}
+                    onClick={() => {
+                        const next: Record<string, string> = {};
+
+                        for (const item of stackedQueue) {
+                            const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
+                            next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
+                        }
+
+
+                        setPriceMap(next);
+                    }}
+                    className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
+                >
+                    {d === 0 ? '0%' : `-${d}%`}
+                </button>
+            ))}
+
+            {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
+                const allMatch = stackedQueue.every(item => {
+                    const bid = bidMap[item.market_name];
+                    return bid && priceMap[item.market_name] === bid.toFixed(2);
+                });
+
+
+                return (
+                    <button
+                        onClick={applyInstantSell}
+                        className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
+                    >
+                        Instant
+                    </button>
+                );
+            })()}
+        </div>
+    );
+
+    const queueCards = stackedQueue.map((item) => (
+        <SellItemCard
+            key={item.market_name}
+            market_name={item.market_name}
+            quantity={item.quantity}
+            icon={item.icon}
+            hexColor={item.hexColor}
+            priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
+            setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
+            marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
+            minPrice={minPrice(item)}
+            maxPrice={maxPrice(item)}
+            bidPrice={bidMap[item.market_name] ?? null}
+            remove={() => remove(item.market_name)}
+        />
+    ));
+
+
     return (
         <>
             {showPrompt && (
@@ -249,64 +310,12 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                                 Global discount modifiers
                             </p>
 
-                            <div className="flex gap-1">
-                                {discounts.map(d => (
-                                    <button
-                                        key={d}
-                                        onClick={() => {
-                                            const next: Record<string, string> = {};
-
-                                            for (const item of stackedQueue) {
-                                                const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
-                                                next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
-                                            }
-
-                                            
-                                            setPriceMap(next);
-                                        }}
-                                        className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
-                                    >
-                                        {d === 0 ? '0%' : `-${d}%`}
-                                    </button>
-                                ))}
-                                
-                                {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
-                                    const allMatch = stackedQueue.every(item => {
-                                        const bid = bidMap[item.market_name];
-                                        return bid && priceMap[item.market_name] === bid.toFixed(2);
-                                    });
-
-
-                                    return (
-                                        <button
-                                            onClick={applyInstantSell}
-                                            className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
-                                        >
-                                            Instant
-                                        </button>
-                                    );
-                                })()}
-                            </div>
+                            {discountButtons}
                         </div>
                     </div>
 
                     <div className="overflow-y-auto flex-1 space-y-3">
-                        {stackedQueue.map((item) => (
-                            <SellItemCard
-                                key={item.market_name}
-                                market_name={item.market_name}
-                                quantity={item.quantity}
-                                icon={item.icon}
-                                hexColor={item.hexColor}
-                                priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
-                                setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
-                                marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
-                                minPrice={minPrice(item)}
-                                maxPrice={maxPrice(item)}
-                                bidPrice={bidMap[item.market_name] ?? null}
-                                remove={() => remove(item.market_name)}
-                            />
-                        ))}
+                        {queueCards}
                     </div>
 
                     <div className="flex gap-2 mt-3">
@@ -365,65 +374,13 @@ export default function RightPanel({ selling, setSelling, onListed, livePrices, 
                                     Global discount modifiers
                                 </span>
 
-                                <div className="flex gap-1">
-                                    {discounts.map(d => (
-                                        <button
-                                            key={d}
-                                            onClick={() => {
-                                                const next: Record<string, string> = {};
-
-                                                for (const item of stackedQueue) {
-                                                    const base = parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2));
-                                                    next[item.market_name] = (base * (1 - d / 100)).toFixed(2);
-                                                }
-
-
-                                                setPriceMap(next);
-                                            }}
-                                            className="flex-1 h-7 rounded-sm text-xs cursor-pointer bg-primary opacity-60 hover:opacity-100 transition-colors"
-                                        >
-                                            {d === 0 ? '0%' : `-${d}%`}
-                                        </button>
-                                    ))}
-
-                                    {stackedQueue.every(item => bidMap[item.market_name]) && (() => {
-                                        const allMatch = stackedQueue.every(item => {
-                                            const bid = bidMap[item.market_name];
-                                            return bid && priceMap[item.market_name] === bid.toFixed(2);
-                                        });
-
-
-                                        return (
-                                            <button
-                                                onClick={applyInstantSell}
-                                                className={`flex-1 h-7 rounded-sm text-xs cursor-pointer transition-colors ${allMatch ? 'bg-special' : 'bg-primary opacity-60 hover:opacity-100'}`}
-                                            >
-                                                Instant
-                                            </button>
-                                        );
-                                    })()}
-                                </div>
+                                {discountButtons}
                             </div>
                         </>
                     )}
 
                     <div className="flex flex-col pb-2">
-                        {stackedQueue.map((item) => (
-                            <SellItemCard
-                                key={item.market_name}
-                                market_name={item.market_name}
-                                quantity={item.quantity}
-                                icon={item.icon}
-                                hexColor={item.hexColor}
-                                priceStr={priceMap[item.market_name] ?? defaultPrice(item)}
-                                setPriceStr={(val) => setPriceMap(prev => ({ ...prev, [item.market_name]: val }))}
-                                marketPrice={parseFloat((livePrices.get(item.market_name) ?? item.price).toFixed(2))}
-                                minPrice={minPrice(item)}
-                                maxPrice={maxPrice(item)}
-                                bidPrice={bidMap[item.market_name] ?? null}
-                                remove={() => remove(item.market_name)}
-                            />
-                        ))}
+                        {queueCards}
                     </div>
                 </div>
 

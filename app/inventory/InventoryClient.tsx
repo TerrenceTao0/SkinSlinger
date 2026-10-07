@@ -359,10 +359,10 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
             }} livePrices={livePrices} inventoryToken={inventoryToken} />
 
 
-            {/* Mobile layout */}
-            <div className="md:hidden flex flex-col h-full pt-[72px] px-[2.5%]">
-                {/* Game filter*/}
-                <div className="flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar justify-center">
+            {/* Main column */}
+            <div className={`flex flex-col h-full pt-[72px] px-[2.5%] md:h-230 md:w-457 md:ml-12 md:pt-20 md:pl-46 md:pr-100${selling.length > 0 ? ' pb-16 md:pb-0' : ''}`}>
+                {/* Mobile game filter */}
+                <div className="md:hidden flex px-3 py-2 gap-1.5 overflow-x-auto no-scrollbar justify-center">
                     {(["CS2", "Dota2", "Rust", "TF2"] as const).map(g => (
                         <button
                             key={g}
@@ -379,15 +379,15 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                         <SteamUrlPrompt onLinked={onTradeUrlLinked} />
                     </div>
                 ) : (
-                    <div className={`flex flex-col flex-1 overflow-hidden${selling.length > 0 ? ' pb-16' : ''}`}>
+                    <>
                         {/* Info bar */}
-                        <div className="border border-gray-800 frame-shadow flex items-center px-4 py-3 rounded-sm shrink-0 gap-6">
+                        <div className="border border-gray-800 frame-shadow flex items-center px-4 py-3 gap-6 md:h-18 md:px-6 md:py-0 md:gap-10 rounded-sm shrink-0">
                             <div className="flex flex-col items-center">
                                 <span className="text-[11px] uppercase tracking-widest opacity-50">
                                     Items
                                 </span>
 
-                                <span className="text-xl">
+                                <span className="text-xl md:text-2xl">
                                     {stackedInventory.length}
                                 </span>
                             </div>
@@ -397,17 +397,17 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                                     Market Value
                                 </span>
 
-                                <span className="text-xl">
+                                <span className="text-xl md:text-2xl">
                                     ${totalValue.toFixed(2)}
                                 </span>
                             </div>
-                            
+
                             <div className="flex flex-col items-center ml-auto">
                                 <span className="text-[11px] uppercase tracking-widest opacity-50">
                                     Last Updated
                                 </span>
 
-                                <span className="text-xl">
+                                <span className="text-xl md:text-2xl">
                                     {lastRefreshDisplay}
                                 </span>
                             </div>
@@ -415,8 +415,8 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
 
 
                         {/* Grid */}
-                        <div className="overflow-y-auto flex-1 border border-gray-800 frame-shadow mt-2 p-3 rounded-sm">
-                            <div className="grid grid-cols-2 gap-2 justify-start content-start">
+                        <div className="overflow-y-auto flex-1 min-h-0 border border-gray-800 frame-shadow mt-2 p-3 rounded-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 justify-start content-start">
                                 {stackedInventory.map((item) => {
                                     const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
                                     const remaining = item.quantity - currentAmount;
@@ -436,81 +436,8 @@ export default function InventoryClient({ isSteamLinked, hasNotificationEmail, i
                                 })}
                             </div>
                         </div>
-                    </div>
+                    </>
                 )}
-            </div>
-
-
-            {/* Desktop layout */}
-            <div className="hidden md:flex h-230 ml-12 w-457">
-                <div className="w-43 shrink-0" />
-
-                <div className="flex-1 ml-3 mr-100 mt-20 flex flex-col gap-2">
-                    {!isSteamLinked ? (
-                        <div className="flex items-center justify-center flex-1">
-                            <SteamUrlPrompt onLinked={onTradeUrlLinked} />
-                        </div>
-                    ) : (
-                        <>
-                            {/* Top info bar */}
-                            <div className="border border-gray-800 frame-shadow h-18 flex items-center px-6 rounded-sm shrink-0">
-                                <div className="flex items-center gap-10">
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                            Items
-                                        </span>
-
-                                        <span className="text-2xl">
-                                            {stackedInventory.length}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                            Market Value
-                                        </span>
-
-                                        <span className="text-2xl">
-                                            ${totalValue.toFixed(2)}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex flex-col items-center ml-auto">
-                                    <span className="text-[11px] uppercase tracking-widest opacity-50">
-                                        Last Updated
-                                    </span>
-
-                                    <span className="text-2xl">
-                                        {lastRefreshDisplay}
-                                    </span>
-                                </div>
-                            </div>
-
-
-                            {/* Item display */}
-                            <div className="border border-gray-800 frame-shadow overflow-y-auto flex-1 min-h-0 grid grid-cols-5 justify-start content-start gap-2 p-3 rounded-sm">
-                                {stackedInventory.map((item) => {
-                                    const currentAmount = selling.filter(i => i.market_name === item.market_name).length;
-                                    const remaining = item.quantity - currentAmount;
-
-                                    if (remaining <= 0) return;
-
-                                    return (
-                                        <InventoryItemCard
-                                            key={item.assetId}
-                                            item={item}
-                                            quantity={remaining}
-                                            setSelling={setSelling}
-                                            hexColor={item.hexColor}
-                                            loading={livePrices.get(item.market_name) === null}
-                                        />
-                                    )
-                                })}
-                            </div>
-                        </>
-                    )}
-                </div>
             </div>
         </>
     )

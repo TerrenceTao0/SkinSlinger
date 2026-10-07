@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { PurchaseNotificationEmail } from "@/app/components/emails/PurchaseNotificationEmail";
 import { countInventoryItem, SteamItem } from "@/lib/steam";
 import { maxListingPrice, minListingPrice, stickerMarketName, Sticker } from "@/lib/pricing";
+import { RARITIES } from "@/lib/rarity";
 
 //
 
@@ -52,10 +53,15 @@ async function listingFilter(searchParams: URLSearchParams): Promise<Prisma.item
     const wear = searchParams.get("wear");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const type = searchParams.get("type");
+    const rarity = RARITIES[game ?? ""]?.find(r => r.key === searchParams.get("rarity"));
 
     const where: Prisma.item_listingWhereInput = {};
 
     if (game) where.game = game;
+    if (type === "skin") where.commodity = false;
+    if (type === "commodity") where.commodity = true;
+    if (rarity) where.hexColor = { equals: rarity.hex, mode: "insensitive" };
 
     // Wear is part of the item name, e.g. "AK-47 | Redline (Field-Tested)"
     const nameFilters: Prisma.item_listingWhereInput[] = [];

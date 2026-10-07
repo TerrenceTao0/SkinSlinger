@@ -174,6 +174,35 @@ export async function fetchItemPrice(market_hash_name: string, game: string): Pr
 }
 
 
+export type PricePoint = { date: string, price: number };
+
+const PRICE_HISTORY_DAYS = 180;
+
+// An item's daily third-party price, oldest first; empty when there is no history.
+// Throws on a failed lookup, so a failure is never cached as "no history".
+export async function fetchPriceHistory(market_hash_name: string): Promise<PricePoint[]> {
+    const url = new URL(`${base_url}/steam/api/history`);
+    url.searchParams.set("key", api_key);
+    url.searchParams.set("market_hash_name", market_hash_name);
+    url.searchParams.set("origin", "markets");
+    url.searchParams.set("interval", "1");
+
+    const response = await fetch(url.toString());
+
+    if (response.status === 404) return [];
+    if (!response.ok) throw new Error(`Price history lookup failed with status ${response.status}`);
+
+    // One entry a day, newest first
+    const days: { price: number, createdat: string }[] = await response.json();
+
+    return days
+        .slice(0, PRICE_HISTORY_DAYS)
+        .filter(day => typeof day.price === "number" && day.price > 0)
+        .map(day => ({ date: day.createdat.slice(0, 10), price: day.price }))
+        .reverse();
+}
+
+
 // Pages through a player's raw inventory for one game from steamwebapi. `complete` is false
 // when a page failed, so a failed lookup can't be mistaken for a small or empty inventory.
 async function fetchInventoryPages(steam_id: string, game: string, includeUntradable: boolean): Promise<{ items: { assetid: string }[], complete: boolean }> {
@@ -231,6 +260,14 @@ async function fetchInventoryPages(steam_id: string, game: string, includeUntrad
 }
 
 
+// Dota 2's `color` is the item's quality (mostly one grey), so it uses its rarity tag's colour
+function itemColor(item: { color?: string, bordercolor?: string, tags?: { category: string, color?: string }[] }, game: string): string {
+    const rarityTag = game === 'Dota2' ? item.tags?.find(tag => tag.category === 'Rarity') : null;
+
+    return rarityTag?.color ?? item.color ?? item.bordercolor ?? '';
+}
+
+
 // Fetches a player's inventory for any supported game from steamwebapi.
 // Returns tradable items with price set to 0 (prices are looked up separately from our DB).
 async function fetchGameInventory(steam_id: string, game: string): Promise<SteamItem[]> {
@@ -247,7 +284,7 @@ async function fetchGameInventory(steam_id: string, game: string): Promise<Steam
                 tradable: true,
                 type: item.itemtype ?? '',
                 price: 0,
-                hexColor: item.color ?? item.bordercolor ?? '',
+                hexColor: itemColor(item, game),
                 game,
                 commodity: game === 'CS2' ? !(item.float?.paintindex) : true,
                 inspectLink: item.inspectlink ?? null,

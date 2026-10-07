@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useBasket } from '@/app/components/BasketProvider'
 import { BasketItem } from '@/lib/basket'
@@ -44,6 +44,7 @@ export default function ItemPageClient({
     currentUserId,
     hasPendingPurchase,
     initialUserCash,
+    children,
 }: {
     marketName: string
     icon: string
@@ -56,6 +57,7 @@ export default function ItemPageClient({
     currentUserId: string | null
     hasPendingPurchase: boolean
     initialUserCash: number
+    children: React.ReactNode
 }) {
     const router = useRouter()
     const { data: session } = useSession()
@@ -125,7 +127,7 @@ export default function ItemPageClient({
 
     function handleBuyInstantly() {
         if (!session) {
-            router.push("/sign-up")
+            signIn("steam")
             return
         }
 
@@ -244,12 +246,12 @@ export default function ItemPageClient({
                                         <p className="text-sm text-gray-400">
                                             Starting from <span className="text-white font-medium">${lowestAsk?.toFixed(2)}</span>
                                         </p>
-                                        <Link
-                                            href="/sign-up"
+                                        <button
+                                            onClick={() => signIn("steam")}
                                             className="h-9 rounded-sm bg-special button text-sm font-medium flex items-center justify-center"
                                         >
-                                            Sign up to buy
-                                        </Link>
+                                            Sign in through Steam to buy
+                                        </button>
                                     </>
                                 )}
                             </div>
@@ -299,6 +301,9 @@ export default function ItemPageClient({
                         )}
                     </div>
                 </div>
+
+                {/* Price history chart */}
+                {children}
 
                 {/* Bottom row: sell orders + buy orders side by side */}
                 <div className="flex flex-col md:flex-row gap-4">

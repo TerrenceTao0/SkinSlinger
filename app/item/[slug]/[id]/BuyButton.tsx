@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useBasket } from "@/app/components/BasketProvider";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function BuyButton({
@@ -26,7 +26,7 @@ export default function BuyButton({
 
     function handleBuy() {
         if (!session) {
-            router.push("/sign-up");
+            signIn("steam");
             return;
         }
 

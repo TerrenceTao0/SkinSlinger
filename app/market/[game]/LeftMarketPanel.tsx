@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { RARITIES } from "@/lib/rarity";
 
 type GameFilter = "all" | "CS2" | "Dota2" | "Rust" | "TF2"
 
@@ -25,6 +26,11 @@ const wearOptions = [
     { label: "Battle-Scarred", short: "BS" },
 ];
 
+const typeOptions = [
+    { label: "Skins", value: "skin" },
+    { label: "Commodities", value: "commodity" },
+];
+
 const thumbClass = [
     "absolute w-full h-0 top-2",
     "appearance-none bg-transparent pointer-events-none",
@@ -38,6 +44,29 @@ const thumbClass = [
 
 //
 
+function PriceInput({ value, onChange, placeholder, className }: {
+    value: string,
+    onChange: (v: string) => void,
+    placeholder: string,
+    className: string,
+}) {
+    return (
+        <div className={`flex items-center bg-accent rounded-sm px-2 h-7 gap-1 ${className}`}>
+            <span className="text-[11px] text-gray-500">
+                $
+            </span>
+
+            <input
+                type="number" min={0} step={0.01} placeholder={placeholder} value={value}
+                onChange={e => onChange(e.target.value)}
+                className="bg-transparent text-xs w-full outline-none"
+            />
+        </div>
+    );
+}
+
+//
+
 export default function LeftPanel({
     currentGame,
     minPrice, setMinPrice,
@@ -46,6 +75,8 @@ export default function LeftPanel({
     minFloat, setMinFloat,
     maxFloat, setMaxFloat,
     hasStickers, setHasStickers,
+    type, setType,
+    rarity, setRarity,
 }: {
     currentGame: GameFilter,
     minPrice: string,
@@ -60,6 +91,10 @@ export default function LeftPanel({
     setMaxFloat: (v: string) => void,
     hasStickers: boolean,
     setHasStickers: (v: boolean) => void,
+    type: string | null,
+    setType: (v: string | null) => void,
+    rarity: string | null,
+    setRarity: (v: string | null) => void,
 }) {
     const minVal = minPrice !== "" ? Math.min(parseFloat(minPrice) || 0, SLIDER_MAX) : 0;
     const maxVal = maxPrice !== "" ? Math.min(parseFloat(maxPrice) || SLIDER_MAX, SLIDER_MAX) : SLIDER_MAX;
@@ -72,10 +107,13 @@ export default function LeftPanel({
     const floatFillLeft = (minFloatVal / FLOAT_MAX) * 100;
     const floatFillRight = 100 - (maxFloatVal / FLOAT_MAX) * 100;
 
+    const rarities = RARITIES[currentGame] ?? [];
+    const selectedRarity = rarities.find(r => r.key === rarity);
+
     return (
         <>
             {/* Desktop filters */}
-            <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 w-43 h-[52.75rem]">
+            <div className="hidden md:flex flex-col fixed left-[2.5%] top-20 bottom-4 w-43 2xl:w-64">
                 <div className="border border-gray-800 frame-shadow rounded-sm flex flex-col h-full overflow-y-auto overflow-x-hidden">
 
                     {/* Games */}
@@ -138,35 +176,68 @@ export default function LeftPanel({
 
                         {/* Min / Max inputs */}
                         <div className="flex items-center gap-2">
-                            <div className="flex-1 flex items-center bg-accent rounded-sm px-2 h-7 gap-1">
-                                <span className="text-[11px] text-gray-500">
-                                    $
-                                </span>
-
-                                <input
-                                    type="number" min={0} step={0.01} placeholder="0.00" value={minPrice}
-                                    onChange={e => setMinPrice(e.target.value)}
-                                    className="bg-transparent text-xs w-full outline-none"
-                                />
-                            </div>
+                            <PriceInput value={minPrice} onChange={setMinPrice} placeholder="0.00" className="flex-1" />
 
                             <span className="text-gray-600 text-xs">
                                 –
                             </span>
 
-                            <div className="flex-1 flex items-center bg-accent rounded-sm px-2 h-7 gap-1">
-                                <span className="text-[11px] text-gray-500">
-                                    $
-                                </span>
-
-                                <input
-                                    type="number" min={0} step={0.01} placeholder="All" value={maxPrice}
-                                    onChange={e => setMaxPrice(e.target.value)}
-                                    className="bg-transparent text-xs w-full outline-none"
-                                />
-                            </div>
+                            <PriceInput value={maxPrice} onChange={setMaxPrice} placeholder="All" className="flex-1" />
                         </div>
                     </div>
+
+
+                    {/* CS2 Type */}
+                    {currentGame === "CS2" && (
+                        <div className="px-3 py-3 border-t border-gray-700/60">
+                            <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">
+                                Type
+                            </p>
+
+                            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-1">
+                                {typeOptions.map(({ label, value }) => (
+                                    <button
+                                        key={value}
+                                        onClick={() => setType(type === value ? null : value)}
+                                        className={`w-full h-8 text-xs rounded-sm button transition-colors text-left px-2.5 ${type === value ? "bg-special font-medium" : "bg-accent"}`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+
+                    {/* CS2 / Dota 2 Rarity */}
+                    {rarities.length > 0 && (
+                        <div className="px-3 py-3 border-t border-gray-700/60">
+                            <div className="flex items-baseline justify-between mb-2">
+                                <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase">
+                                    Rarity
+                                </p>
+
+                                {selectedRarity && (
+                                    <span className="text-[11px] font-medium" style={{ color: `#${selectedRarity.hex}` }}>
+                                        {selectedRarity.label}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex gap-1">
+                                {rarities.map(({ key, label, hex }) => (
+                                    <button
+                                        key={key}
+                                        title={label}
+                                        aria-label={label}
+                                        onClick={() => setRarity(rarity === key ? null : key)}
+                                        className={`flex-1 h-5 rounded-sm cursor-pointer transition-all ${rarity === key ? "ring-2 ring-white" : "opacity-70 hover:opacity-100"}`}
+                                        style={{ backgroundColor: `#${hex}` }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
 
                     {/* CS2 / TF2 Float Range */}
@@ -296,33 +367,13 @@ export default function LeftPanel({
 
                 {/* Price */}
                 <div className="flex items-center justify-center gap-2 border border-gray-800 frame-shadow rounded-sm px-3 py-2 overflow-x-auto no-scrollbar">
-                    <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">
-                            $
-                        </span>
-
-                        <input
-                            type="number" min={0} step={0.01} placeholder="0" value={minPrice}
-                            onChange={e => setMinPrice(e.target.value)}
-                            className="bg-transparent text-xs w-full outline-none"
-                        />
-                    </div>
+                    <PriceInput value={minPrice} onChange={setMinPrice} placeholder="0" className="w-24 shrink-0" />
 
                     <span className="text-gray-600 text-xs shrink-0">
                         –
                     </span>
 
-                    <div className="flex items-center bg-accent rounded-sm px-2 h-7 w-24 shrink-0 gap-1">
-                        <span className="text-[11px] text-gray-500">
-                            $
-                        </span>
-
-                        <input
-                            type="number" min={0} step={0.01} placeholder="All" value={maxPrice}
-                            onChange={e => setMaxPrice(e.target.value)}
-                            className="bg-transparent text-xs w-full outline-none"
-                        />
-                    </div>
+                    <PriceInput value={maxPrice} onChange={setMaxPrice} placeholder="All" className="w-24 shrink-0" />
                 </div>
             </div>
         </>

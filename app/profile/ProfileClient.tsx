@@ -42,67 +42,73 @@ function Listings({ listings }: { listings: Listing[] }) {
                             }
                         }
 
-                        return rows.map(({ listing, quantity, href }) => (
-                            <Link
-                                key={listing.commodity ? listing.marketName : listing.id}
-                                href={href}
-                                className="flex flex-col gap-1.5 px-4 py-4 hover:bg-accent transition-colors"
-                            >
-                                <div className="flex gap-3 items-start">
-                                    {/* Left: icon */}
-                                    {listing.icon && (
-                                        <Image
-                                            src={listing.icon}
-                                            alt={listing.marketName}
-                                            width={64}
-                                            height={64}
-                                            className="object-contain shrink-0"
-                                        />
-                                    )}
+                        return rows.map(({ listing, quantity, href }) => {
+                            const rarityColor = listing.hexColor ? `#${listing.hexColor}` : null
 
-                                    {/* Middle: name, float, stickers */}
-                                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-sm leading-none truncate">
-                                                {listing.marketName}
-                                            </span>
-
-                                            {listing.commodity && (
-                                                <span className="text-xs text-gray-500 shrink-0 leading-none">
-                                                    ×{quantity}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {listing.floatValue != null && (
-                                            <span className="text-[10px] text-gray-500 font-mono">
-                                                {listing.floatValue.toFixed(10).replace(/0+$/, '')}
-                                            </span>
+                            return (
+                                <Link
+                                    key={listing.commodity ? listing.marketName : listing.id}
+                                    href={href}
+                                    className="flex flex-col gap-1.5 px-4 py-4 hover:bg-accent transition-colors"
+                                    style={rarityColor ? { borderLeft: `3px solid ${rarityColor}`, backgroundImage: `linear-gradient(to right, ${rarityColor}33, transparent 60%)` } : undefined}
+                                >
+                                    <div className="flex gap-3 items-start">
+                                        {/* Left: icon */}
+                                        {listing.icon && (
+                                            <Image
+                                                src={listing.icon}
+                                                alt={listing.marketName}
+                                                width={64}
+                                                height={64}
+                                                className="object-contain shrink-0"
+                                                style={rarityColor ? { filter: `drop-shadow(0 4px 10px ${rarityColor}66)` } : undefined}
+                                            />
                                         )}
 
-                                        {(() => {
-                                            const stickers = Array.isArray(listing.stickers) ? (listing.stickers as Sticker[]) : null
-                                            if (!stickers || stickers.length === 0) return null
-                                            return (
-                                                <div className="flex gap-1">
-                                                    {stickers.map((s, i) => (
-                                                        <div key={i} title={s.name}>
-                                                            <Image src={s.image} alt={s.name} width={24} height={24} className="h-6 w-auto" />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )
-                                        })()}
+                                        {/* Middle: name, float, stickers */}
+                                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-sm leading-none truncate" style={rarityColor ? { color: rarityColor } : undefined}>
+                                                    {listing.marketName}
+                                                </span>
+
+                                                {listing.commodity && (
+                                                    <span className="text-xs text-gray-500 shrink-0 leading-none">
+                                                        ×{quantity}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {listing.floatValue != null && (
+                                                <span className="text-[10px] text-gray-500 font-mono">
+                                                    {listing.floatValue.toFixed(10).replace(/0+$/, '')}
+                                                </span>
+                                            )}
+
+                                            {(() => {
+                                                const stickers = Array.isArray(listing.stickers) ? (listing.stickers as Sticker[]) : null
+                                                if (!stickers || stickers.length === 0) return null
+                                                return (
+                                                    <div className="flex gap-1">
+                                                        {stickers.map((s, i) => (
+                                                            <div key={i} title={s.name}>
+                                                                <Image src={s.image} alt={s.name} width={24} height={24} className="h-6 w-auto" />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )
+                                            })()}
+                                        </div>
+
+
+                                        {/* Right: price */}
+                                        <span className="text-sm font-medium text-special shrink-0 leading-none">
+                                            ${listing.price.toFixed(2)}
+                                        </span>
                                     </div>
-
-
-                                    {/* Right: price */}
-                                    <span className="text-sm font-medium text-special shrink-0 leading-none">
-                                        ${listing.price.toFixed(2)}
-                                    </span>
-                                </div>
-                            </Link>
-                        ))
+                                </Link>
+                            )
+                        })
                     })()}
                 </div>
             </div>
