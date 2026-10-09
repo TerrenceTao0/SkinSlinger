@@ -26,15 +26,24 @@ const getListing = cache(async (id: string) => {
         return null;
     }
 
-    const [float, commodityCount, seller] = await Promise.all([
+    const [float, commodityCount, seller, inspectRows] = await Promise.all([
         prisma.item_float.findUnique({ where: { assetId: listing.assetId } }),
         listing.commodity
             ? prisma.item_listing.count({ where: { marketName: listing.marketName, commodity: true } })
             : Promise.resolve(1),
         prisma.user.findUnique({ where: { id: listing.userId }, select: { steam_id: true, name: true, image: true } }),
+        // A skin's Steam inspect link is kept in its seller's inventory snapshot
+        listing.game === "CS2" && !listing.commodity
+            ? prisma.$queryRaw<{ link: string | null }[]>`
+                SELECT item->>'inspectLink' AS link
+                FROM "user", jsonb_array_elements("inventoryCache"::jsonb) AS item
+                WHERE "user".id = ${listing.userId} AND item->>'assetId' = ${listing.assetId}
+                LIMIT 1
+            `
+            : Promise.resolve([]),
     ]);
 
-    return { listing, float, commodityCount, seller };
+    return { listing, float, commodityCount, seller, inspectLink: inspectRows[0]?.link ?? null };
 });
 
 //
@@ -76,7 +85,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
     const data = await getListing(id);
     if (!data) notFound();
 
-    const { listing, float, commodityCount, seller } = data;
+    const { listing, float, commodityCount, seller, inspectLink } = data;
     const gameName = GAME_NAMES[listing.game!] ?? listing.game!;
     const gameSlug = GAME_SLUGS[listing.game!] ?? "cs2";
 
@@ -241,6 +250,13 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                                 commodity={listing.commodity}
                                 maxQuantity={commodityCount}
                             />
+
+                            {/* Opens the item in CS2, so it is hidden on phones */}
+                            {inspectLink?.startsWith("steam://") && (
+                                <a href={inspectLink} className="hidden md:flex -mt-2 h-10 rounded-sm bg-accent button text-sm items-center justify-center">
+                                    Inspect in game
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -202,21 +202,6 @@ function Hero() {
 function Features() {
     return (
         <div className="flex flex-col items-center gap-6 px-4 pt-10">
-            <div
-                className="w-full max-w-sm rounded-sm px-6 py-6 flex flex-col items-center gap-2 bg-secondary relative overflow-hidden"
-                style={{ boxShadow: "0 0 48px rgba(0, 194, 255, 0.18), inset 0 1px 0 rgba(0, 194, 255, 0.25)" }}
-            >
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-special to-transparent" />
-
-                <h2 className="text-special text-3xl font-bold tracking-wide">
-                    NO KYC
-                </h2>
-
-                <p className="text-gray-300 text-sm text-center">
-                    No identity verification required. Log in with Steam and trade instantly.
-                </p>
-            </div>
-
             <div className="flex flex-col items-center text-center gap-1 mt-2">
                 <p className="eyebrow">
                     Fully transparent
